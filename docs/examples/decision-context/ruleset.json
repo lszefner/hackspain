@@ -1,0 +1,28 @@
+{
+  "policy_id": "balanced",
+  "precedence": [
+    "NO_PAGAR",
+    "ESCALAR",
+    "PAGAR"
+  ],
+  "rules": [
+    {
+      "canonical": "VENDOR",
+      "condition": {
+        "function": "check_vendor",
+        "kind": "python_check",
+        "module": "rules_ingestion.checks"
+      },
+      "enabled": true,
+      "id": "R_VENDOR",
+      "input_fields": [],
+      "on_fail": "ESCALAR",
+      "params": {
+        "require_iban_match": true,
+        "require_nif_in_master": true
+      }
+    }
+  ],
+  "ruleset_version": "v-test",
+  "schema_version": "2.0"
+}

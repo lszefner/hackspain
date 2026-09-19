@@ -7,16 +7,23 @@ Two different "invoice" contracts meet here: the OCR/LLM extraction pipeline
 """
 from __future__ import annotations
 
+import re
 from decimal import Decimal, InvalidOperation
+
+from rules_ingestion.decision_registry import VAT_LABEL_PATTERN
+
+_VAT_LABEL = re.compile(VAT_LABEL_PATTERN, re.IGNORECASE)
+_DECIMAL = re.compile(r"^-?[0-9]+(?:\.[0-9]+)?$")
 
 
 def _dec(value: str | None) -> Decimal | None:
-    if value in (None, ""):
+    if not isinstance(value, str) or not _DECIMAL.match(value):
         return None
     try:
-        return Decimal(value)
+        result = Decimal(value)
     except InvalidOperation:
         return None
+    return result if result.is_finite() else None
 
 
 def to_raw_invoice(file_id: str, invoice: dict) -> dict:
@@ -26,7 +33,23 @@ def to_raw_invoice(file_id: str, invoice: dict) -> dict:
     taxes = invoice.get("taxes") or []
     lines = invoice.get("lines") or []
 
-    iva_total = sum((_dec(t.get("amount")) or Decimal(0)) for t in taxes) if taxes else None
+    iva_total = None
+    if taxes:
+        subtotal = Decimal(0)
+        explicit_vat = True
+        for tax in taxes:
+            if not isinstance(tax, dict):
+                explicit_vat = False
+                break
+            label = tax.get("label")
+            amount = _dec(tax.get("amount"))
+            if not isinstance(label, str) or not _VAT_LABEL.match(label.strip()) \
+                    or amount is None:
+                explicit_vat = False
+                break
+            subtotal += amount
+        if explicit_vat:
+            iva_total = subtotal
 
     return {
         "file_id": file_id,
@@ -40,5 +63,11 @@ def to_raw_invoice(file_id: str, invoice: dict) -> dict:
         "total": totals.get("total"),
         "currency": invoice.get("currency"),
         "date": invoice.get("issue_date"),
-        "line_items": [ln.get("amount") for ln in lines if ln.get("amount") is not None],
+        "line_items": [ln.get("amount") for ln in lines],
     }
+
+
+def to_decision_context(outcome: dict, **kwargs):
+    from rules_ingestion.decision_context import build_context
+
+    return build_context(outcome, **kwargs)
