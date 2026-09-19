@@ -13,7 +13,7 @@ import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 import { ensayar, publicar } from "../actions";
 
-export function Editor({ inicial, base }: { inicial: string; base: string }) {
+export function Editor({ inicial, base, activa }: { inicial: string; base: string; activa: string }) {
   const [yaml, setYaml] = useState(inicial);
   const [ensayo, setEnsayo] = useState<Ensayo | null>(null);
   const [erroresPub, setErroresPub] = useState<string[]>([]);
@@ -29,12 +29,18 @@ export function Editor({ inicial, base }: { inicial: string; base: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/manual" className="text-sm text-muted hover:text-ink">← el manual</Link>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">Redactar norma nueva</h1>
+        <Link href="/logica" className="text-sm text-muted hover:text-ink">← la lógica</Link>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight">
+          Editar norma <span className="font-mono">{base}</span>
+        </h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
-          Borrador sobre una copia de <b className="font-mono text-ink">{base}</b> (las versiones
-          publicadas son inmutables). Primero <b className="text-ink">ensaya</b>: verás qué
-          decidiría el motor sobre las 500 facturas <i>antes</i> de publicar nada.
+          Estás editando una copia de <b className="font-mono text-ink">{base}</b>: las versiones
+          publicadas son inmutables, así que los cambios se publican como versión nueva y ninguna
+          decisión pierde su referencia. Primero <b className="text-ink">ensaya</b>: verás qué
+          decidiría el motor sobre las 500 facturas <i>antes</i> de publicar nada
+          {base !== activa && (
+            <> (el ensayo compara contra la activa, <b className="font-mono text-ink">{activa}</b>)</>
+          )}.
         </p>
       </div>
 
@@ -143,7 +149,7 @@ export function Editor({ inicial, base }: { inicial: string; base: string }) {
                   {publicando ? "publicando y reprocesando…" : `Publicar ${ensayo.version} y reprocesar`}
                 </button>
                 <p className="mt-2 text-xs text-muted">
-                  Las decisiones con {ensayo.base} no se borran: quedan consultables y el diff sale en Operación.
+                  Las decisiones con {ensayo.base} no se borran: quedan consultables y el diff sale en Finanzas.
                 </p>
               </Card>
             </>

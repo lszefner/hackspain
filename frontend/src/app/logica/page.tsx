@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 import { BotonActivar } from "./ui";
 
-export const metadata = { title: "Manual de empleado · Albertito" };
+export const metadata = { title: "Lógica · tito.ai" };
 export const dynamic = "force-dynamic";
 
 export default async function ManualPage({
@@ -31,7 +31,7 @@ export default async function ManualPage({
           </p>
         </div>
         <Link
-          href="/manual/editor"
+          href="/logica/editor"
           className="ml-auto rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-ink/85"
         >
           Redactar norma nueva
@@ -42,7 +42,7 @@ export default async function ManualPage({
         <div className="rounded-lg border border-ok/30 bg-ok/5 px-4 py-3 text-sm text-ok">
           Norma <b className="font-mono">{version}</b> publicada y reprocesada. Ahora es la versión
           activa; las decisiones anteriores siguen ahí —{" "}
-          <Link href="/operacion" className="underline underline-offset-2">el diff está en Operación</Link>.
+          <Link href="/finanzas" className="underline underline-offset-2">el diff está en Finanzas</Link>.
         </div>
       )}
 
@@ -51,7 +51,7 @@ export default async function ManualPage({
         {listaNormas().map((n) => (
           <Link
             key={n.version}
-            href={`/manual?version=${n.version}`}
+            href={`/logica?version=${n.version}`}
             className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
               n.version === version ? "border-ink bg-ink text-paper" : "border-line bg-card hover:bg-soft"
             }`}
@@ -85,6 +85,13 @@ export default async function ManualPage({
           </div>
           <div className="text-muted">por <b className="text-ink">{norma.autor}</b></div>
           <div className="text-muted">motivo: <span className="text-ink">{norma.motivo}</span></div>
+          <Link
+            href={`/logica/editor?desde=${version}`}
+            className="ml-auto rounded-md border border-line bg-card px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+            title="Abre esta norma en el editor. Los cambios se publican como versión nueva: las publicadas son inmutables."
+          >
+            Editar esta norma
+          </Link>
         </div>
       </Card>
 

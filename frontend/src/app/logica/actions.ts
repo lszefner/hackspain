@@ -17,5 +17,5 @@ export async function publicar(yaml: string, autor: string, motivo: string): Pro
   const r = publicarNorma(yaml, autor, motivo);
   if (!r.ok) return r.errores;
   revalidatePath("/", "layout");
-  redirect(`/manual?version=${r.version}&publicada=1`);
+  redirect(`/logica?version=${r.version}&publicada=1`);
 }
