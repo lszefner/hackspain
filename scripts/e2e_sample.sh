@@ -54,6 +54,6 @@ uv run --locked --extra worker --extra backend python -m backend.run_revision \
 
 uv run --locked --extra worker --extra backend python -m backend.export_outcomes \
     --request-key "$REQUEST_KEY" \
-    --out /tmp/e2e/outcomes_sample.jsonl
+    --format traced --out /tmp/e2e/outcomes_sample.jsonl
 
 exit "$rc"

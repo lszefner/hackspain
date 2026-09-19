@@ -2,8 +2,14 @@
 from __future__ import annotations
 
 import json
+import unicodedata
 
-from backend.export_outcomes import build_rows, decide_output, write_jsonl
+from backend.export_outcomes import (
+    build_rows,
+    decide_output,
+    project,
+    write_jsonl,
+)
 
 
 def _row(**kw):
@@ -104,3 +110,33 @@ def test_build_rows_uses_store_all_when_listed(tmp_path):
     rows = build_rows(store, sorted(store.all()))
     assert rows[0]["output"] == "NO_PAGAR"
     assert rows[0]["trace"]["basis"] == "evaluator"
+
+
+class TestProject:
+    def test_deliverable_rows_have_exactly_two_keys_in_order(self):
+        store = _FakeStore({"a.pdf": _row(), "b.pdf": _row(decision="NO_PAGAR")})
+        rows = build_rows(store, ["a.pdf", "b.pdf", "c.pdf"])
+        out = project(rows, "deliverable")
+        assert [list(row) for row in out] == [["file_id", "result"]] * 3
+        assert out == [{"file_id": "a.pdf", "result": "PAGAR"},
+                       {"file_id": "b.pdf", "result": "NO_PAGAR"},
+                       {"file_id": "c.pdf", "result": "ESCALAR"}]
+        for row in out:
+            assert row["result"] in ("PAGAR", "NO_PAGAR", "ESCALAR")
+
+    def test_traced_returns_rows_unchanged(self):
+        store = _FakeStore({"a.pdf": _row()})
+        rows = build_rows(store, ["a.pdf"])
+        assert project(rows, "traced") == rows
+
+    def test_nfd_file_id_emitted_nfc(self, tmp_path):
+        nfd = unicodedata.normalize("NFD", "FA-4385_informática.pdf")
+        nfc = unicodedata.normalize("NFC", "FA-4385_informática.pdf")
+        store = _FakeStore({nfc: _row()})
+        rows = project(build_rows(store, [nfd]), "deliverable")
+        assert rows[0]["file_id"] == nfc
+        assert rows[0]["result"] == "PAGAR"
+        out = tmp_path / "out.jsonl"
+        write_jsonl(rows, out)
+        line = out.read_text(encoding="utf-8").strip()
+        assert nfc in line and nfd not in line

@@ -58,6 +58,7 @@ def _extraction_route(store, row: dict):
 def build_rows(store, file_ids: list[str]) -> list[dict]:
     rows = []
     for file_id in file_ids:
+        file_id = unicodedata.normalize("NFC", file_id)
         row = store.get(file_id)
         if row is None:
             output, basis = "ESCALAR", "not_processed"
@@ -78,6 +79,16 @@ def build_rows(store, file_ids: list[str]) -> list[dict]:
     return rows
 
 
+def project(rows: list[dict], fmt: str) -> list[dict]:
+    """deliverable: the org's outcomes.jsonl contract; traced: full rows."""
+    if fmt == "deliverable":
+        return [{"file_id": row["file_id"], "result": row["result"]}
+                for row in rows]
+    if fmt == "traced":
+        return rows
+    raise ValueError(f"unknown format: {fmt}")
+
+
 def write_jsonl(rows: list[dict], path) -> None:
     with open(path, "w", encoding="utf-8") as handle:
         handle.writelines(
@@ -89,6 +100,8 @@ def main(argv=None) -> int:
     parser.add_argument("--out", default="outcomes.jsonl")
     parser.add_argument("--facturas")
     parser.add_argument("--request-key")
+    parser.add_argument("--format", choices=("deliverable", "traced"),
+                        default="deliverable")
     args = parser.parse_args(argv)
 
     from backend.results_store import PostgresResultsStore
@@ -115,7 +128,7 @@ def main(argv=None) -> int:
         else:
             file_ids = sorted(store.all())
         rows = build_rows(store, file_ids)
-        write_jsonl(rows, args.out)
+        write_jsonl(project(rows, args.format), args.out)
     finally:
         engine.close()
     outputs = Counter(row["output"] for row in rows)
