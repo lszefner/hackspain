@@ -6,7 +6,10 @@ state.py, and the model is only allowed to write the sentence in front of them.
 It is handed the facts and told it may not invent one. The key stays here and
 never reaches the browser.
 
-    python3 serve.py            # http://127.0.0.1:8770
+Needs Python 3.11 or newer, like the rest of the repo, and nothing else --
+stdlib only. From the repo root:
+
+    .venv/bin/python desk/mock/serve.py          # http://127.0.0.1:8770
 """
 from __future__ import annotations
 
@@ -43,7 +46,7 @@ def api_key() -> str:
     env = REPO / ".env"
     if env.exists():
         for line in env.read_text(encoding="utf-8").splitlines():
-            if line.startswith("DEEPSEEK_API_KEY=") or line.startswith("HELMCODE_API_KEY="):
+            if line.startswith(("DEEPSEEK_API_KEY=", "HELMCODE_API_KEY=")):
                 return line.split("=", 1)[1].strip()
     raise SystemExit("no HELMCODE_API_KEY / DEEPSEEK_API_KEY found")
 
@@ -426,7 +429,7 @@ class Handler(SimpleHTTPRequestHandler):
                 f"(counts, amounts, duplicates, files you could not read). Do not restate it.\n"
                 f"The verdicts in this batch are demo data and the panel says so; do not claim "
                 f"you truly read the PDFs."
-                + (f"\nAlberto sent the batch with a message; answer THAT, using the batch result."
+                + ("\nAlberto sent the batch with a message; answer THAT, using the batch result."
                    if said else "")},
             {"role": "user", "content": (
                 said if said else

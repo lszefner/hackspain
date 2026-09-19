@@ -203,7 +203,7 @@ DUE_MONTH = {"02 Sep": "02 Oct", "04 Sep": "04 Oct", "08 Sep": "08 Oct", "10 Sep
 
 def _fields(c, inv):
     """What was read off the page, and what it was compared against."""
-    f, number, date, total, finding = inv
+    _file, number, date, total, finding = inv
     net = round(total / 1.21, 2)
     rows = [
         ["Invoice number", number],
@@ -371,7 +371,7 @@ def batch_block(b):
 # from the snapshot taken just before it.
 # --------------------------------------------------------------------------- #
 import copy
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 OUTBOX: list = []
 LOG: list = []
@@ -414,7 +414,7 @@ def _close(c, status):
 
 
 def _stamp():
-    return datetime.now().strftime("%H:%M")
+    return datetime.now(UTC).astimezone().strftime("%H:%M")
 
 
 def act(name, key=None, reason=None):
@@ -437,7 +437,7 @@ def act(name, key=None, reason=None):
 
     if name == "email" and c:
         _close(c, "waiting")
-        out = datetime.now() + timedelta(seconds=60)
+        out = datetime.now(UTC).astimezone() + timedelta(seconds=60)
         OUTBOX.append({"to": c["vendor"], "subject": f"About your {c['count']} open invoice(s)",
                        "release": out.strftime("%H:%M:%S")})
         WAITING.append({"vendor": c["vendor"], "what": "an answer to the mail I just wrote",
@@ -515,7 +515,7 @@ def sepa_xml():
     """The artefact the bank takes. Not a payment -- a file you upload."""
     total = TOTALS["queued_eur"] or sum(p["eur"] for p in PAYMENTS)
     n = TOTALS["queued"] or sum(p["count"] for p in PAYMENTS)
-    stamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
+    stamp = datetime.now(UTC).astimezone().strftime("%Y-%m-%dT%H:%M:%S")
     txs = "".join(
         f'''
       <CdtTrfTxInf>
@@ -528,14 +528,14 @@ def sepa_xml():
 <Document xmlns="urn:iso:std:iso:20022:tech:xsd:pain.001.001.03">
   <CstmrCdtTrfInitn>
     <GrpHdr>
-      <MsgId>DESK-{datetime.now().strftime("%Y%m%d-%H%M%S")}</MsgId>
+      <MsgId>DESK-{datetime.now(UTC).astimezone().strftime("%Y%m%d-%H%M%S")}</MsgId>
       <CreDtTm>{stamp}</CreDtTm>
       <NbOfTxs>{n}</NbOfTxs>
       <CtrlSum>{total:.2f}</CtrlSum>
       <InitgPty><Nm>Alberto</Nm></InitgPty>
     </GrpHdr>
     <PmtInf>
-      <PmtInfId>RUN-{datetime.now().strftime("%Y%m%d")}</PmtInfId>
+      <PmtInfId>RUN-{datetime.now(UTC).astimezone().strftime("%Y%m%d")}</PmtInfId>
       <PmtMtd>TRF</PmtMtd>{txs}
     </PmtInf>
   </CstmrCdtTrfInitn>
@@ -573,12 +573,14 @@ def _lines(path):
     """The text the page actually carries. Nothing is guessed."""
     raw = path.read_bytes()
     out = []
-    for m in _re.finditer(rb"stream(.*?)endstream", raw, _re.S):
+    for m in _re.finditer(rb"stream(.*?)endstream", raw, _re.DOTALL):
         b = m.group(1).strip(b"\r\n")
         try:
             out.append(zlib.decompress(base64.a85decode(b, adobe=True)))
-        except Exception:                                          # noqa: BLE001
-            pass
+        except Exception:                                          # noqa: BLE001, S112
+            # Not every stream in a PDF is ASCII85 + Flate text. The ones that
+            # are not are images and fonts, and we want none of them.
+            continue
     body = b"\n".join(out).decode("latin-1", "replace")
     return [_re.sub(r"\\(\d{3})", lambda m: chr(int(m.group(1), 8)), t[1:-1]).replace("\\", "")
             for t in _re.findall(r"\((?:[^()\\]|\\.)*\)", body)]
@@ -611,7 +613,7 @@ def _read(path):
 
     def grab(*pats):
         for p in pats:
-            m = _re.search(p, txt, _re.I)
+            m = _re.search(p, txt, _re.IGNORECASE)
             if m:
                 return m.group(1).strip()
         return None
@@ -625,7 +627,7 @@ def _read(path):
         except ValueError:
             issued = None
     if issued is None:
-        m2 = _re.search(r"Fecha de emisi.n:\s*(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})", txt, _re.I)
+        m2 = _re.search(r"Fecha de emisi.n:\s*(\d{1,2})\s+de\s+(\w+)\s+de\s+(\d{4})", txt, _re.IGNORECASE)
         if m2:
             try:
                 issued = _date(int(m2.group(3)), _MON.get(m2.group(2).lower(), 1), int(m2.group(1)))

@@ -39,7 +39,10 @@ from desk import agents, chat, llm, mail, rules, state
 from desk.ledger import Ledger
 
 HERE = Path(__file__).resolve().parent
-STATIC = HERE / "static"
+# The interface lives in desk/mock/ now and runs its own server. This process
+# is the engine and the API; it no longer serves a page of its own.
+UI_MOVED = (b"The desk API is up. The interface lives in desk/mock/ -- "
+            b"run `python3 desk/mock/serve.py` and open the port it prints.\n")
 
 LED: Ledger | None = None
 DEMO = False
@@ -95,17 +98,9 @@ class Handler(BaseHTTPRequestHandler):
         p = u.path
 
         if p in ("/", "/index.html"):
-            return self._send(200, (STATIC / "index.html").read_bytes(),
-                              "text/html; charset=utf-8")
+            return self._send(200, UI_MOVED, "text/plain; charset=utf-8")
         if p == "/favicon.ico":
             return self._send(204, b"")
-        if p.startswith("/static/"):
-            f = STATIC / p[len("/static/"):]
-            if not f.is_file() or STATIC not in f.resolve().parents:
-                return self._send(404, b"not found", "text/plain")
-            ctype = {"css": "text/css", "js": "application/javascript"}.get(
-                f.suffix[1:], "text/plain")
-            return self._send(200, f.read_bytes(), f"{ctype}; charset=utf-8")
 
         if p == "/api/brief":
             return self._json(chat.brief(LED, demo=DEMO))
