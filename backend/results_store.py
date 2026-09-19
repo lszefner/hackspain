@@ -176,6 +176,37 @@ class ResultsStore:
             availability="partial")
 
 
+def _artifact_ref(ref):
+    """The identity of an artifact, without leaking its storage path."""
+    if not ref:
+        return None
+    return {key: ref[key] for key in ("artifact_id", "sha256", "byte_size", "kind") if key in ref}
+
+
+def separar_estados(row):
+    """The five axes of the contract, represented independently.
+
+    Run execution, extraction, deterministic evaluation, contextual review and
+    human resolution are different facts. Collapsing them into one `estado` is
+    what makes a preliminary PAGAR look like a cleared invoice, so the engine
+    reports each one on its own and never implies payment authority.
+    """
+    return {
+        "run": {"state": row.get("run_state"), "error": row.get("run_error")},
+        "extraction": {"status": row.get("extraction_status"),
+                       "error": row.get("extraction_error")},
+        "evaluation": {"record_id": row.get("evaluation_record_id"),
+                       "preliminary_decision": row.get("decision")},
+        "review": {"record_id": row.get("review_record_id"),
+                   "status": row.get("review_status"),
+                   "attention_required": row.get("attention_required", True)},
+        # No resolution table exists yet: the engine neither executes nor
+        # authorizes payment, and an absent record must not read as "cleared".
+        "resolution": None,
+        "payment_authorized": False,
+    }
+
+
 class PostgresResultsStore:
     def __init__(self, engine):
         self.engine = engine
@@ -215,11 +246,42 @@ class PostgresResultsStore:
                        'reason': result['explanation']} for result in evaluation['rule_results']]
             row.update(raw_invoice=_dumps(invoice), checks=_dumps(checks),
                        decision_context=_dumps(context), context_receipt=_dumps(packet),
-                       evaluation_result=evaluation)
+                       evaluation_result=evaluation, provenance=self._provenance(packet))
         if row['review_record_id']:
             review_packet = self.engine.load(row['review_record_id'])
             row['contextual_review'] = self.engine._json(review_packet['review'])
         return row
+
+    @staticmethod
+    def _provenance(packet):
+        """The exact artifacts behind this decision, not today's newest ones.
+
+        A ruleset is identified by its artifact hash as well as its name: two
+        different generated artifacts can both call themselves `v3`.
+        """
+        sources = packet.get("sources") or {}
+        lineage = (packet.get("rule_source_lineage") or {}).get("sources") or []
+        return {
+            "input_id": packet.get("input_id"),
+            "batch_id": packet.get("batch_id"),
+            "interpreter": packet.get("interpreter"),
+            "evaluation_id": packet.get("evaluation_id"),
+            "evaluation_date": packet.get("evaluation_date"),
+            "captured_at": packet.get("captured_at"),
+            "original": _artifact_ref(packet.get("original")),
+            "outcome": _artifact_ref(packet.get("outcome")),
+            "ruleset": _artifact_ref(sources.get("ruleset")),
+            "rule_sources": [{"name": source["name"], **_artifact_ref(source)}
+                             for source in lineage],
+        }
+
+    def health(self):
+        """Real dependency readiness. Never a process-local busy flag."""
+        try:
+            self.engine.repository.preflight()
+        except Exception as exc:  # noqa: BLE001 - health degrades, it never propagates
+            return {"postgres": {"ok": False, "error": type(exc).__name__}}
+        return {"postgres": {"ok": True, "error": None}}
 
     def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
         from rules_ingestion.decision_context import SourceSnapshot

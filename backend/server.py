@@ -18,7 +18,7 @@ from urllib.parse import parse_qs, unquote, urlparse
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backend.results_store import PostgresResultsStore  # noqa: E402
+from backend.results_store import PostgresResultsStore, separar_estados  # noqa: E402
 from backend.run_revision import (  # noqa: E402
     FACTURAS_DIR,
     revisar_lote_sync,
@@ -82,6 +82,66 @@ def _resumen() -> dict:
     }
 
 
+LISTADO_LIMITE = 50
+LISTADO_LIMITE_MAX = 200
+
+
+def _fila(file_id: str, row: dict | None) -> dict:
+    """One list row. Deliberately light: no evidence packet is loaded here."""
+    if row is None:
+        # On disk but not yet in Postgres: pending work, not a result.
+        row = {}
+        estado = "pendiente"
+    else:
+        estado = row["estado"]
+    return {"file_id": file_id, "estado": estado,
+            "input_id": row.get("input_id"), "batch_id": row.get("batch_id"),
+            "error": row.get("error"), **separar_estados(row)}
+
+
+def _entero(campos: dict[str, list[str]], nombre: str, defecto: int) -> int:
+    crudo = (campos.get(nombre) or [""])[0]
+    if not crudo:
+        return defecto
+    if not crudo.isdigit():
+        raise ValueError(nombre)
+    return int(crudo)
+
+
+def _facturas_listado(campos: dict[str, list[str]]) -> dict:
+    limite = _entero(campos, "limit", LISTADO_LIMITE)
+    desplazamiento = _entero(campos, "offset", 0)
+    if not 1 <= limite <= LISTADO_LIMITE_MAX:
+        raise ValueError("limit")
+    decision = (campos.get("decision") or [""])[0]
+    estado = (campos.get("estado") or [""])[0]
+    q = (campos.get("q") or [""])[0].lower()
+
+    # One `latest_results()` round trip per request: `_facturas()` would repeat it.
+    persistido = get_store().all()
+    todas = sorted({p.name for p in FACTURAS_DIR.glob("*.pdf")} | set(persistido))
+    filas = [_fila(file_id, persistido.get(file_id)) for file_id in todas]
+    if decision:
+        filas = [f for f in filas if f["evaluation"]["preliminary_decision"] == decision]
+    if estado:
+        filas = [f for f in filas if f["estado"] == estado]
+    if q:
+        filas = [f for f in filas if q in f["file_id"].lower()]
+    return {"total": len(filas), "limit": limite, "offset": desplazamiento,
+            "filas": filas[desplazamiento:desplazamiento + limite]}
+
+
+def _salud() -> dict:
+    try:
+        dependencias = get_store().health()
+    except Exception as exc:  # noqa: BLE001 - an unbuildable store is a degraded state
+        dependencias = {"postgres": {"ok": False, "error": type(exc).__name__}}
+    return {"estado": "ok" if all(d["ok"] for d in dependencias.values()) else "degradado",
+            "dependencias": dependencias,
+            # Reported alongside, never as the health signal itself.
+            "procesando": _procesando}
+
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         pass
@@ -112,6 +172,13 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(200, run_status(get_store().engine, key))
             except KeyError:
                 self._json(404, {'error': 'run_not_found'})
+        elif url.path == "/api/facturas":
+            try:
+                self._json(200, _facturas_listado(parse_qs(url.query)))
+            except ValueError as exc:
+                self._json(422, {"error": "invalid_query", "campo": str(exc)})
+        elif url.path == "/api/salud":
+            self._json(200, _salud())
         elif url.path == "/api/estado":
             self._json(200, {"procesando": _procesando, "error": _ultimo_error})
         else:
@@ -165,7 +232,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         if row is None:
             self._json(200, {"file_id": file_id, "estado": "pendiente", "decision": None,
-                            "checks": [], "campos": {}, "error": None})
+                            "checks": [], "campos": {}, "error": None,
+                            "provenance": None, **separar_estados({})})
             return
         self._json(200, {
             "file_id": file_id,
@@ -180,6 +248,9 @@ class Handler(BaseHTTPRequestHandler):
             'contextual_review': row.get('contextual_review'),
             'review_status': row.get('review_status'),
             'attention_required': row.get('attention_required'),
+            # The exact artifacts behind this decision, and the five axes kept apart.
+            'provenance': row.get('provenance'),
+            **separar_estados(row),
         })
 
 
