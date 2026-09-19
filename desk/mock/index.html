@@ -330,7 +330,7 @@ body.chatting .chips{justify-content:flex-start}
 .scrim{position:fixed;inset:0;background:rgba(43,31,22,.26);backdrop-filter:blur(2px);opacity:0;
   pointer-events:none;transition:opacity .34s var(--ease);z-index:40}
 .scrim.on{opacity:1;pointer-events:auto}
-.dossier{position:fixed;top:0;right:0;height:100%;width:min(76vw,1180px);background:var(--bg);
+.dossier{position:fixed;top:0;right:0;height:100%;width:min(80vw,1240px);background:var(--bg);
   border-left:1px solid var(--line2);box-shadow:-24px 0 60px rgba(43,31,22,.14);
   transform:translateX(102%);transition:transform .42s var(--ease);z-index:41;
   display:grid;grid-template-rows:auto 1fr}
@@ -341,18 +341,20 @@ body.chatting .chips{justify-content:flex-start}
 .dos-head .x{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
   color:var(--mut);font-size:15px}
 .dos-head .x:hover{background:var(--chip);color:var(--ink)}
-.dos-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
-.dos-pdf{border-right:1px solid var(--line);background:var(--chip);min-height:0}
+.dos-body{overflow:auto;min-height:0}
+.dos-side{padding:20px 26px 0;min-width:0}
+.dos-pdf{margin:6px 26px 26px;border:1px solid var(--line);border-radius:12px;overflow:hidden;
+  background:var(--chip);height:min(78vh,820px)}
 .dos-pdf iframe{width:100%;height:100%;border:0;display:block}
-.dos-side{overflow:auto;padding:18px 22px 60px;min-width:0}
 .sec{margin-bottom:22px}
 .sec h5{margin:0 0 10px;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
   font-weight:600}
-.sec dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 26px;margin:0}
-.sec dl div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
-.sec dt{color:var(--faint);font-size:11.5px;white-space:nowrap}
-.sec dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
+.sec dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 34px;margin:0}
+.sec dl div{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0;
+  border-bottom:1px dashed var(--line)}
+.sec dt{color:var(--faint);font-size:11.5px;white-space:nowrap;flex:none}
+.sec dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;
+  word-break:break-word;min-width:0}
 .sec .why{font-size:14.5px;line-height:1.62}
 .chk{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:baseline;padding:8px 0;
   border-bottom:1px dashed var(--line)}
@@ -362,19 +364,24 @@ body.chatting .chips{justify-content:flex-start}
   padding:2px 7px;border-radius:5px;white-space:nowrap}
 .vd2.PASS{background:var(--pay-soft);color:var(--pay)}
 .vd2.BLOCKS{background:var(--no-soft);color:var(--no)}
-.tl{list-style:none;margin:0;padding:0;position:relative}
-.tl:before{content:"";position:absolute;left:4px;top:8px;bottom:12px;width:1px;background:var(--line2)}
-.tl li{position:relative;padding:0 0 14px 20px}
-.tl li:before{content:"";position:absolute;left:0;top:5px;width:9px;height:9px;border-radius:50%;
-  background:var(--panel);border:1.5px solid var(--line2)}
+.tl{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;
+  grid-auto-columns:minmax(0,1fr)}
+.tl li{position:relative;padding:20px 16px 0 0}
+.tl li:before{content:"";position:absolute;left:0;top:0;width:11px;height:11px;border-radius:50%;
+  background:var(--bg);border:1.5px solid var(--line2);z-index:1}
+.tl li:after{content:"";position:absolute;left:12px;right:0;top:5px;height:1.5px;background:var(--line2)}
+.tl li:last-child:after{display:none}
 .tl li.hot:before{background:var(--esc);border-color:var(--esc)}
-.tl .k2{font-size:11px;font-weight:600;letter-spacing:.06em}
-.tl .d2{font-size:12.5px;color:var(--mut);margin-top:1px}
-.tl .m2{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+.tl .k2{font-size:10px;font-weight:600;letter-spacing:.07em;color:var(--ink)}
+.tl .d2{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.45}
+.tl .m2{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:5px}
 @media (max-width:1000px){
   .dossier{width:96vw}
-  .dos-body{grid-template-columns:1fr;grid-template-rows:38% 1fr}
-  .dos-pdf{border-right:0;border-bottom:1px solid var(--line)}
+  .sec dl{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tl{grid-auto-flow:row;grid-auto-columns:auto}
+  .tl li{padding:0 0 14px 20px}
+  .tl li:before{top:4px}
+  .tl li:after{left:5px;top:12px;right:auto;bottom:-2px;width:1.5px;height:auto}
 }
 
 /* ───────────────── other views */
@@ -483,8 +490,8 @@ body.chatting .chips{justify-content:flex-start}
     <button class="x" id="dos-x" aria-label="Close">✕</button>
   </div>
   <div class="dos-body">
-    <div class="dos-pdf"><iframe id="dos-frame" title="The invoice"></iframe></div>
     <div class="dos-side" id="dos-side"></div>
+    <div class="dos-pdf"><iframe id="dos-frame" title="The invoice"></iframe></div>
   </div>
 </aside>
 
@@ -1014,13 +1021,10 @@ async function loadInvoices(){
   }
   $('#inv-count').textContent = `${d.matched} of ${d.grand}`;
 
-  // a filter narrows things down, so the boxes open themselves
-  const auto = Boolean(INV.q || INV.action);
-
   $('#inv-body').innerHTML = !d.lanes.length
     ? `<div class="empty-note">Nothing matches that. Try a supplier name, or clear the filters.</div>`
     : `<div class="lanes">${d.lanes.map(l => {
-        const open = auto || INV.open.has(l.id);
+        const open = INV.open.has(l.id);
         return `<div class="lane${open ? ' open' : ''}" data-lane="${esc(l.id)}">
           <button class="lane-head" type="button">
             <span class="cv2"></span>
