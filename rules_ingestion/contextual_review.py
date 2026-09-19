@@ -62,6 +62,25 @@ class DecisionContextV1Adapter:
         )
 
 
+class DecisionContextV2Adapter:
+    def inspect(self, context: dict, artifacts: dict[str, bytes]) -> ContextView:
+        from .decision_context import ContextBundle
+        from .execution_context import validate_execution_context
+
+        if context.get("schema_version") != "decision-context/2":
+            raise ReviewInputError("unsupported_context_version")
+        try:
+            validate_execution_context(ContextBundle(context=context, artifacts=artifacts))
+        except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
+            raise ReviewInputError("invalid_context") from exc
+        return ContextView(
+            context["context_id"], context["schema_version"], context["evaluation_date"],
+            context["sources"], context["fields"],
+            {field: "/fields/" + field.replace("~", "~0").replace("/", "~1")
+             for field in context["fields"]}, context["ruleset"], context["rule_bindings"],
+        )
+
+
 @dataclass(frozen=True)
 class ProviderReply:
     payload: dict
@@ -259,7 +278,18 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
                             limits: ReviewLimits | None = None) -> dict:
     limits = limits or ReviewLimits()
     evaluation, context, artifacts = deepcopy((evaluation, context, artifacts))
-    validate(EVALUATION_SCHEMA, evaluation, "invalid_evaluation")
+    if context.get("schema_version") == "decision-context/2":
+        from .decision_context import ContextBundle
+        from .evaluator import load_schema, validate_evaluation
+
+        validate(load_schema(), evaluation, "invalid_evaluation")
+        try:
+            validate_evaluation(evaluation, ContextBundle(context=context, artifacts=artifacts))
+        except (ValueError, KeyError, TypeError, IndexError, RecursionError) as exc:
+            raise ReviewInputError("invalid_evaluation") from exc
+        adapter = adapter or DecisionContextV2Adapter()
+    else:
+        validate(EVALUATION_SCHEMA, evaluation, "invalid_evaluation")
     validate({"type": "string", "format": "date-time"}, reviewed_at, "invalid_reviewed_at")
     validate({"type": "string", "minLength": 1}, provider.provider, "invalid_provider")
     validate({"type": "string", "minLength": 1}, provider.model, "invalid_provider")

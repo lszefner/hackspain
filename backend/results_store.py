@@ -174,3 +174,69 @@ class ResultsStore:
             authoritative_for=("history.processed",),
             scope="latest-per-file UI review records",
             availability="partial")
+
+
+class PostgresResultsStore:
+    def __init__(self, engine):
+        self.engine = engine
+
+    @staticmethod
+    def _project(row):
+        from rules_ingestion.decision_storage import _jsonable
+
+        review = row.get('contextual_review') or {}
+        status = review.get('status')
+        failed = (status == 'FAILED' or row['extraction_status'] in ('failed', 'unknown')
+                  or (not status and row['run_state'] in ('completed', 'partial', 'failed', 'unknown')))
+        return _jsonable(row) | {
+            'estado': 'error' if failed else 'hecha' if status in ('COMPLETED', 'INCOMPLETE') else 'procesando',
+            'review_status': status, 'attention_required': review.get('attention_required', True),
+            'error': review.get('error') or row.get('extraction_error') or row.get('run_error'),
+            'raw_invoice': None, 'checks': None,
+        }
+
+    def all(self):
+        return {row['file_id']: self._project(row) for row in self.engine.repository.latest_results()}
+
+    def get(self, file_id):
+        from rules_ingestion.decision_context import project_legacy
+
+        rows = self.engine.repository.latest_results(file_id)
+        if not rows:
+            return None
+        row = self._project(rows[0])
+        if row['evaluation_record_id']:
+            packet = self.engine.load(row['evaluation_record_id'])
+            context = self.engine._json(packet['context'])
+            evaluation = self.engine._json(packet['evaluation'])
+            invoice, _master = project_legacy(context)
+            checks = [{'rule_id': result['rule_id'],
+                       'verdict': {'PASS': 'PASS', 'VIOLATED': 'FAIL'}.get(result['status'], 'NEEDS_REVIEW'),
+                       'reason': result['explanation']} for result in evaluation['rule_results']]
+            row.update(raw_invoice=_dumps(invoice), checks=_dumps(checks),
+                       decision_context=_dumps(context), context_receipt=_dumps(packet),
+                       evaluation_result=evaluation)
+        if row['review_record_id']:
+            review_packet = self.engine.load(row['review_record_id'])
+            row['contextual_review'] = self.engine._json(review_packet['review'])
+        return row
+
+    def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
+        from rules_ingestion.decision_context import SourceSnapshot
+
+        records = []
+        for row in self.engine.repository.processed_records(exclude_file_id):
+            packet = self.engine.load(row['record_id'])
+            context = self.engine._json(packet['context'])
+            fields = context['fields']
+            record = {'file_id': context['file_id'], 'context_id': context['context_id']}
+            for name, field in (('invoice_number', 'invoice.number'), ('supplier_id', 'supplier.id'),
+                                ('total', 'invoice.total'), ('currency', 'invoice.currency'),
+                                ('issue_date', 'invoice.issue_date')):
+                fact = fields.get(field) or {}
+                record[name] = fact.get('value') if fact.get('state') == 'present' else None
+            records.append(record)
+        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': False},
+                              captured_at=captured_at, asserted_by='core-engine-postgres',
+                              authoritative_for=('history.processed',), availability='partial',
+                              scope='Persisted engine evaluations; not a claim of complete submission history')

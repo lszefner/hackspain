@@ -429,17 +429,26 @@ def test_authoritative_duplicate_with_missing_total_still_rejects():
     assert not result["completeness"]["evaluation_complete"]
 
 
-def test_no_provider_imports_or_network(monkeypatch):
+def test_no_provider_imports_or_network():
+    import subprocess
     import sys
-    import urllib.request
 
-    def forbidden(*args, **kwargs):
-        pytest.fail("deterministic execution attempted network access")
+    code = '''
+import sys
+import urllib.request
+from tests.test_rule_execution import run
 
-    monkeypatch.setattr(urllib.request, "urlopen", forbidden)
-    run()
-    assert "rules_ingestion.codegen" not in sys.modules
-    assert "rules_ingestion.classify" not in sys.modules
+def forbidden(*args, **kwargs):
+    raise AssertionError("deterministic execution attempted network access")
+
+urllib.request.urlopen = forbidden
+run()
+assert "rules_ingestion.codegen" not in sys.modules
+assert "rules_ingestion.classify" not in sys.modules
+'''
+    result = subprocess.run([sys.executable, '-c', code], cwd=Path(__file__).resolve().parents[1],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
 
 
 def test_bad_evidence_cannot_justify_rejection():
