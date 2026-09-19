@@ -179,6 +179,7 @@ class ResultsStore:
 class PostgresResultsStore:
     def __init__(self, engine):
         self.engine = engine
+        self._history_cache: dict[str, dict] = {}
 
     @staticmethod
     def _project(row):
@@ -221,12 +222,10 @@ class PostgresResultsStore:
             row['contextual_review'] = self.engine._json(review_packet['review'])
         return row
 
-    def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
-        from rules_ingestion.decision_context import SourceSnapshot
-
-        records = []
-        for row in self.engine.repository.processed_records(exclude_file_id):
-            packet = self.engine.load(row['record_id'])
+    def _history_record(self, record_id):
+        record = self._history_cache.get(record_id)
+        if record is None:
+            packet = self.engine.archive.load_packet(record_id)
             context = self.engine._json(packet['context'])
             fields = context['fields']
             record = {'file_id': context['file_id'], 'context_id': context['context_id']}
@@ -235,7 +234,14 @@ class PostgresResultsStore:
                                 ('issue_date', 'invoice.issue_date')):
                 fact = fields.get(field) or {}
                 record[name] = fact.get('value') if fact.get('state') == 'present' else None
-            records.append(record)
+            self._history_cache[record_id] = record
+        return record
+
+    def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
+        from rules_ingestion.decision_context import SourceSnapshot
+
+        records = [dict(self._history_record(row['record_id']))
+                   for row in self.engine.repository.processed_records(exclude_file_id)]
         return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': False},
                               captured_at=captured_at, asserted_by='core-engine-postgres',
                               authoritative_for=('history.processed',), availability='partial',

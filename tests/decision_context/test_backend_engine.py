@@ -266,6 +266,34 @@ async def test_one_failed_document_does_not_hide_other_results(runtime, monkeypa
     assert store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z', exclude_file_id='invoice.pdf').payload['records'] == []
 
 
+@pytest.mark.asyncio
+async def test_processed_history_reads_projection_without_forensic_replay(runtime, monkeypatch):
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+    await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    store = PostgresResultsStore(engine)
+    gets = {'count': 0}
+    original_get = engine.storage.get
+
+    def counted_get(object_key):
+        gets['count'] += 1
+        return original_get(object_key)
+
+    monkeypatch.setattr(engine.storage, 'get', counted_get)
+    monkeypatch.setattr(engine, 'load', lambda record_id: pytest.fail('forensic replay on history path'))
+    history = store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z')
+    records = history.payload['records']
+    assert len(records) == 1
+    assert records[0]['file_id'] == 'invoice.pdf'
+    assert records[0]['context_id'].startswith('dc_')
+    assert set(records[0]) == {'file_id', 'context_id', 'invoice_number', 'supplier_id', 'total', 'currency', 'issue_date'}
+    assert 0 < gets['count'] <= 3
+    gets['count'] = 0
+    again = store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z')
+    assert gets['count'] == 0
+    assert again.payload == history.payload
+    assert store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z', exclude_file_id='invoice.pdf').payload['records'] == []
+
+
 def test_backend_import_is_lazy_and_request_key_is_required(monkeypatch):
     from backend import server
 
