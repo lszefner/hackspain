@@ -38,11 +38,9 @@ def _lanzar_en_fondo(file_ids: list[str]) -> None:
     try:
         revisar_lote_sync(file_ids, store=STORE)
     except Exception as exc:  # keep the UI alive; show the error instead of crashing the thread
-        _ultimo_error = f"{type(exc).__name__}: {exc}"
+        _ultimo_error = type(exc).__name__
         for file_id in file_ids:
-            row = STORE.get(file_id)
-            if row is None or row["estado"] == "procesando":
-                STORE.set_error(file_id, _ultimo_error)
+            STORE.set_error(file_id, _ultimo_error)
     finally:
         with _estado_lock:
             _procesando = False
@@ -204,15 +202,37 @@ reglas de rules_ingestion/checks.py contra el maestro de proveedores/pedidos y e
         checks = json.loads(row["checks"]) if row["checks"] else []
         inv = json.loads(row["raw_invoice"]) if row["raw_invoice"] else {}
         check_html = "".join(
-            f'<div class="check"><b class="{c["verdict"]}">{c["verdict"]}</b> &middot; '
-            f'{html.escape(c["canonical"])}<br>{html.escape(c["reason"])}</div>'
+            f'<div class="check"><b class="{html.escape(str(c.get("verdict", "NEEDS_REVIEW")), quote=True)}">'
+            f'{html.escape(str(c.get("verdict", "NEEDS_REVIEW")))}</b> &middot; '
+            f'{html.escape(str(c.get("canonical") or "UNKNOWN"))}<br>'
+            f'{html.escape(str(c.get("reason", "")))}</div>'
             for c in checks
         )
+        estado_actual = row["estado"]
+        context_html = ""
+        if row.get("decision_context"):
+            titulo = "Contexto de decision (recomendacion, no pago)" \
+                if estado_actual == "hecha" else \
+                "Ultima evidencia guardada; no recomendacion vigente"
+            context_html = (
+                f"<h3>{titulo}</h3>"
+                f'<details><summary>decision_context</summary><pre>'
+                f'{html.escape(json.dumps(json.loads(row["decision_context"]), ensure_ascii=False, indent=2))}'
+                f"</pre></details>")
+        receipt_html = ""
+        if row.get("context_receipt"):
+            titulo = "Recibo de persistencia" if estado_actual == "hecha" \
+                else "Ultima evidencia guardada; no recomendacion vigente"
+            receipt_html = (
+                f"<h3>{titulo}</h3>"
+                f'<details><summary>context_receipt</summary><pre>'
+                f'{html.escape(json.dumps(json.loads(row["context_receipt"]), ensure_ascii=False, indent=2))}'
+                f"</pre></details>")
         campos_html = "".join(
             f"<tr><td>{html.escape(str(k))}</td><td>{html.escape(str(v))}</td></tr>"
             for k, v in inv.items() if k not in ("file_id",)
         )
-        decision = row.get("decision")
+        decision = row.get("decision") if estado_actual == "hecha" else None
         deco = f'<span class="{decision}">{decision}</span>' if decision else "&mdash;"
         error_html = f'<div class="aviso">{html.escape(row["error"])}</div>' if row.get("error") else ""
         body = f"""<html><head><title>{html.escape(file_id)}</title>{ESTILO}</head><body>
@@ -228,6 +248,8 @@ reglas de rules_ingestion/checks.py contra el maestro de proveedores/pedidos y e
 <div class="checks">{check_html or "<p>sin checks</p>"}</div>
 <h3>Campos extraidos (mapeados a rules_ingestion.invoice)</h3>
 <table>{campos_html}</table>
+{context_html}
+{receipt_html}
 </body></html>"""
         self._responder(200, body)
 

@@ -281,9 +281,9 @@ def test_put_verified_rejects_self_consistent_wrong_bytes(tmp_path):
 
 
 def test_receipt_binding_and_key_validation(tmp_path):
+    from test_decision_context import make_outcome, make_ruleset, make_snapshots
+
     import rules_ingestion.decision_context as dc
-    from test_decision_context import (
-        make_outcome, make_ruleset, make_snapshots)
 
     store = _local_store(tmp_path)
     bundle_a = build()
@@ -312,3 +312,100 @@ def test_receipt_binding_and_key_validation(tmp_path):
     path_a.write_text(json.dumps(crafted))
     with pytest.raises(ContextError):
         store.load(receipt_a["context_id"])
+
+
+def test_create_decision_store_supabase_bucket_env(tmp_path, monkeypatch):
+    import rules_ingestion.decision_storage as ds
+
+    calls = {}
+
+    class FakeStorage:
+        def __init__(self, **kwargs):
+            calls["bucket"] = kwargs.get("bucket")
+            self.client = None
+
+        def preflight(self):
+            calls["preflight"] = True
+
+    class FakeRepo:
+        def __init__(self):
+            calls["repo"] = True
+
+        def get_context(self, context_id):
+            calls["probe"] = context_id
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(ds, "SupabaseStorage", FakeStorage)
+    monkeypatch.setattr(ds, "DecisionRepository", FakeRepo)
+    monkeypatch.setenv("SUPABASE_STORAGE_BUCKET", "custom-bucket")
+    store = ds.create_decision_store("supabase", local_root=tmp_path)
+    assert calls["bucket"] == "custom-bucket"
+    assert calls["preflight"] is True
+    assert calls["probe"] == "dc_" + "0" * 64
+    assert store.backend == "supabase"
+    assert not (tmp_path / "contexts").exists()
+
+
+def test_create_decision_store_supabase_fail_closed(tmp_path, monkeypatch):
+    import rules_ingestion.decision_storage as ds
+
+    closed = {"storage": False, "repo": False}
+
+    class FakeClient:
+        def close(self):
+            closed["storage"] = True
+
+    class FakeStorage:
+        def __init__(self, **kwargs):
+            self.client = FakeClient()
+
+        def preflight(self):
+            raise RuntimeError("bucket not found")
+
+    class FakeRepo:
+        def __init__(self):
+            pass
+
+        def get_context(self, context_id):
+            return None
+
+        def close(self):
+            closed["repo"] = True
+
+    monkeypatch.setattr(ds, "SupabaseStorage", FakeStorage)
+    monkeypatch.setattr(ds, "DecisionRepository", FakeRepo)
+    with pytest.raises(RuntimeError):
+        ds.create_decision_store("supabase", local_root=tmp_path)
+    assert closed == {"storage": True, "repo": True}
+    assert not (tmp_path / "contexts").exists()
+
+
+def test_create_decision_store_supabase_repo_failure_closes_client(
+        tmp_path, monkeypatch):
+    import rules_ingestion.decision_storage as ds
+
+    closed = {"storage": False}
+
+    class FakeClient:
+        def close(self):
+            closed["storage"] = True
+
+    class FakeStorage:
+        def __init__(self, **kwargs):
+            self.client = FakeClient()
+
+        def preflight(self):
+            raise AssertionError("preflight must not run")
+
+    class FakeRepo:
+        def __init__(self):
+            raise ValueError("SUPABASE_DB_URL is required")
+
+    monkeypatch.setattr(ds, "SupabaseStorage", FakeStorage)
+    monkeypatch.setattr(ds, "DecisionRepository", FakeRepo)
+    with pytest.raises(ValueError):
+        ds.create_decision_store("supabase", local_root=tmp_path)
+    assert closed["storage"] is True
+    assert not (tmp_path / "contexts").exists()

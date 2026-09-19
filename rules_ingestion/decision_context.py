@@ -120,6 +120,10 @@ def _iso_datetime(value: Any) -> bool:
     return parsed.tzinfo is not None
 
 
+def _nonnegative_integer(value: Any) -> int | None:
+    return value if isinstance(value, int) and not isinstance(value, bool) and value >= 0 else None
+
+
 def _strict_decimal(value: Any) -> Decimal | None:
     if not isinstance(value, str) or not DECIMAL_PATTERN.match(value):
         return None
@@ -505,13 +509,13 @@ def _resolve_supplier(fields: dict, snapshots: dict, snapshot_json: dict,
     if "payment_terms_days" in row:
         terms_raw = row["payment_terms_days"]
         terms_column = "payment_terms_days"
-        normalizer = lambda v: v if isinstance(v, int) and not isinstance(v, bool) and v >= 0 else None
+        normalizer = _nonnegative_integer
     else:
         match = TERMS_PATTERN.match(row.get("condiciones") or "") \
             if isinstance(row.get("condiciones"), str) else None
         terms_raw = int(match.group(1)) if match else row.get("condiciones")
         terms_column = "condiciones"
-        normalizer = lambda v: v if isinstance(v, int) and v >= 0 else None
+        normalizer = _nonnegative_integer
     fields["supplier.payment_terms_days"] = master_field(
         "supplier.payment_terms_days", "supplier.payment_terms",
         terms_raw, terms_column, "explicit_terms_days/1", normalizer)

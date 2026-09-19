@@ -1,7 +1,10 @@
 # Invoice–ruleset–ERP alignment: traceable decision-context specification
 
 Date: 2026-09-19  
-Status: proposed design; documentation authorized, implementation not yet authorized.  
+Status: implemented and verified offline; see `docs/decision-context-integration.md` for the
+authoritative implemented contract. This document remains the design rationale; where its
+illustrative excerpts differ from `rules_ingestion/decision_context.schema.json`, the machine
+schema is authoritative.
 Scope: challenge 1, semantic alignment and traceability between structured invoice extraction and business-rule inputs.
 
 ## 1. Recommendation and intended outcome
@@ -32,16 +35,19 @@ It enables the next stage to produce defensible PAGAR, ESCALAR, or NO_PAGAR deci
 
 ### Non-goals
 
-- Database persistence/schema design or payment execution.
+- Payment execution. Persistence is no longer a non-goal: an append-only private
+  `ingestion.decision_contexts` index plus immutable artifact bytes in the existing private
+  Supabase Storage bucket is now part of the implemented boundary (see
+  `docs/decision-context-integration.md`).
 - Reliable natural-language rule compilation and arbitrary rule-code generation: challenge 2.
 - Implementing a JEV/DeepSeek second-pass reviewer: challenge 3.
 - Rewriting all canonical check bodies or final verdict precedence in challenge 1.
 - A universal tax, currency-conversion, identity-resolution, or rules platform.
 - Changing provider prompts, benchmark references/reports, or extraction schema 0.1.
 
-## 2. Current repository contracts and integration gaps
+## 2. Repository findings at design time (historical; implementation changes below)
 
-These are current observations, distinct from the proposed contract below.
+These were the observations at design time, distinct from the proposed contract below.
 
 | Area | Current behavior | Consequence for this design |
 | --- | --- | --- |
@@ -93,7 +99,9 @@ The evaluation date is a required input. Retrieval time, source effective time, 
 
 ## 4. Proposed contract names and types
 
-The notation below specifies data shapes, not implementation code. These contracts do not yet exist in the runtime.
+The notation below specifies data shapes, not implementation code. These contracts are now
+implemented; `rules_ingestion/decision_context.schema.json` is the authoritative machine
+schema and this section's notation is conceptual.
 
 Primitive names:
 
@@ -698,9 +706,9 @@ Leave authored artifacts unchanged and attach bindings alongside them:
 3. Apply per-rule `on_fail` and final precedence correctly.
 4. Preserve the distinction between processing duplicates and prior payment evidence.
 
-Balanced policy defines PASS → PAGAR, NEEDS_REVIEW → ESCALAR, FAIL → the rule's `on_fail`, with NO_PAGAR > ESCALAR > PAGAR precedence. The current `webui/run_revision.py` reducer hardcodes any FAIL to NO_PAGAR; this spec does not declare it correct or fix it merely by adding a context.
+Balanced policy defines PASS → PAGAR, NEEDS_REVIEW → ESCALAR, FAIL → the rule's `on_fail`, with NO_PAGAR > ESCALAR > PAGAR precedence. (Historical note: the pre-implementation `webui/run_revision.py` reducer hardcoded any FAIL to NO_PAGAR; the implemented guarded evaluation path now honors merged IDs, `on_fail`, and precedence, without claiming full policy correctness for every check body.)
 
-Until these blockers are addressed, context/preflight output can be inspected, but the old reducer must not be advertised as a trustworthy payment recommendation. Challenge 1's integration must prevent a blocked context from appearing as an all-pass approval, even while general evaluator work remains separate.
+The implemented integration prevents a blocked context from appearing as an all-pass approval: unsupported bindings get `execution_status: "unsupported"`, the context reports `"blocked"`, and no recommendation is treated as approval. Generic `run_checks` call sites, canonical check bodies, and new/structured condition kinds remain outside this fix.
 
 ### Future seams
 
@@ -708,20 +716,26 @@ Challenge 2 consumes frozen context facts, registry bindings, applicable rules, 
 
 Challenge 3 receives the structured invoice, resolved master/ERP context, applicable rules, preliminary decision/reasons, and extracted page/block reading evidence. References in this context make that evidence retrievable without reinterpreting raw text as deterministic rule input. The reviewer does not silently promote invoice claims to master authority.
 
-## 11. Proposed implementation surface
+## 11. Implementation surface (delivered)
 
-After explicit implementation approval:
-
-| File | Proposed change |
+| File | Delivered change |
 | --- | --- |
-| New `rules_ingestion/decision_context.py` | Types/validation, static field registry, pure construction, dependency preflight, guarded projection |
-| `webui/map_invoice.py` | Replace lossy adaptation with the context boundary |
-| `rules_ingestion/loader.py` | Add original row/cell provenance and uncollapsed candidates while preserving legacy consumers |
-| `webui/master_data.py` | Explicit source availability/coverage, injected date, snapshot metadata |
-| `webui/run_revision.py` | Pass complete extraction/context artifacts and expose readiness without claiming evaluator correctness |
-| New focused tests | Mapping, lineage, dependency/readiness, and projection behavior |
+| `rules_ingestion/decision_context.py` | Types/validation, static field registry, pure construction, dependency preflight, guarded projection |
+| `rules_ingestion/decision_registry.py` | Static field/alias registry and check-condition allowlist |
+| `rules_ingestion/decision_context.schema.json` | Authoritative machine schema (draft 2020-12) |
+| `rules_ingestion/decision_storage.py` | Immutable artifact persistence, local + fail-closed Supabase backends, replay-verified load |
+| `rules_ingestion/decision_cli.py` | Offline `python -m rules_ingestion.decision_cli` entrypoint |
+| `supabase/migrations/20260919111816_decision_contexts.sql` | Private `ingestion.decision_contexts` index, RLS, no frontend grants |
+| `webui/map_invoice.py` | Conservative mapping (no invented VAT/currency) plus `to_decision_context` seam |
+| `rules_ingestion/loader.py` | Original row/cell provenance and uncollapsed candidates while preserving legacy consumers |
+| `webui/master_data.py` | Explicit source availability/coverage, snapshot metadata, bounded ERP capture |
+| `webui/results_store.py` | Decision-context/receipt columns, retained evidence, processed-history snapshot |
+| `webui/run_revision.py`, `webui/server.py` | Revision seam, persistence-before-done ordering, escaped evidence display |
+| `tests/test_decision_*.py`, `docs/decision-context-integration.md`, `docs/examples/decision-context/` | Focused tests, integration guide, synthetic runnable inputs |
 
-No extraction-schema, provider-prompt, benchmark, canonical-check-body, profile, or database-schema changes in this slice. Snapshot serialization does not select a database storage design.
+No extraction-schema, provider-prompt, benchmark, canonical-check-body, or profile changes
+were made. Persistence scope (private Supabase Storage + `ingestion.decision_contexts`) was
+explicitly authorized after this spec was written.
 
 ## 12. Acceptance cases
 
@@ -745,7 +759,9 @@ These describe behavior, not an implementation or benchmark harness.
 16. **Rule identity/policy:** bindings retain schema 2.0 IDs, exact ruleset hash, and per-rule policy metadata without rewriting authored rules.
 17. **No silent defaults:** missing dates, amounts, identities, ERP states, and tax rows never acquire passing values through fallback behavior.
 
-Verification is offline and uses synthetic/local fixtures only; no paid providers or shared databases. Application-code tests are not part of this documentation-only change.
+Verification was performed offline with synthetic/local fixtures only — no paid providers
+or shared databases — against a disposable local Postgres. The implementation is verified
+offline; no hosted deployment has been applied.
 
 ## 13. Prioritized implementation plan
 
@@ -754,7 +770,7 @@ Verification is offline and uses synthetic/local fixtures only; no paid provider
 3. **Add dependency/capability preflight and guarded projection.** Make incomplete or unsupported work impossible to mistake for all-pass.
 4. **Connect the revision seam and verify offline acceptance cases.** Track evaluator correctness as a separate release gate; do not conflate input readiness with payment approval.
 
-Keep the first version small and defensible. Do not add general natural-language compilation, a universal rule platform, an AI reviewer, database persistence, or payment execution to this slice.
+Keep the delivered version small and defensible. No general natural-language compilation, universal rule platform, AI reviewer, or payment execution was added. The later-authorized persistence slice (private artifact storage plus the immutable index) is documented in `docs/decision-context-integration.md`.
 
 ## 14. Blocking product questions and conservative defaults
 
@@ -765,7 +781,7 @@ Before enabling automatic PAGAR for the current balanced workflow:
 1. **Which designated source establishes supplier-active status and order currency?** Current declared fields do not. Without a source or approved scoped declaration, affected requirements remain blocked rather than defaulted.
 2. **What does “already processed” authorize us to conclude?** May processing alone prohibit payment, or does prohibition require an approval/payment record? Until decided, processing history is processing evidence only.
 
-The proposed first version escalates unreviewed annotations conservatively, including potentially benign notes/footers. Improving that distinction belongs to later explicit policy/review work rather than an implicit classifier in the adapter.
+The implemented version escalates unreviewed annotations conservatively, including potentially benign notes/footers. Improving that distinction belongs to later explicit policy/review work rather than an implicit classifier in the adapter.
 
 ## 15. Definition of done and delivery boundary
 
@@ -782,4 +798,6 @@ Challenge 1 is done when an invoice can be joined to frozen rules/master/ERP con
 
 After challenge 1 we can reliably inspect **what the evaluator would know, where it came from, and what it cannot conclude**. After the separately scoped evaluator fixes, that foundation can support policy-correct PAGAR/ESCALAR/NO_PAGAR decisions. After the later reviewer work, it can also support a second-pass review grounded in the same frozen evidence.
 
-The documented contract remains proposed until implementation approval. Saving this specification does not authorize application-code changes.
+The documented contract is implemented and verified offline. The hosted migration has not
+been applied; remaining limitations (unsupported rule semantics, processed-vs-paid history
+policy, reviewer work) are listed in `docs/decision-context-integration.md`.

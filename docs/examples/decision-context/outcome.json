@@ -1,0 +1,205 @@
+{
+  "checks": {},
+  "evidence": {
+    "/currency": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/document_type": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "b1"
+        ]
+      }
+    ]
+  },
+  "file_id": "f-clean",
+  "invoice": {
+    "additional_fields": [],
+    "annotations": [],
+    "currency": "EUR",
+    "customer": {
+      "address": null,
+      "location": null,
+      "name": null,
+      "tax_id": null
+    },
+    "document_type": "invoice",
+    "file_id": "f-clean",
+    "invoice_number": "INV-1",
+    "issue_date": "2026-09-01",
+    "issues": [],
+    "lines": [
+      {
+        "amount": "100.00",
+        "description": "item",
+        "position": 1,
+        "quantity": "1"
+      }
+    ],
+    "payment": {
+      "iban": "ES9121000418450200051332"
+    },
+    "purchase_order_reference": "PO-1",
+    "schema_version": "0.1",
+    "supplier": {
+      "address": null,
+      "location": null,
+      "name": "Proveedor",
+      "tax_id": "B12345678"
+    },
+    "taxes": [
+      {
+        "amount": "21.00",
+        "label": "IVA 21%",
+        "rate_percent": "21"
+      }
+    ],
+    "totals": {
+      "taxable_base": "100.00",
+      "total": "121.00"
+    }
+  },
+  "reading": {
+    "capabilities": {
+      "block_kinds": true,
+      "layout": false,
+      "tables": true
+    },
+    "file_id": "f-clean",
+    "pages": [
+      {
+        "blocks": [
+          {
+            "id": "b1",
+            "kind": "paragraph",
+            "rows": [],
+            "text": "text b1",
+            "uncertainties": []
+          }
+        ],
+        "non_text_elements": [],
+        "page": 1
+      }
+    ],
+    "schema_version": "0.1"
+  },
+  "status": "completed"
+}
