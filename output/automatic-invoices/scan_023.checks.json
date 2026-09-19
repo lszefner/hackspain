@@ -1,0 +1,15 @@
+{
+  "coverage_accounted": false,
+  "currency_code_shape": true,
+  "evidence_references": true,
+  "factual_leaves_linked": true,
+  "foreground_evidence_only": true,
+  "invoice_identity_present": true,
+  "invoice_issues_clear": false,
+  "invoice_lines_present": true,
+  "invoice_schema": true,
+  "invoice_total_present": true,
+  "nonempty_interpretation": true,
+  "reading_schema": true,
+  "source_uncertainty_clear": false
+}

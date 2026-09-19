@@ -1,0 +1,164 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_022.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "Construcciones Benimaclet S.A.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF: A46311208  ·  Valencia",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Cuenta de abono (IBAN): ES82 0128 0011 2301 0004 4571",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "FACTURA Nº 2026/40155",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Fecha: 02/06/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Pedido: PO-2026-0724",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Cliente: Banco Miralmar S.A.  ·  CIF: A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "table",
+          "text": "",
+          "rows": [
+            {
+              "id": "p1-b008-r01",
+              "cells": [
+                {
+                  "id": "p1-b008-r01-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Servicio mensual"
+                },
+                {
+                  "id": "p1-b008-r01-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1.770,00"
+                }
+              ]
+            },
+            {
+              "id": "p1-b008-r02",
+              "cells": [
+                {
+                  "id": "p1-b008-r02-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Mantenimiento trimestral"
+                },
+                {
+                  "id": "p1-b008-r02-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1.770,00"
+                }
+              ]
+            },
+            {
+              "id": "p1-b008-r03",
+              "cells": [
+                {
+                  "id": "p1-b008-r03-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Suministro pedido"
+                },
+                {
+                  "id": "p1-b008-r03-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1.770,00"
+                }
+              ]
+            }
+          ],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "Base imponible  5.310,00",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "paragraph",
+          "text": "IVA 21%  1.115,10",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b013",
+          "kind": "paragraph",
+          "text": "TOTAL 6.425,10 EUR",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b014",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": [
+        {
+          "description": "Strong wavy horizontal scan lines distort all text; two small dark marks upper left and large pale shadows right. Footer follows wave.",
+          "reference_ids": []
+        }
+      ]
+    }
+  ]
+}

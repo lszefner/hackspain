@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-12_P002.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-6827",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0061",
+  "currency": null,
+  "supplier": {
+    "name": "Transportes Guadaira S.A.",
+    "tax_id": "A41220987",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES7621000813610123456789"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Mantenimiento trimestral",
+      "quantity": null,
+      "amount": "198.87"
+    },
+    {
+      "position": 2,
+      "description": "Material de oficina",
+      "quantity": null,
+      "amount": "106.54"
+    },
+    {
+      "position": 3,
+      "description": "Material de oficina",
+      "quantity": null,
+      "amount": "404.84"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "149.15"
+    }
+  ],
+  "totals": {
+    "taxable_base": "710.25",
+    "total": "859.40"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "12/01/2026",
+      "candidates": [
+        "2026-01-12",
+        "2026-12-01"
+      ]
+    }
+  ]
+}

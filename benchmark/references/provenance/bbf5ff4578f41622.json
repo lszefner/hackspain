@@ -1,0 +1,221 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_012.pdf",
+  "source_sha256": "51b58f420fbb28e7e9ab11daa7534f86c94c05795cf8839ec2b312e32efbaac0",
+  "stage2": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "bab0500a9337f06a2760c88f767ff6042c0c6ceb99c8502d88b2639c60bffcea",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "stage3": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "93de005e1a15a587264bc0dd5c062c71c2e0e3cd0f9588fb8123b1f3f3d23b1b",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "pointers": {
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b001"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b004"
+        ]
+      }
+    ],
+    "/customer/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/customer/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/1/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/1/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/1/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/2/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/lines/2/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/lines/2/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/currency": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ]
+  },
+  "unresolved": [
+    "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+    "/issue_date: ambiguous (06/05/2026)"
+  ]
+}

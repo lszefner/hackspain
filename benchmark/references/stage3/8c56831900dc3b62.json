@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-5077_electricidad.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-5077",
+  "issue_date": "2026-06-14",
+  "purchase_order_reference": "PO-2026-0493",
+  "currency": "EUR",
+  "supplier": {
+    "name": "ELECTRICIDAD MONTCADA S.A.",
+    "tax_id": "A46990201",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES3520385778983000765410"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Material de oficina",
+      "quantity": "1",
+      "amount": "106.40"
+    },
+    {
+      "position": 2,
+      "description": "Cuota de servicio",
+      "quantity": "1",
+      "amount": "1064.00"
+    },
+    {
+      "position": 3,
+      "description": "Horas de soporte",
+      "quantity": "1",
+      "amount": "9469.60"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "2234.40"
+    }
+  ],
+  "totals": {
+    "taxable_base": "10640.00",
+    "total": "12874.40"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

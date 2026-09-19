@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-12_P010.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-3359",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0042",
+  "currency": null,
+  "supplier": {
+    "name": "Informática Benimámet S.L.",
+    "tax_id": "B98455101",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES2702390806667122334455"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Cuota de servicio",
+      "quantity": null,
+      "amount": "5918.33"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "1242.85"
+    }
+  ],
+  "totals": {
+    "taxable_base": "5918.33",
+    "total": "7161.18"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "12/01/2026",
+      "candidates": [
+        "2026-01-12",
+        "2026-12-01"
+      ]
+    }
+  ]
+}

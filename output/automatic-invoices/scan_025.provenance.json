@@ -1,0 +1,19 @@
+{
+  "review_assisted": false,
+  "batch_id": "530718ca-f59b-4fa5-a8fb-7d8d63e59842",
+  "reading_batch": "72730e24-dddc-4f49-8f75-26a084ef6a73",
+  "source_export": "benchmark/runs/repair-hard-two/export-contract-retest",
+  "artifact_hashes": {
+    "checks": "eae952e15923c36c95d05c7839c4fac5e3dd5cb261f042a721f28dd5fe0dcd21",
+    "coverage": "914ae82683e4eb2c933aee4207dbfd8b1cfef71728a872376e4bc6048601b86a",
+    "evidence": "17e839df4f03721af31724b61a18e987732fbc301ebaef2cd7aa1c75cb5da32c",
+    "invoice": "9af937be032a8196ddb7fc8684e9067a045d0ef171907846b3298e1df5b301b2",
+    "layout": "67707a1e79b5251fe597eb80174a43bc8851bf646c59110d9d45178a31f8c20d",
+    "raw": "fdcfa1e7b130ed6032f83d93e70fc0d1479ae5d682d4ab65f69b3c9f91ba62d3",
+    "reading": "e8426dde851a7c7f206e3b5432f9d1828106f4b8b75d2f2a668eb4eeb3877167",
+    "warnings": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+  },
+  "status": "completed",
+  "reader_version": "vision-regions-2",
+  "interpretation_version": "alpha-4"
+}

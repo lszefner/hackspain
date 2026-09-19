@@ -1,0 +1,346 @@
+{
+  "/annotations/0/kind": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b3"
+      ]
+    }
+  ],
+  "/annotations/0/text": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b3"
+      ]
+    }
+  ],
+  "/annotations/1/kind": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b15"
+      ]
+    }
+  ],
+  "/annotations/1/text": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b15"
+      ]
+    }
+  ],
+  "/annotations/2/kind": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b1"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b2"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b3"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b4"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b5"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b6"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b7"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b8"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b9"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b10"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b11"
+      ]
+    }
+  ],
+  "/annotations/2/text": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b1"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b2"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b3"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b4"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b5"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b6"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b7"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b8"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b9"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b10"
+      ]
+    },
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-bg-b11"
+      ]
+    }
+  ],
+  "/currency": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b14"
+      ]
+    }
+  ],
+  "/customer/name": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b8"
+      ]
+    }
+  ],
+  "/customer/tax_id": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b8"
+      ]
+    }
+  ],
+  "/document_type": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b5"
+      ]
+    }
+  ],
+  "/invoice_number": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b5"
+      ]
+    }
+  ],
+  "/issue_date": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b6"
+      ]
+    }
+  ],
+  "/lines/0/amount": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b9"
+      ]
+    }
+  ],
+  "/lines/0/description": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b9"
+      ]
+    }
+  ],
+  "/lines/1/amount": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b10"
+      ]
+    }
+  ],
+  "/lines/1/description": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b10"
+      ]
+    }
+  ],
+  "/lines/2/amount": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b11"
+      ]
+    }
+  ],
+  "/lines/2/description": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b11"
+      ]
+    }
+  ],
+  "/payment/iban": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b4"
+      ]
+    }
+  ],
+  "/purchase_order_reference": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b7"
+      ]
+    }
+  ],
+  "/supplier/location": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b2"
+      ]
+    }
+  ],
+  "/supplier/name": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b1"
+      ]
+    }
+  ],
+  "/supplier/tax_id": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b2"
+      ]
+    }
+  ],
+  "/taxes/0/amount": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b13"
+      ]
+    }
+  ],
+  "/taxes/0/label": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b13"
+      ]
+    }
+  ],
+  "/taxes/0/rate_percent": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b13"
+      ]
+    }
+  ],
+  "/totals/taxable_base": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b12"
+      ]
+    }
+  ],
+  "/totals/total": [
+    {
+      "page": 1,
+      "reference_ids": [
+        "p1-fg-b14"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+FACTURA
+Factura: FA-2247  Fecha: 18/01/2026
+Pedido: PO-2026-0161
+
+Catering Hermanos Pico S.L.
+NIF: B96233419
+IBAN: ES18 0081 5290 0700 0123 4567
+
+Cliente: Banco Miralmar S.A. · CIF: A58231074
+
+Consumibles ....... 1.144,70
+Transporte urgente ....... 1.191,42
+
+Base: 2.336,12
+IVA (21%): 490,59
+TOTAL: 2.826,71
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

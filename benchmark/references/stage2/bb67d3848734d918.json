@@ -1,0 +1,122 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-15_P003.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "Ofimática Cieza S.L.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "Murcia · NIF B30455812",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Cuenta de abono (IBAN): ES60 0182 5322 1802 0158 8391",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "Nº de factura: F26-9524",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Fecha de emisión: 15 de enero de 2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Su pedido: PO-2026-0070",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Facturar a: Banco Miralmar S.A. — CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "Paseo de la Castellana 214, Madrid",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "Transporte urgente (1) — 458,04 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "Horas de soporte (1) — 5.169,36 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "Consumibles (1) — 916,09 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "paragraph",
+          "text": "Importe base: 6.543,49 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b013",
+          "kind": "paragraph",
+          "text": "Cuota IVA (21%): 1.374,13 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b014",
+          "kind": "paragraph",
+          "text": "Total factura: 7.917,62 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b015",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

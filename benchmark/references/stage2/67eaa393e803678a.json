@@ -1,0 +1,140 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-17_P011.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "MENSAJERÍA RÁPIDA DEL SUR S.L.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF B90233808  MÁLAGA",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "CUENTA DE ABONO (IBAN): ES93 6888 4400 1235 8890 0142",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "REF FACTURA: FA-5138",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "FECHA: 17/01/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "PEDIDO CLIENTE: PO-2026-0184",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "CLIENTE: BANCO MIRALMAR S.A.  CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "table",
+          "text": "",
+          "rows": [
+            {
+              "id": "p1-b008-r01",
+              "cells": [
+                {
+                  "id": "p1-b008-r01-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "SERVICIO DE LIMPIEZA"
+                },
+                {
+                  "id": "p1-b008-r01-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "268,37"
+                }
+              ]
+            },
+            {
+              "id": "p1-b008-r02",
+              "cells": [
+                {
+                  "id": "p1-b008-r02-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "MANTENIMIENTO TRIMESTRAL"
+                },
+                {
+                  "id": "p1-b008-r02-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "597,34"
+                }
+              ]
+            }
+          ],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "BASE IMPONIBLE....................        865,71",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "IVA (21%)..........................        181,80",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "paragraph",
+          "text": "TOTAL.............................      1.047,51",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b013",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

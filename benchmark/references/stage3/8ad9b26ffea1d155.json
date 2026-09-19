@@ -1,0 +1,63 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_026.pdf",
+  "document_type": "invoice",
+  "invoice_number": "F26-7712",
+  "issue_date": "2026-05-15",
+  "purchase_order_reference": "PO-2026-0729",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Seguridad Alcores S.L.",
+    "tax_id": "B91455230",
+    "location": "Sevilla",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES0900730100510505331902"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": null,
+      "amount": "826.67"
+    },
+    {
+      "position": 2,
+      "description": "Mantenimiento trimestral",
+      "quantity": null,
+      "amount": "826.67"
+    },
+    {
+      "position": 3,
+      "description": "Suministro pedido",
+      "quantity": null,
+      "amount": "826.66"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "520.80"
+    }
+  ],
+  "totals": {
+    "taxable_base": "2480.00",
+    "total": "3000.80"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

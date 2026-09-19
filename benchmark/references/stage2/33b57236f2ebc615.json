@@ -1,0 +1,94 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4349_electricidad.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "ELECTRICIDAD MONTCADA S.A.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF: A46990201   |  Valencia",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "IBAN: ES35 2038 5778 9830 0076 5410",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "Invoice # FA-4349",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Fecha factura: 17/03/2026  PO: PO-2026-0403",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Bill to: Banco Miralmar S.A. (CIF: A58231074)",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "- Mantenimiento trimestral (1 ud): EUR 3545.99",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "Subtotal: EUR 3545.99",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "IVA (21%): EUR 744.66",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "TOTAL A PAGAR: EUR 4290.65",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

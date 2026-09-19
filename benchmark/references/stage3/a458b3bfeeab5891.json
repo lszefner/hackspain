@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-3939_transportes.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-3939",
+  "issue_date": "2026-06-21",
+  "purchase_order_reference": "PO-2026-0320",
+  "currency": "EUR",
+  "supplier": {
+    "name": "TRANSPORTES GUADAIRA S.A.",
+    "tax_id": "A41220987",
+    "location": "Sevilla",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES7621000813610123456789"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Transporte urgente",
+      "quantity": "1",
+      "amount": "1881.69"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "395.15"
+    }
+  ],
+  "totals": {
+    "taxable_base": "1881.69",
+    "total": "2276.84"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

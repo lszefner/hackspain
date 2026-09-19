@@ -1,0 +1,20 @@
+ELECTRICIDAD MONTCADA S.A.
+NIF: A46990201   |  Valencia
+IBAN: ES35 2038 5778 9830 0076 5410
+
+Invoice # FA-4349
+Fecha factura: 17/03/2026  PO: PO-2026-0403
+
+Bill to: Banco Miralmar S.A. (CIF: A58231074)
+
+- Mantenimiento trimestral (1 ud): EUR 3545.99
+
+Subtotal: EUR 3545.99
+IVA (21%): EUR 744.66
+TOTAL A PAGAR: EUR 4290.65
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

@@ -1,0 +1,69 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_010.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-2780",
+  "issue_date": "2026-02-28",
+  "purchase_order_reference": "PO-2026-0486",
+  "currency": "EUR",
+  "supplier": {
+    "name": null,
+    "tax_id": "B90233808",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES9368884400123588900142"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Reparaci�n equipo",
+      "quantity": null,
+      "amount": "177.24"
+    },
+    {
+      "position": 2,
+      "description": "Horas de soporte",
+      "quantity": null,
+      "amount": "44.31"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "46.53"
+    }
+  ],
+  "totals": {
+    "taxable_base": "221.55",
+    "total": "268.08"
+  },
+  "annotations": [],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/supplier/name",
+      "kind": "unreadable",
+      "raw_text": "Mensajer�a R�pida del Sur S.L.",
+      "candidates": [
+        "Mensajería Rápida del Sur S.L."
+      ]
+    },
+    {
+      "field": "/lines/0/description",
+      "kind": "unreadable",
+      "raw_text": "Reparaci�n equipo",
+      "candidates": [
+        "Reparación equipo"
+      ]
+    }
+  ]
+}

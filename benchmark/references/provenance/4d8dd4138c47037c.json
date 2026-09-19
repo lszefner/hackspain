@@ -1,0 +1,220 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-3788_informática.pdf",
+  "source_sha256": "7feb3c353e1de9bd9886be8062a36d7956ec2e8c5cc3d3669a61376be43e9752",
+  "stage2": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "8831e3c484fd18a519cdcf6674f49236ad244ed582e03185620b5ae8ffa4a347",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "stage3": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "a812f6ecc08edd3376fa10c46661ae34047f0333be77562df536f32d790898ac",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "pointers": {
+    "/annotations/0/kind": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b012"
+        ]
+      }
+    ],
+    "/annotations/0/text": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b012"
+        ]
+      }
+    ],
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b001"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/supplier/location": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b004"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/customer/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/customer/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/currency": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b011"
+        ]
+      }
+    ],
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/1/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/lines/1/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/lines/1/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b011"
+        ]
+      }
+    ]
+  },
+  "unresolved": [
+    "/issue_date: ambiguous (12/05/2026)"
+  ]
+}

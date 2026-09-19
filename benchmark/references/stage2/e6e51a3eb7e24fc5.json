@@ -1,0 +1,78 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_007.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "Limpiezas Turia S.L.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF: B98120774  IBAN: ES44 1465 0100 9517 0430 2211",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Factura 2026/98052  Fecha 21/04/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "paragraph",
+          "text": "Pedido PO-2026-0483",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Cliente: Banco Miralmar S.A.  CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Consumibles  1.533,53",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Base 1.533,53  IVA 21% 322,04",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "TOTAL 1.855,57 EUR",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": [
+        {
+          "description": "Small skewed raster text on an otherwise blank page; some accented glyphs damaged.",
+          "reference_ids": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,212 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4816_seguridad.pdf",
+  "source_sha256": "783a8c0c4370cc3328923280817fdf8ad10bf6ea082c1dbee67fafeb8f6bc15c",
+  "stage2": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "03e0b1d6cb808df724fa86039072082539e7a247ea66d0467a8e5e9731739de6",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "stage3": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "263b64a7aaf2e52ebcaaf560cb8eebb315816904cb396ed22a81b78277a5388e",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "pointers": {
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r02-c1"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r02-c2"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r02-c3"
+        ]
+      }
+    ],
+    "/lines/1/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r03-c1"
+        ]
+      }
+    ],
+    "/lines/1/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r03-c2"
+        ]
+      }
+    ],
+    "/lines/1/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006-r03-c3"
+        ]
+      }
+    ],
+    "/annotations/0/kind": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/annotations/0/text": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/supplier/location": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b001"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b004"
+        ]
+      }
+    ],
+    "/customer/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/customer/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ]
+  },
+  "unresolved": [
+    "/issue_date: ambiguous (07/03/2026)"
+  ]
+}

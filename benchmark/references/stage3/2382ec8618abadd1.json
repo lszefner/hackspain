@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4488_transportes.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-4488",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-1202",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Transportes Guadaira S.A.",
+    "tax_id": "A41220987",
+    "location": "Sevilla · España",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": "Madrid",
+    "address": "Paseo de la Castellana 214, Madrid"
+  },
+  "payment": {
+    "iban": "ES7621000813610123456789"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": "1",
+      "amount": "726.67"
+    },
+    {
+      "position": 2,
+      "description": "Mantenimiento trimestral",
+      "quantity": "1",
+      "amount": "726.67"
+    },
+    {
+      "position": 3,
+      "description": "Suministro pedido",
+      "quantity": "1",
+      "amount": "726.66"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "457.80"
+    }
+  ],
+  "totals": {
+    "taxable_base": "2180.00",
+    "total": "2637.80"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "08/04/2026",
+      "candidates": [
+        "2026-04-08",
+        "2026-08-04"
+      ]
+    }
+  ]
+}

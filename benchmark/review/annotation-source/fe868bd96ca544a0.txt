@@ -1,0 +1,24 @@
+Transportes Guadaira S.A.
+NIF: A41220987
+Sevilla · España
+IBAN: ES76 2100 0813 6101 2345 6789
+
+FACTURA Nº: FA-4666
+Fecha: 10/01/2026
+Ref. Pedido: PO-2026-0319
+
+Cliente: Banco Miralmar S.A.  · CIF: A58231074
+Paseo de la Castellana 214, Madrid
+
+ Reparación equipo x1  ... 40,68 €
+ Transporte urgente x1  ... 4.026,95 €
+
+Base imponible: 4.067,63 €
+IVA (21%): 854,20 €
+TOTAL: 4.921,83 €
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

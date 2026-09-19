@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-17_P011.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-5138",
+  "issue_date": "2026-01-17",
+  "purchase_order_reference": "PO-2026-0184",
+  "currency": null,
+  "supplier": {
+    "name": "MENSAJERÍA RÁPIDA DEL SUR S.L.",
+    "tax_id": "B90233808",
+    "location": "MÁLAGA",
+    "address": null
+  },
+  "customer": {
+    "name": "BANCO MIRALMAR S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES9368884400123588900142"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "SERVICIO DE LIMPIEZA",
+      "quantity": null,
+      "amount": "268.37"
+    },
+    {
+      "position": 2,
+      "description": "MANTENIMIENTO TRIMESTRAL",
+      "quantity": null,
+      "amount": "597.34"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "181.80"
+    }
+  ],
+  "totals": {
+    "taxable_base": "865.71",
+    "total": "1047.51"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

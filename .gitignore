@@ -1,1 +1,10 @@
 .DS_Store
+
+.env
+.env.*
+!.env.example
+.venv/
+__pycache__/
+.pytest_cache/
+benchmark/runs/
+benchmark/review/pages/

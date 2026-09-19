@@ -1,0 +1,101 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-08_P001.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "FACTURA",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "Factura: 2026/11604  Fecha: 08/01/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Pedido: PO-2026-0096",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "paragraph",
+          "text": "Suministros Levante S.L.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "NIF: B46102331",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "IBAN: ES21 0049 1500 0512 3456 7890",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Cliente: Banco Miralmar S.A. · CIF: A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "Servicio mensual ....... 2.489,99",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "Base: 2.489,99",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "IVA (21%): 522,90",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "TOTAL: 3.012,89",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

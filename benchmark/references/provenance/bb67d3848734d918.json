@@ -1,0 +1,258 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-15_P003.pdf",
+  "source_sha256": "794835cd7ae3ec1a13f3553eee821c1d1c2a361f7633abe6b4e02627caf1db38",
+  "stage2": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "969e326730cf4ba8bd7ff520e629ac2707ce4c21b981ae3e4b03e12fca098d4f",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "stage3": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "8a33cb39acb10fbb543fb6a4eb12afd3337f4535ef1fa6a76ec05004a20ebbaa",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "pointers": {
+    "/annotations/0/kind": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b015"
+        ]
+      }
+    ],
+    "/annotations/0/text": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b015"
+        ]
+      }
+    ],
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b001"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/supplier/location": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b004"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/customer/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/customer/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/customer/address": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/customer/location": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/currency": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b014"
+        ]
+      }
+    ],
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/lines/1/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/lines/1/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/lines/1/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b010"
+        ]
+      }
+    ],
+    "/lines/2/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b011"
+        ]
+      }
+    ],
+    "/lines/2/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b011"
+        ]
+      }
+    ],
+    "/lines/2/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b011"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b012"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b013"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b013"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b013"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b014"
+        ]
+      }
+    ]
+  },
+  "unresolved": []
+}

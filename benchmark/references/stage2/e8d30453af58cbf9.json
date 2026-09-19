@@ -1,0 +1,115 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-22_P006.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "Electricidad Montcada S.A.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "Valencia · NIF A46990201",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Cuenta de abono (IBAN): ES35 2038 5778 9830 0076 5410",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "Nº de factura: FA-7141",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Fecha de emisión: 22 de enero de 2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Su pedido: PO-2026-0021",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Facturar a: Banco Miralmar S.A. — CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "Paseo de la Castellana 214, Madrid",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "Material de oficina (1) — 374,22 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "Cuota de servicio (1) — 1.595,37 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "Importe base: 1.969,59 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "paragraph",
+          "text": "Cuota IVA (21%): 413,61 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b013",
+          "kind": "paragraph",
+          "text": "Total factura: 2.383,20 €",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b014",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

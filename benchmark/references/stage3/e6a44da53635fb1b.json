@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4294_papelería.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-4294",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0017",
+  "currency": "EUR",
+  "supplier": {
+    "name": "PAPELERÍA RUZAFA S.C.",
+    "tax_id": "J40112358",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES5531590012348765123407"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio de limpieza",
+      "quantity": "1",
+      "amount": "8250.42"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "1732.59"
+    }
+  ],
+  "totals": {
+    "taxable_base": "8250.42",
+    "total": "9983.01"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "05/02/2026",
+      "candidates": [
+        "2026-02-05",
+        "2026-05-02"
+      ]
+    }
+  ]
+}

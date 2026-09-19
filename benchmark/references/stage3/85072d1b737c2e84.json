@@ -1,0 +1,68 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_025.pdf",
+  "document_type": "invoice",
+  "invoice_number": "2026/27401",
+  "issue_date": "2026-03-22",
+  "purchase_order_reference": "PO-2026-0728",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Limpiezas Turia S.L.",
+    "tax_id": "B98120774",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES4414650100951704302211"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": null,
+      "amount": "320.00"
+    },
+    {
+      "position": 2,
+      "description": "Mantenimiento trimestral",
+      "quantity": null,
+      "amount": "320.00"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "134.40"
+    }
+  ],
+  "totals": {
+    "taxable_base": "640.00",
+    "total": "774.40"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    },
+    {
+      "kind": "other",
+      "text": "Electricidad Montcada S.A.\nNIF: A46990201 · Valencia\nCuenta de abono (IBAN): ES35 2038 5778 9830 0076 5410\nFACTURA Nº F26-2203\nFecha: 07/06/2026\nPedido: PO-2026-0720\nCliente: Banco Miralmar S.A. · CIF: A58231074\nServicio mensual 1.040,00\nMantenimiento trimestral 1.040,00\nSuministro pedido 1.040,00\nBase imponible 3.120,00\nIVA 21% 655,20\nTOTAL 3.775,20 EUR\nURGENTE\nDocumento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/annotations/1/text",
+      "kind": "unreadable",
+      "raw_text": "Electricidad Montcada S.A.\nNIF: A46990201 · Valencia\nCuenta de abono (IBAN): ES35 2038 5778 9830 0076 5410\nFACTURA Nº F26-2203\nFecha: 07/06/2026\nPedido: PO-2026-0720\nCliente: Banco Miralmar S.A. · CIF: A58231074\nServicio mensual 1.040,00\nMantenimiento trimestral 1.040,00\nSuministro pedido 1.040,00\nBase imponible 3.120,00\nIVA 21% 655,20\nTOTAL 3.775,20 EUR\nURGENTE\nDocumento generado por el sistema de facturacion del proveedor.",
+      "candidates": []
+    }
+  ]
+}

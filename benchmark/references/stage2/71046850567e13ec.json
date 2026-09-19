@@ -1,0 +1,91 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_016.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "Mensajer�a R�pida del Sur S.L.",
+          "rows": [],
+          "uncertainties": [
+            {
+              "kind": "uncertain",
+              "raw_text": "Mensajer�a R�pida del Sur S.L.",
+              "description": "Damaged accented glyphs; replacement symbol denotes unreadable glyph, not literal text."
+            }
+          ]
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF: B90233808  IBAN: ES71 3058 0022 7710 2233 8846",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Factura FA-6036  Fecha 18/06/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "paragraph",
+          "text": "Pedido PO-2026-0498",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Cliente: Banco Miralmar S.A.  CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "Material de oficina  1.980,00",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "Base 1.980,00  IVA 21% 415,80",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "TOTAL 2.395,80 EUR",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "note",
+          "text": "NOTA NUEVO NUM. DE CUENTA - actualizar antes del pago",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": [
+        {
+          "description": "Small skewed raster text on an otherwise blank page; some accented glyphs damaged.",
+          "reference_ids": []
+        }
+      ]
+    }
+  ]
+}

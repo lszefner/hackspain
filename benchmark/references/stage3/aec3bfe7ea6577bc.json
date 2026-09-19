@@ -1,0 +1,51 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-16_P004.pdf",
+  "document_type": "invoice",
+  "invoice_number": "2026/20821",
+  "issue_date": "2026-01-16",
+  "purchase_order_reference": "PO-2026-0266",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Limpiezas Turia S.L.",
+    "tax_id": "B98120774",
+    "location": "Valencia · España",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": "Madrid",
+    "address": "Paseo de la Castellana 214, Madrid"
+  },
+  "payment": {
+    "iban": "ES4414650100951704302211"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Cuota de servicio",
+      "quantity": "1",
+      "amount": "4164.74"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "874.60"
+    }
+  ],
+  "totals": {
+    "taxable_base": "4164.74",
+    "total": "5039.34"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

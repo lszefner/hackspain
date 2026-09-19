@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-5418_catering.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-5418",
+  "issue_date": "2026-04-20",
+  "purchase_order_reference": "PO-2026-0323",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Catering Hermanos Pico S.L.",
+    "tax_id": "B96233419",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": "Madrid",
+    "address": "Paseo de la Castellana 214, Madrid"
+  },
+  "payment": {
+    "iban": "ES1800815290070001234567"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Suministro pedido",
+      "quantity": "1",
+      "amount": "113.62"
+    },
+    {
+      "position": 2,
+      "description": "Revisión anual",
+      "quantity": "1",
+      "amount": "1022.55"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "Cuota IVA",
+      "rate_percent": "21",
+      "amount": "238.60"
+    }
+  ],
+  "totals": {
+    "taxable_base": "1136.17",
+    "total": "1374.77"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

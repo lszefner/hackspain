@@ -1,0 +1,198 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_010.pdf",
+  "source_sha256": "149bca3ff90d93fd88bd6849403fe32073195d698663b15b2036cb5138f7b546",
+  "stage2": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "27d6ddfebeff6ff70fe1bede9df90270678830d07c55e71debb49eefd6a569c4",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "stage3": {
+    "author": "Codex",
+    "source": "codex_visual",
+    "status": "draft",
+    "reviewer": null,
+    "reviewed_at": null,
+    "artifact_sha256": "104fc1078497433744a459d87dd8df005896180bcb30c29113ddf328c7bc0a5c",
+    "complete": true,
+    "inspected_pages": [
+      1
+    ],
+    "excluded_pointers": []
+  },
+  "pointers": {
+    "/supplier/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b001"
+        ]
+      }
+    ],
+    "/supplier/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/payment/iban": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b002"
+        ]
+      }
+    ],
+    "/invoice_number": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/issue_date": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b003"
+        ]
+      }
+    ],
+    "/purchase_order_reference": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b004"
+        ]
+      }
+    ],
+    "/customer/name": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/customer/tax_id": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b005"
+        ]
+      }
+    ],
+    "/lines/0/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/0/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b006"
+        ]
+      }
+    ],
+    "/lines/1/description": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/1/quantity": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/lines/1/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b007"
+        ]
+      }
+    ],
+    "/totals/taxable_base": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/taxes/0/label": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/taxes/0/rate_percent": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/taxes/0/amount": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b008"
+        ]
+      }
+    ],
+    "/totals/total": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ],
+    "/currency": [
+      {
+        "page": 1,
+        "reference_ids": [
+          "p1-b009"
+        ]
+      }
+    ]
+  },
+  "unresolved": [
+    "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+    "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+    "/lines/0/description: unreadable (Reparaci�n equipo)"
+  ]
+}
