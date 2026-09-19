@@ -242,7 +242,8 @@ class PostgresResultsStore:
 
         records = [dict(self._history_record(row['record_id']))
                    for row in self.engine.repository.processed_records(exclude_file_id)]
-        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': False},
+        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True},
                               captured_at=captured_at, asserted_by='core-engine-postgres',
-                              authoritative_for=('history.processed',), availability='partial',
-                              scope='Persisted engine evaluations; not a claim of complete submission history')
+                              authoritative_for=('history.processed',), availability='available',
+                              scope='Every invoice La Caja submits is evaluated by this engine; '
+                                    'the processed records are the complete submission history known to it')

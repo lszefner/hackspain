@@ -129,6 +129,9 @@ def build_ruleset(load: LoadResult,
                 "matched_from": matched,
                 "params_from_sheet": settings,
                 "param_conflicts": conflicts,
+                "interpretations": list(dict.fromkeys(
+                    setting["note"] for setting in settings
+                    if setting.get("note"))),
                 "enabled_by_sheet": enabled_by_sheet,
                 "backed_by_master": bool(matched),
                 "is_rule_conf": (round(sum(m["is_rule_conf"] for m in matched) / len(matched), 4)

@@ -207,6 +207,36 @@ async def test_failed_review_persisted_without_changing_decision(seeded):
 
 
 @pytest.mark.asyncio
+async def test_provider_failure_body_is_archived_and_old_packets_load(seeded):
+    from rules_ingestion.contextual_contracts import ReviewProviderError
+
+    engine, kwargs = seeded
+    packet = engine.evaluate(**kwargs)
+
+    class Truncated(ScriptedProvider):
+        async def review(self, request):
+            raise ReviewProviderError(
+                'invalid_response',
+                raw=b'{"choices":[{"finish_reason":"length","message":{"content":"{"}}]}',
+                detail='finish_reason=length')
+
+    reviewed = await engine.review(packet['record_id'], provider=Truncated(),
+                                   request_key='truncated', reviewed_at=REVIEWED)
+    assert engine._json(reviewed['review'])['status'] == 'FAILED'
+    failure = engine._json(reviewed['provider_failure'])
+    assert failure['code'] == 'invalid_response'
+    assert failure['detail'] == 'finish_reason=length'
+    assert 'finish_reason' in failure['raw_utf8']
+    assert engine.load(reviewed['record_id']) == reviewed
+    # Packets written before provider_failure existed still load.
+    legacy = {key: value for key, value in reviewed.items()
+              if key not in ('record_id', 'provider_failure')}
+    legacy_packet = engine.archive.save_packet(legacy)
+    assert legacy_packet.get('provider_failure') is None
+    assert engine.load(legacy_packet['record_id']) == legacy_packet
+
+
+@pytest.mark.asyncio
 async def test_review_timeout_and_budget_are_archived(seeded):
     engine, kwargs = seeded
     packet = engine.evaluate(**kwargs)

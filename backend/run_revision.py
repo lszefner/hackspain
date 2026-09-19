@@ -9,7 +9,7 @@ import os
 import re
 import sys
 from dataclasses import asdict
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -58,6 +58,8 @@ def review_outcome(outcome: dict, *, snapshots: dict[str, SourceSnapshot],
 
 def _resolve_evaluation_date(value: str | None) -> str:
     candidate = value or os.environ.get("REVISION_EVALUATION_DATE")
+    if candidate == "issue-date":
+        return candidate
     if not candidate or not ISO_DATE.match(candidate):
         raise ValueError(
             "an explicit evaluation date (YYYY-MM-DD) is required via "
@@ -140,6 +142,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     from rules_ingestion.contextual_provider import review_provider_from_environment
 
     evaluation_date = _resolve_evaluation_date(evaluation_date)
+    date_policy = 'issue-date' if evaluation_date == 'issue-date' else 'fixed'
     backend = backend or os.environ.get('REVISION_BACKEND') or 'supabase'
     if backend != 'supabase':
         raise ValueError('the backend requires Supabase; local fallback is disabled')
@@ -214,6 +217,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                        for source in rule_sources]
         run_input = {'schema_version': 'core-engine-run-input/1', 'request_key': request_key,
                      'request_sha256': request_sha, 'signature': signature, 'captured_at': captured_at,
+                     'evaluation_date_policy': date_policy,
                      'originals': originals, 'rule_sources': source_refs,
                      'ruleset': engine.archive.put(ruleset_bytes, 'decision-source-ruleset', 'application/octet-stream')
                      if ruleset_bytes is not None else None,
@@ -246,28 +250,61 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                 raise ContextError('unexpected extraction result')
             rows_by_file.setdefault(row['file_name'], []).append(row)
         results = []
+        review_tasks = []
+        review_slots = asyncio.Semaphore(3)
         for name in file_ids:
-            result = {'file_id': name, 'evaluation_record_id': None, 'review_record_id': None, 'error': None}
+            result = {'file_id': name, 'evaluation_record_id': None, 'review_record_id': None,
+                      'evaluation_date': None, 'error': None}
             rows = rows_by_file.get(name, [])
             try:
                 if len(rows) != 1 or rows[0]['status'] not in ('completed', 'needs_review'):
                     raise ContextError('extraction_missing_or_failed')
                 row = rows[0]
+                file_date = evaluation_date
+                if date_policy == 'issue-date':
+                    outcome = engine._json(engine.archive.ref(str(row['artifact_id'])))
+                    issue = (outcome.get('invoice') or {}).get('issue_date')
+                    try:
+                        file_date = date.fromisoformat(str(issue)).isoformat() \
+                            if issue is not None else None
+                    except ValueError:
+                        file_date = None
+                    if file_date is None:
+                        file_date = captured_at[:10]
+                        result['evaluation_date_fallback'] = True
+                result['evaluation_date'] = file_date
                 current = dict(snapshots)
                 current['processed'] = store.processed_history_snapshot(captured_at=captured_at, exclude_file_id=name)
                 evaluation = engine.evaluate(input_id=str(row['input_id']), interpreter=config['interpreter'],
                                              ruleset=ruleset_bytes, rule_sources=rule_sources, snapshots=current,
-                                             evaluation_date=evaluation_date, captured_at=captured_at)
+                                             evaluation_date=file_date, captured_at=captured_at)
                 result.update(evaluation_record_id=evaluation['record_id'], decision=evaluation['decision'])
-                review = await engine.review(evaluation['record_id'], provider=provider,
-                                             request_key='run-' + digest(canonical_bytes([request_key, str(row['input_id'])])),
-                                             reviewed_at=datetime.now(UTC).isoformat())
+
+                async def review_call(record_id=evaluation['record_id'],
+                                      input_id=row['input_id']):
+                    async with review_slots:
+                        return await engine.review(
+                            record_id, provider=provider,
+                            request_key='run-' + digest(canonical_bytes(
+                                [request_key, str(input_id)])),
+                            reviewed_at=datetime.now(UTC).isoformat())
+
+                review_tasks.append((result, asyncio.create_task(review_call())))
+            except (ContextError, KeyError, ValueError) as exc:
+                result['error'] = {'code': type(exc).__name__}
+            results.append(result)
+
+        async def fill_review(result, task):
+            try:
+                review = await task
                 reviewed = engine._json(review['review'])
                 result.update(review_record_id=review['record_id'], review_status=reviewed['status'],
                               attention_required=reviewed['attention_required'], error=reviewed['error'])
             except (ContextError, KeyError, ValueError) as exc:
                 result['error'] = {'code': type(exc).__name__}
-            results.append(result)
+
+        await asyncio.gather(*(fill_review(result, task)
+                               for result, task in review_tasks))
         failed = sum(bool(result['error']) for result in results)
         state = 'failed' if failed == len(results) else 'partial' if failed else 'completed'
         summary = {'request_key': request_key, 'batch_id': str(batch['id']), 'state': state,

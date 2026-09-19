@@ -262,7 +262,7 @@ async def test_one_failed_document_does_not_hide_other_results(runtime, monkeypa
     history = store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z')
     assert len(history.payload['records']) == 1
     assert history.payload['records'][0]['file_id'] == 'invoice.pdf'
-    assert history.payload['complete'] is False
+    assert history.payload['complete'] is True
     assert store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z', exclude_file_id='invoice.pdf').payload['records'] == []
 
 
@@ -320,6 +320,60 @@ async def test_backend_read_api_uses_database_records(runtime, monkeypatch):
     assert responses[0][1]['evaluation_record_id'] == result['files'][0]['evaluation_record_id']
     assert responses[0][1]['contextual_review']['payment_authorized'] is False
     assert responses[0][1]['evaluation_result']['context_schema_version'] == 'decision-context/2'
+
+
+@pytest.mark.asyncio
+async def test_issue_date_policy_evaluates_on_each_invoice_date(runtime):
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+    kwargs['evaluation_date'] = 'issue-date'
+    result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert result['state'] == 'completed'
+    assert result['files'][0]['evaluation_date'] == '2026-09-01'
+    packet = engine.load(result['files'][0]['evaluation_record_id'])
+    assert engine._json(packet['evaluation'])['evaluation_date'] == '2026-09-01'
+    run = engine.repository.get_run('intent-1')
+    frozen = engine._json(engine.archive.ref(str(run['input_artifact_id'])))
+    assert frozen['evaluation_date_policy'] == 'issue-date'
+    assert frozen['signature']['evaluation_date'] == 'issue-date'
+
+
+@pytest.mark.asyncio
+async def test_issue_date_policy_falls_back_when_unreadable(runtime, monkeypatch):
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+    kwargs['evaluation_date'] = 'issue-date'
+
+    async def interpret(self, batch, entry, reading):
+        async def operation(attempt):
+            outcome = make_outcome(file_id=reading['file_id'])
+            outcome['invoice']['issue_date'] = None
+            return {'invoice': outcome['invoice'], 'evidence': outcome['evidence'],
+                    'checks': {}, 'raw': {'response': 'raw structured output'}, 'status': 'completed'}
+
+        return await self.job(batch, entry, 'interpretation',
+                              digest(canonical_bytes(reading)), 'scripted', 'test', operation)
+
+    monkeypatch.setattr(Pipeline, 'interpret', interpret)
+    result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert result['state'] == 'completed'
+    assert result['files'][0]['evaluation_date_fallback'] is True
+    assert result['files'][0]['evaluation_date'][:4].isdigit()
+    packet = engine.load(result['files'][0]['evaluation_record_id'])
+    assert engine._json(packet['evaluation'])['evaluation_date'] == \
+        result['files'][0]['evaluation_date']
+
+
+@pytest.mark.asyncio
+async def test_reviews_run_for_every_evaluated_file_in_order(runtime):
+    _engine, kwargs, _calls, _rules, _workbook_path = runtime
+    pdfs = Path(kwargs['input_dir'])
+    (pdfs / 'a.pdf').write_bytes(b'%PDF-a')
+    (pdfs / 'b.pdf').write_bytes(b'%PDF-b')
+    result = await rr.revisar_lote(['invoice.pdf', 'a.pdf', 'b.pdf'], **kwargs)
+    assert result['state'] == 'completed'
+    assert [row['file_id'] for row in result['files']] == ['invoice.pdf', 'a.pdf', 'b.pdf']
+    assert kwargs['review_provider'].calls == 3
+    for row in result['files']:
+        assert row['review_record_id'] and row['review_status'] == 'INCOMPLETE'
 
 
 def test_backend_uses_latest_caja_resolver():

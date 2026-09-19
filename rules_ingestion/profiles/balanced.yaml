@@ -42,7 +42,7 @@ rules:
   VENDOR:
     enabled: true
     params:
-      require_active: true
+      require_active: false
       require_nif_in_master: true
       require_iban_match: true
       check_nif_control_digit: true

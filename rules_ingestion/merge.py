@@ -109,6 +109,7 @@ def _canonical_entry(store_rule: dict) -> dict:
         # provenance of a threshold has to survive the merge.
         "sheet_params": list(trace.get("params_from_sheet") or []),
         "param_conflicts": list(trace.get("param_conflicts") or []),
+        "interpretations": list(trace.get("interpretations") or []),
         "enabled_by_sheet": bool(trace.get("enabled_by_sheet")),
         "on_fail": store_rule.get("on_fail"),
         "soft_verdict": store_rule.get("soft_verdict"),

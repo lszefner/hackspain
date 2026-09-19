@@ -42,7 +42,14 @@ RE_NUM = re.compile(r"-?\d[\d.,]*")
 RE_PCT = re.compile(r"\s*%")
 RE_TOKEN = re.compile(r"[A-Z0-9][A-Z0-9/\-]{2,}")
 RE_DOCTYPE = re.compile(r"\b(?:factura|invoice)\b", re.IGNORECASE)
-RE_CURRENCY = re.compile(r"\bEUR\b|€")
+RE_CURRENCY = re.compile(
+    r"US\$|\b(?:EUR|USD|GBP|CHF|MXN|ARS|COP)\b|[€$£]")
+CURRENCY_CODES = {
+    "€": "EUR", "EUR": "EUR",
+    "$": "USD", "US$": "USD", "USD": "USD",
+    "£": "GBP", "GBP": "GBP",
+    "CHF": "CHF", "MXN": "MXN", "ARS": "ARS", "COP": "COP",
+}
 RE_LEGAL = re.compile(
     r"\b(?:S\.?\s?L\.?\s?U?\.?|S\.?\s?A\.?|S\.?\s?C\.?|S\.?\s?COOP\.?|C\.?\s?B\.?)",
     re.IGNORECASE)
@@ -566,13 +573,19 @@ def extract(reading: dict) -> dict:
         gaps.append("missing_vat_row")
 
     # currency ----------------------------------------------------------------------
+    # Codes are word-bounded; symbols match anywhere. More than one distinct
+    # currency on the document is ambiguous rather than a guess.
     currency = None
+    hits = []
     for line in lines:
-        match = RE_CURRENCY.search(line.text)
-        if match:
-            currency = "EUR"
-            put("/currency", line.link(match.start(), match.end()))
-            break
+        for match in RE_CURRENCY.finditer(line.text):
+            hits.append((CURRENCY_CODES[match.group()], line, match))
+    distinct = {code for code, _line, _match in hits}
+    if len(distinct) == 1:
+        currency = hits[0][0]
+        put("/currency", hits[0][1].link(hits[0][2].start(), hits[0][2].end()))
+    elif len(distinct) > 1:
+        gaps.append("ambiguous_currency")
 
     invoice = {
         "schema_version": "0.1",

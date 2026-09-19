@@ -108,7 +108,7 @@ def _vendor(text: str) -> dict:
     if ("nif" in text or "cif" in text) and matches:
         found["require_nif_in_master"] = True
     if "activo" in text and "proveedor" in text:
-        found["require_active"] = True
+        found["require_nif_in_master"] = True
     if any(word in text for word in ("digito de control", "letra del nif",
                                      "digito de control del nif", "nif valido")):
         found["check_nif_control_digit"] = True
@@ -138,6 +138,15 @@ def _missing(text: str) -> dict:
     names = [name for words, name in _REQUIRED_FIELD_WORDS
              if any(word in text for word in words)]
     return {"required_fields": names} if names else {}
+
+
+_INTERPRETATIONS = {
+    ("VENDOR", "require_nif_in_master"): {
+        "trigger": ("activo", "proveedor"),
+        "note": ("activo interpreted as presence in the supplier master; "
+                 "the master has no status column"),
+    },
+}
 
 
 _EXTRACTORS = {
@@ -195,5 +204,12 @@ def from_sheet(canonical: str, matched: list) -> tuple[list[dict], list[dict]]:
         if len(distinct) > 1:
             conflicts.append({"param": param, "readings": found})
             continue
-        settings.append(found[0])
+        setting = found[0]
+        interpretation = _INTERPRETATIONS.get((canonical, param))
+        if interpretation and any(
+                all(word in _accent_fold(entry["text"] or "").lower()
+                    for word in interpretation["trigger"])
+                for entry in found):
+            setting["note"] = interpretation["note"]
+        settings.append(setting)
     return settings, conflicts

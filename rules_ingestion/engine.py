@@ -11,7 +11,12 @@ from ingestion.contracts import canonical_bytes, digest
 from ingestion.storage import SupabaseStorage
 
 from . import evaluator, execution_context
-from .contextual_contracts import RESPONSE_SCHEMA, REVIEW_SCHEMA, validate
+from .contextual_contracts import (
+    RESPONSE_SCHEMA,
+    REVIEW_SCHEMA,
+    ReviewProviderError,
+    validate,
+)
 from .contextual_review import (
     PROJECTION_LIMITATION,
     DecisionContextV2Adapter,
@@ -324,7 +329,8 @@ class InvoiceDecisionEngine:
             if claim['state'] == 'finished':
                 return self.load(claim['review_record_id'])
             raise ContextError('review_request_in_progress_or_unknown')
-        archived = {'provider_request': None, 'provider_response': None}
+        archived = {'provider_request': None, 'provider_response': None,
+                    'provider_failure': None}
 
         def save(value, kind):
             try:
@@ -337,7 +343,15 @@ class InvoiceDecisionEngine:
         class RecordingProvider:
             async def review(self, request):
                 archived['provider_request'] = save(request, 'engine-review-request')
-                reply = await provider.review(request)
+                try:
+                    reply = await provider.review(request)
+                except ReviewProviderError as exc:
+                    if isinstance(exc.raw, bytes):
+                        archived['provider_failure'] = save(
+                            {'code': exc.code, 'detail': exc.detail,
+                             'raw_utf8': exc.raw.decode('utf-8', 'replace')},
+                            'engine-review-provider-failure')
+                    raise
                 if isinstance(reply, ProviderReply):
                     archived['provider_response'] = save(asdict(reply), 'engine-review-response')
                 return reply

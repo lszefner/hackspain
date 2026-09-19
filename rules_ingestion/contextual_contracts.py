@@ -100,8 +100,11 @@ class ReviewInputError(ValueError):
 
 
 class ReviewProviderError(RuntimeError):
-    def __init__(self, code: str):
+    def __init__(self, code: str, *, raw: bytes | None = None,
+                 detail: str | None = None):
         self.code = code
+        self.raw = raw
+        self.detail = detail
         super().__init__(code)
 
 

@@ -398,3 +398,30 @@ def test_invisible_chars_stripped_from_amounts():
     invoice = normalize_invoice(out["invoice"])
     assert invoice["totals"]["total"] == "2637.8"
     assert clean.index("2.637,80") >= 0
+
+
+def _currency_of(text):
+    out = extract(native_reading("f.pdf", [text]))
+    return out["invoice"]["currency"], out["gaps"]
+
+
+@pytest.mark.parametrize("token,expected", [
+    ("$1.000,00", "USD"),
+    ("USD 1.000,00", "USD"),
+    ("US$ 1.000,00", "USD"),
+    ("£1.000,00", "GBP"),
+    ("GBP 1.000,00", "GBP"),
+    ("CHF 1.000,00", "CHF"),
+    ("MXN 1.000,00", "MXN"),
+])
+def test_currency_detection(token, expected):
+    text = SAMPLE_TEXT.replace("TOTAL: 3.012,89", f"TOTAL: {token}")
+    assert _currency_of(text) == (expected, [])
+
+
+def test_mixed_currencies_are_ambiguous():
+    text = SAMPLE_TEXT.replace(
+        "TOTAL: 3.012,89", "TOTAL: 3.012,89 €\nNota: importe en USD 3.500,00")
+    currency, gaps = _currency_of(text)
+    assert currency is None
+    assert "ambiguous_currency" in gaps

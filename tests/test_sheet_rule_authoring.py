@@ -200,6 +200,31 @@ def test_contradictory_lines_change_nothing_and_are_recorded():
     assert document["stats"]["param_conflicts"] == 1
 
 
+def test_activo_means_present_in_the_master_not_a_status_column():
+    # No supplier source carries an "active" flag, so "el proveedor debe estar
+    # activo" is read as "must be in the master" -- the interpretation is
+    # recorded so nobody mistakes the sheet's wording for a status check.
+    rules, document = build([
+        ("1. Pagar solo si el NIF esta en el maestro y el IBAN de la factura "
+         "coincide con el maestro."),
+        "El proveedor debe estar activo en el maestro.",
+    ])
+    vendor = rules["VENDOR"]
+
+    assert vendor["params"].get("require_active") in (False, None)
+    assert vendor["params"]["require_nif_in_master"] is True
+    note = ("activo interpreted as presence in the supplier master; "
+            "the master has no status column")
+    assert note in vendor["trace"]["interpretations"]
+    assert any(setting.get("note") == note
+               for setting in vendor["trace"]["params_from_sheet"])
+
+    from rules_ingestion.merge import build_merged
+    merged = next(rule for rule in build_merged(document, None)["rules"]
+                  if rule.get("canonical") == "VENDOR")
+    assert note in merged["interpretations"]
+
+
 def test_a_policy_can_keep_parameter_authority():
     # conservative.yaml does not grant the sheet parameter authority.
     rules, _document = build([

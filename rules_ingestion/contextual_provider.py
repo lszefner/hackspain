@@ -50,7 +50,7 @@ class DeepSeekReviewProvider:
     provider = "deepseek"
 
     def __init__(self, *, endpoint: str, model: str, api_key: str,
-                 timeout_seconds: float = 90.0, transport=None):
+                 timeout_seconds: float = 180.0, transport=None):
         parsed = urlsplit(endpoint)
         if (parsed.scheme != "https" or not parsed.hostname or parsed.username
                 or parsed.password or parsed.query or parsed.fragment
@@ -68,6 +68,7 @@ class DeepSeekReviewProvider:
             {"role": "system", "content": request["system_prompt"]},
             {"role": "user", "content": canonical_bytes(user).decode("utf-8")},
         ], "temperature": 0, "response_format": {"type": "json_object"}, "max_tokens": 8192}
+        chunks = bytearray()
         try:
             async with (
                 httpx.AsyncClient(timeout=self.timeout_seconds, transport=self.transport,
@@ -80,20 +81,29 @@ class DeepSeekReviewProvider:
                     code = ("authentication_error" if response.status_code in (401, 403)
                             else "rate_limited" if response.status_code == 429 else "http_error")
                     raise ReviewProviderError(code)
-                chunks = bytearray()
                 async for chunk in response.aiter_bytes(chunk_size=16_384):
-                    if len(chunks) + len(chunk) > 100_000:
-                        raise ReviewProviderError("output_too_large")
+                    if len(chunks) + len(chunk) > 400_000:
+                        raise ReviewProviderError(
+                            "output_too_large", raw=bytes(chunks),
+                            detail="cap_exceeded")
                     chunks.extend(chunk)
                 request_id = response.headers.get("x-request-id") or None
             raw = strict_json(bytes(chunks))
             choice = raw["choices"][0]
             content = choice["message"]["content"]
             if choice.get("finish_reason") != "stop" or not isinstance(content, str):
-                raise ReviewProviderError("invalid_response")
-            payload = strict_json(content)
+                raise ReviewProviderError(
+                    "invalid_response", raw=bytes(chunks),
+                    detail=f"finish_reason={choice.get('finish_reason')}")
+            try:
+                payload = strict_json(content)
+            except (ValueError, UnicodeError, RecursionError) as exc:
+                raise ReviewProviderError(
+                    "invalid_response", raw=bytes(chunks),
+                    detail="content_not_json") from exc
             if not isinstance(payload, dict) or not isinstance(raw.get("model"), str) or not raw["model"]:
-                raise ReviewProviderError("invalid_response")
+                raise ReviewProviderError(
+                    "invalid_response", raw=bytes(chunks), detail="model_missing")
             usage = raw.get("usage")
             return ProviderReply(payload, raw["model"], request_id, {
                 key: value for key, value in (usage if isinstance(usage, dict) else {}).items()
@@ -103,5 +113,9 @@ class DeepSeekReviewProvider:
             raise ReviewProviderError("timeout") from exc
         except httpx.HTTPError as exc:
             raise ReviewProviderError("transport_error") from exc
+        except ReviewProviderError:
+            raise
         except (ValueError, UnicodeError, KeyError, IndexError, TypeError, RecursionError) as exc:
-            raise ReviewProviderError("invalid_response") from exc
+            raise ReviewProviderError(
+                "invalid_response",
+                raw=bytes(chunks) if chunks else None) from exc

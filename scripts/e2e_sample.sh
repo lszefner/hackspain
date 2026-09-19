@@ -40,7 +40,7 @@ PY
 )
 
 REQUEST_KEY="${REQUEST_KEY:-e2e-30-$(date +%Y%m%d-%H%M%S)}"
-EVALUATION_DATE="${EVALUATION_DATE:-$(date +%F)}"
+EVALUATION_DATE="${EVALUATION_DATE:-issue-date}"
 mkdir -p /tmp/e2e
 
 rc=0

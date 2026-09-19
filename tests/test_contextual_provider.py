@@ -97,7 +97,22 @@ async def test_timeout_and_size_limits():
     with pytest.raises(ReviewProviderError, match="timeout"):
         await provider(timeout).review(REQUEST)
     with pytest.raises(ReviewProviderError, match="output_too_large"):
-        await provider(lambda _: httpx.Response(200, content=b"x" * 100_001)).review(REQUEST)
+        await provider(lambda _: httpx.Response(200, content=b"x" * 400_001)).review(REQUEST)
+
+
+@pytest.mark.asyncio
+async def test_truncated_generation_carries_raw_body_and_detail():
+    def handler(request):
+        return httpx.Response(200, json=envelope(
+            content='{"rule_reviews": [', finish_reason="length"))
+
+    with pytest.raises(ReviewProviderError) as error:
+        await provider(handler).review(REQUEST)
+    assert error.value.code == "invalid_response"
+    assert error.value.detail == "finish_reason=length"
+    body = error.value.raw
+    assert isinstance(body, bytes)
+    assert json.loads(body)["choices"][0]["finish_reason"] == "length"
 
 
 @pytest.mark.parametrize("endpoint", ["http://provider.test", "https://user:password@provider.test", "https://provider.test?key=secret",
