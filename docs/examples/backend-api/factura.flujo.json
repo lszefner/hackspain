@@ -1,0 +1,861 @@
+{
+  "ejecucion": {
+    "captured_at": "2026-09-19T22:01:40.679663+02:00",
+    "error": null,
+    "evaluation_date_policy": "fixed",
+    "request_key": "intent-1",
+    "rule_generation": "generated",
+    "snapshots": {
+      "erp": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.payment_status"
+        ],
+        "availability": "unavailable",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "erp",
+        "scope": "erp capture failed (no_response)"
+      },
+      "orders": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.identity",
+          "order.amount"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "order_master",
+        "scope": "workbook sheet 'Pedidos_2026'"
+      },
+      "source_mapping": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "source_mapping",
+        "scope": "configured sources.yaml mapping"
+      },
+      "suppliers": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "supplier.identity",
+          "supplier.bank_details",
+          "supplier.payment_terms"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "supplier_master",
+        "scope": "workbook sheet 'Proveedores'"
+      },
+      "workbook": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "master_workbook",
+        "scope": "configured master workbook"
+      }
+    },
+    "state": "completed"
+  },
+  "etapas": [
+    {
+      "at": "2026-09-19T22:01:40.691036+02:00",
+      "estado": "hecha",
+      "etapa": "recibida",
+      "ref": "522aadc2-efe4-4ba7-835d-979a222c6b9d"
+    },
+    {
+      "at": null,
+      "estado": "hecha",
+      "etapa": "extraida",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "hecha",
+      "etapa": "evaluada",
+      "ref": "er_9744fd815806ef47a71bfacc927399bada5649762e8d38bcbc96639a902516f3"
+    },
+    {
+      "at": null,
+      "estado": "hecha",
+      "etapa": "revisada",
+      "ref": "er_ec5fc3964a90e0d6c2a4af52fc3aa2554a5e3c93e95c28f5589686595ae41261"
+    },
+    {
+      "at": null,
+      "estado": "hecha",
+      "etapa": "emitida",
+      "ref": "ESCALAR"
+    },
+    {
+      "at": null,
+      "estado": "no_registrada",
+      "etapa": "resuelta",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "no_registrada",
+      "etapa": "pagada",
+      "ref": null
+    }
+  ],
+  "evaluacion": {
+    "captured_at": "2026-09-19T22:01:40.679663+02:00",
+    "decision": "ESCALAR",
+    "evaluation_date": "2026-09-19",
+    "evaluation_id": "ev_9c5a9dff95326d81819eaf7f3e6a895983d81b3f1c06a864b5cca48379e2db6f",
+    "fuentes": {
+      "checks": {
+        "artifact_ref": "sha256/db/db6ea97816bec831ca80c0e7a72222198f2e0653c71bbd327c726fc288f89069/decision-source-extraction_checks",
+        "as_of": null,
+        "asserted_by": "invoice-extraction",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "extraction_checks",
+        "scope": "extraction extraction_checks artifact",
+        "sha256": "db6ea97816bec831ca80c0e7a72222198f2e0653c71bbd327c726fc288f89069"
+      },
+      "erp": {
+        "artifact_ref": null,
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.payment_status"
+        ],
+        "availability": "unavailable",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "erp",
+        "scope": "erp capture failed (no_response)",
+        "sha256": null
+      },
+      "evidence": {
+        "artifact_ref": "sha256/10/1099065e926c97d00a07cbd74aeed552504b1ac0d4e57b0cf834fa2ba56d738b/decision-source-evidence",
+        "as_of": null,
+        "asserted_by": "invoice-extraction",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "evidence",
+        "scope": "extraction evidence artifact",
+        "sha256": "1099065e926c97d00a07cbd74aeed552504b1ac0d4e57b0cf834fa2ba56d738b"
+      },
+      "invoice": {
+        "artifact_ref": "sha256/c7/c78bd7d87926688e5aab5f4995a7aa1dd0531534214dc84a1c03462823bbb5a7/decision-source-invoice",
+        "as_of": null,
+        "asserted_by": "invoice-extraction",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "invoice",
+        "scope": "extraction invoice artifact",
+        "sha256": "c78bd7d87926688e5aab5f4995a7aa1dd0531534214dc84a1c03462823bbb5a7"
+      },
+      "orders": {
+        "artifact_ref": "sha256/df/dfcab0f1656f778a7564a5088250d7d516baf603589ae443eafe67da87745281/decision-source-order_master",
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.identity",
+          "order.amount"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "order_master",
+        "scope": "workbook sheet 'Pedidos_2026'",
+        "sha256": "dfcab0f1656f778a7564a5088250d7d516baf603589ae443eafe67da87745281"
+      },
+      "processed": {
+        "artifact_ref": "sha256/00/0028a1eb617d95a835202c326959987e346c5870854ea46cc52b31eb0236f01a/decision-source-history",
+        "as_of": null,
+        "asserted_by": "core-engine-postgres",
+        "authoritative_for": [
+          "history.processed"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "history",
+        "scope": "Every invoice La Caja submits is evaluated by this engine; the processed records are the complete submission history known to it",
+        "sha256": "0028a1eb617d95a835202c326959987e346c5870854ea46cc52b31eb0236f01a"
+      },
+      "reading": {
+        "artifact_ref": "sha256/91/9195e817994d4870b05070d699490419afa785b1888a56c6d7bb42f00fd99724/decision-source-reading",
+        "as_of": null,
+        "asserted_by": "invoice-extraction",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "reading",
+        "scope": "extraction reading artifact",
+        "sha256": "9195e817994d4870b05070d699490419afa785b1888a56c6d7bb42f00fd99724"
+      },
+      "ruleset": {
+        "artifact_ref": "sha256/5f/5f6f0da7967c39ec00745126c80cff13dcf45dbda31e5c24e2a2e39cb50eb9c4/decision-source-ruleset",
+        "as_of": null,
+        "asserted_by": "invoice-extraction",
+        "authoritative_for": [
+          "business_rules"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "ruleset",
+        "scope": "frozen ruleset bytes",
+        "sha256": "5f6f0da7967c39ec00745126c80cff13dcf45dbda31e5c24e2a2e39cb50eb9c4"
+      },
+      "source_mapping": {
+        "artifact_ref": "sha256/a7/a7e4c8812d2f5c0b73016f51192eb864c6afee24b93196f4c5655c332630075c/decision-source-source_mapping",
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "source_mapping",
+        "scope": "configured sources.yaml mapping",
+        "sha256": "a7e4c8812d2f5c0b73016f51192eb864c6afee24b93196f4c5655c332630075c"
+      },
+      "suppliers": {
+        "artifact_ref": "sha256/d9/d99b951c18b229ab7b79cf769a94eb21c53bc1de042fd012a6fe3aef6574dab3/decision-source-supplier_master",
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "supplier.identity",
+          "supplier.bank_details",
+          "supplier.payment_terms"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "supplier_master",
+        "scope": "workbook sheet 'Proveedores'",
+        "sha256": "d99b951c18b229ab7b79cf769a94eb21c53bc1de042fd012a6fe3aef6574dab3"
+      },
+      "workbook": {
+        "artifact_ref": "sha256/d4/d465ff825ea13f2e3f18869eb3d12e5c80f0987bb31cd817a84767aaaf06d9c5/decision-source-master_workbook",
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:40.679663+02:00",
+        "kind": "master_workbook",
+        "scope": "configured master workbook",
+        "sha256": "d465ff825ea13f2e3f18869eb3d12e5c80f0987bb31cd817a84767aaaf06d9c5"
+      }
+    },
+    "interpreter": "deepseek",
+    "record_id": "er_9744fd815806ef47a71bfacc927399bada5649762e8d38bcbc96639a902516f3",
+    "resultado": {
+      "completeness": {
+        "accounted_rule_ids": [
+          "R_VENDOR"
+        ],
+        "all_enabled_accounted": true,
+        "approval_eligible": false,
+        "enabled_rule_ids": [
+          "R_VENDOR"
+        ],
+        "evaluation_complete": false
+      },
+      "context_id": "dc_56a26c64c01fb7ddd6cec4e645d6b643aabaf05f3477d506228a5283f1d0fabe",
+      "context_schema_version": "decision-context/2",
+      "context_sha256": "38db638a1a3d1fb02e683f434605a53ef5570917c9f097ec19d85eaae8e25b80",
+      "decision_reasons": [
+        {
+          "code": "UNUSABLE_INPUT",
+          "consequence": "ESCALAR",
+          "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id",
+          "refs": [
+            {
+              "pointer": "/rules/0",
+              "source": "ruleset"
+            },
+            {
+              "field": "supplier.id"
+            }
+          ],
+          "rule_id": "R_VENDOR"
+        },
+        {
+          "code": "UNUSABLE_INPUT",
+          "consequence": "ESCALAR",
+          "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id",
+          "refs": [
+            {
+              "pointer": "/rules/0",
+              "source": "ruleset"
+            },
+            {
+              "field": "invoice.supplier_tax_id"
+            },
+            {
+              "field": "supplier.tax_id"
+            }
+          ],
+          "rule_id": "R_VENDOR"
+        },
+        {
+          "code": "UNUSABLE_INPUT",
+          "consequence": "ESCALAR",
+          "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+          "refs": [
+            {
+              "pointer": "/rules/0",
+              "source": "ruleset"
+            },
+            {
+              "field": "invoice.iban"
+            },
+            {
+              "field": "supplier.iban"
+            }
+          ],
+          "rule_id": "R_VENDOR"
+        },
+        {
+          "code": "SUPPLIER_IDENTITY_AMBIGUOUS",
+          "consequence": "ESCALAR",
+          "explanation": "Unresolved evidence or execution finding requires review: SUPPLIER_IDENTITY_AMBIGUOUS",
+          "refs": [
+            {
+              "pointer": "/records",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/0",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/1",
+              "source": "suppliers"
+            },
+            {
+              "field": "supplier.id"
+            },
+            {
+              "pointer": "",
+              "source": "suppliers"
+            }
+          ],
+          "rule_id": null
+        },
+        {
+          "code": "ERP_UNAVAILABLE",
+          "consequence": "ESCALAR",
+          "explanation": "The ERP snapshot does not provide a usable authoritative payment state.",
+          "refs": [
+            {
+              "field": "erp.order_payment_status"
+            }
+          ],
+          "rule_id": null
+        },
+        {
+          "code": "UNUSABLE_INPUT",
+          "consequence": "ESCALAR",
+          "explanation": "Unresolved evidence or execution finding requires review: UNUSABLE_INPUT",
+          "refs": [
+            {
+              "field": "supplier.id"
+            },
+            {
+              "field": "invoice.supplier_tax_id"
+            },
+            {
+              "field": "supplier.tax_id"
+            },
+            {
+              "field": "invoice.iban"
+            },
+            {
+              "field": "supplier.iban"
+            },
+            {
+              "pointer": "/rules/0",
+              "source": "ruleset"
+            }
+          ],
+          "rule_id": "R_VENDOR"
+        }
+      ],
+      "evaluation_date": "2026-09-19",
+      "evaluation_id": "ev_9c5a9dff95326d81819eaf7f3e6a895983d81b3f1c06a864b5cca48379e2db6f",
+      "evaluator": {
+        "capability_version": "decision-capabilities/3",
+        "implementation_sha256": "57bd8b9c926077810bdf6ce342a2bfc28d9df051e0c78fe195d1367daf63c196",
+        "version": "rule-evaluator/2"
+      },
+      "outstanding_findings": [
+        {
+          "code": "SUPPLIER_IDENTITY_AMBIGUOUS",
+          "refs": [
+            {
+              "pointer": "/records",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/0",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/1",
+              "source": "suppliers"
+            },
+            {
+              "field": "supplier.id"
+            },
+            {
+              "pointer": "",
+              "source": "suppliers"
+            }
+          ],
+          "rule_ids": [],
+          "severity": "blocking"
+        },
+        {
+          "code": "AUTHORITY_NOT_GRANTED",
+          "refs": [
+            {
+              "field": "order.currency"
+            },
+            {
+              "pointer": "",
+              "source": "orders"
+            }
+          ],
+          "rule_ids": [],
+          "severity": "info"
+        },
+        {
+          "code": "ERP_UNAVAILABLE",
+          "refs": [
+            {
+              "field": "erp.order_payment_status"
+            }
+          ],
+          "rule_ids": [],
+          "severity": "blocking"
+        },
+        {
+          "code": "UNUSABLE_INPUT",
+          "refs": [
+            {
+              "field": "supplier.id"
+            },
+            {
+              "field": "invoice.supplier_tax_id"
+            },
+            {
+              "field": "supplier.tax_id"
+            },
+            {
+              "field": "invoice.iban"
+            },
+            {
+              "field": "supplier.iban"
+            },
+            {
+              "pointer": "/rules/0",
+              "source": "ruleset"
+            }
+          ],
+          "rule_ids": [
+            "R_VENDOR"
+          ],
+          "severity": "blocking"
+        }
+      ],
+      "policy": {
+        "precedence": [
+          "NO_PAGAR",
+          "ESCALAR",
+          "PAGAR"
+        ],
+        "verdict_semantics": {
+          "FAIL": "on_fail",
+          "NEEDS_REVIEW": "ESCALAR",
+          "PASS": "PAGAR"
+        }
+      },
+      "preliminary_decision": "ESCALAR",
+      "rule_results": [
+        {
+          "applicability": "APPLICABLE",
+          "applied_consequence": "ESCALAR",
+          "capability_id": "canonical/VENDOR/3",
+          "complete": false,
+          "compliance": "NOT_EVALUATED",
+          "evidence_refs": [
+            {
+              "pointer": "/supplier/tax_id",
+              "source": "invoice"
+            },
+            {
+              "pointer": "/records",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/0",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/records/1",
+              "source": "suppliers"
+            },
+            {
+              "pointer": "/payment/iban",
+              "source": "invoice"
+            },
+            {
+              "pointer": "/~1supplier~1tax_id",
+              "source": "evidence"
+            },
+            {
+              "pointer": "/pages/0/blocks/0",
+              "source": "reading"
+            },
+            {
+              "pointer": "/~1payment~1iban",
+              "source": "evidence"
+            }
+          ],
+          "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+          "inputs": [
+            {
+              "fact_pointer": "/fields/supplier.id",
+              "field": "supplier.id",
+              "state": "ambiguous",
+              "value": null
+            },
+            {
+              "fact_pointer": "/fields/invoice.supplier_tax_id",
+              "field": "invoice.supplier_tax_id",
+              "state": "present",
+              "value": "B12345678"
+            },
+            {
+              "fact_pointer": "/fields/supplier.tax_id",
+              "field": "supplier.tax_id",
+              "state": "unavailable",
+              "value": null
+            },
+            {
+              "fact_pointer": "/fields/invoice.iban",
+              "field": "invoice.iban",
+              "state": "present",
+              "value": "ES9121000418450200051332"
+            },
+            {
+              "fact_pointer": "/fields/supplier.iban",
+              "field": "supplier.iban",
+              "state": "unavailable",
+              "value": null
+            }
+          ],
+          "on_fail": "ESCALAR",
+          "reason_codes": [
+            "UNUSABLE_INPUT"
+          ],
+          "rule_id": "R_VENDOR",
+          "rule_ref": {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          },
+          "status": "BLOCKED",
+          "trace": [
+            {
+              "effective_params": {
+                "check_nif_control_digit": false,
+                "require_active": false,
+                "require_iban_match": true,
+                "require_nif_in_master": true
+              },
+              "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id",
+              "input_refs": [
+                {
+                  "field": "supplier.id"
+                }
+              ],
+              "node": "/rules/0",
+              "operands": [
+                null
+              ],
+              "operation": "resolved_supplier",
+              "reason_code": "UNUSABLE_INPUT",
+              "required": true,
+              "result": "UNKNOWN",
+              "verdict": "BLOCKED"
+            },
+            {
+              "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id",
+              "input_refs": [
+                {
+                  "field": "invoice.supplier_tax_id"
+                },
+                {
+                  "field": "supplier.tax_id"
+                }
+              ],
+              "node": "/rules/0",
+              "operands": [
+                "B12345678",
+                null
+              ],
+              "operation": "==",
+              "reason_code": "UNUSABLE_INPUT",
+              "required": true,
+              "result": "UNKNOWN",
+              "verdict": "BLOCKED"
+            },
+            {
+              "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+              "input_refs": [
+                {
+                  "field": "invoice.iban"
+                },
+                {
+                  "field": "supplier.iban"
+                }
+              ],
+              "node": "/rules/0",
+              "operands": [
+                "ES9121000418450200051332",
+                null
+              ],
+              "operation": "==",
+              "reason_code": "UNUSABLE_INPUT",
+              "required": true,
+              "result": "UNKNOWN",
+              "verdict": "BLOCKED"
+            }
+          ]
+        }
+      ],
+      "ruleset": {
+        "policy_id": "balanced",
+        "ruleset_version": "v-test",
+        "sha256": "5f6f0da7967c39ec00745126c80cff13dcf45dbda31e5c24e2a2e39cb50eb9c4",
+        "source": "ruleset"
+      },
+      "schema_version": "evaluation-result/1"
+    },
+    "rule_source_lineage": {
+      "basis": "caller_attested",
+      "sources": [
+        {
+          "artifact_id": "90ef85c6-22bc-4c29-abcd-47bd9e57205b",
+          "byte_size": 107,
+          "content_type": "application/json",
+          "kind": "engine-rule-source",
+          "name": "generation-audit.json",
+          "object_key": "sha256/07/07d48f0bbce4698d33ebef22b7e948b1553b50959c500f3def4ae16f154b9634/engine-rule-source",
+          "sha256": "07d48f0bbce4698d33ebef22b7e948b1553b50959c500f3def4ae16f154b9634"
+        },
+        {
+          "artifact_id": "09fdb3e8-3b33-43fc-b6de-bcfccf28c084",
+          "byte_size": 2290,
+          "content_type": "application/octet-stream",
+          "kind": "engine-rule-source",
+          "name": "profile.yaml",
+          "object_key": "sha256/47/47a78b7527274ba1de5fbe20f5925addaf1c305ef2063d6db548298b4be2819a/engine-rule-source",
+          "sha256": "47a78b7527274ba1de5fbe20f5925addaf1c305ef2063d6db548298b4be2819a"
+        },
+        {
+          "artifact_id": "6749e836-aafd-435f-8baa-8b629620d761",
+          "byte_size": 739,
+          "content_type": "application/octet-stream",
+          "kind": "engine-rule-source",
+          "name": "sources.yaml",
+          "object_key": "sha256/a7/a7e4c8812d2f5c0b73016f51192eb864c6afee24b93196f4c5655c332630075c/engine-rule-source",
+          "sha256": "a7e4c8812d2f5c0b73016f51192eb864c6afee24b93196f4c5655c332630075c"
+        },
+        {
+          "artifact_id": "ea2c83ea-5733-45dc-af96-bf433db282da",
+          "byte_size": 5600,
+          "content_type": "application/octet-stream",
+          "kind": "engine-rule-source",
+          "name": "workbook.xlsx",
+          "object_key": "sha256/d4/d465ff825ea13f2e3f18869eb3d12e5c80f0987bb31cd817a84767aaaf06d9c5/engine-rule-source",
+          "sha256": "d465ff825ea13f2e3f18869eb3d12e5c80f0987bb31cd817a84767aaaf06d9c5"
+        }
+      ]
+    }
+  },
+  "extraccion": {
+    "checks": {},
+    "cost_usd": null,
+    "determinista": {
+      "accepted": false,
+      "attempted": false,
+      "gaps": [
+        "no_text_layer_or_cascade_off"
+      ]
+    },
+    "error": null,
+    "factura": {
+      "additional_fields": [],
+      "annotations": [],
+      "currency": "EUR",
+      "customer": {
+        "address": null,
+        "location": null,
+        "name": null,
+        "tax_id": null
+      },
+      "document_type": "invoice",
+      "file_id": "invoice.pdf",
+      "invoice_number": "INV-1",
+      "issue_date": "2026-09-01",
+      "issues": [],
+      "lines": [
+        {
+          "amount": "100.00",
+          "description": "item",
+          "position": 1,
+          "quantity": "1"
+        }
+      ],
+      "payment": {
+        "iban": "ES9121000418450200051332"
+      },
+      "purchase_order_reference": "PO-1",
+      "schema_version": "0.1",
+      "supplier": {
+        "address": null,
+        "location": null,
+        "name": "Proveedor",
+        "tax_id": "B12345678"
+      },
+      "taxes": [
+        {
+          "amount": "21.00",
+          "label": "IVA 21%",
+          "rate_percent": "21"
+        }
+      ],
+      "totals": {
+        "taxable_base": "100.00",
+        "total": "121.00"
+      }
+    },
+    "gaps": [],
+    "paginas": 1,
+    "por_que_vision": [
+      "no_text_layer_or_cascade_off"
+    ],
+    "ruta": "vision",
+    "status": "completed",
+    "trabajos": [
+      {
+        "adapter_version": "alpha-4",
+        "artifact_id": "9a063dbd-1a41-4017-9723-d0b807f606f0",
+        "attempt_count": 1,
+        "config_version": "alpha-4",
+        "created_at": "2026-09-19T22:01:40.708591+02:00",
+        "extra": {},
+        "id": "195b0c15-4f2d-4563-89a7-4e556e9a4d3f",
+        "intentos": [
+          {
+            "attempt_number": 1,
+            "error": null,
+            "finished_at": "2026-09-19T22:01:40.727813+02:00",
+            "latency_seconds": "0.0149179580039345",
+            "provider_request_id": null,
+            "raw_artifact_ids": [
+              "fcbdc9b9-35d8-49f8-bdf9-acbd85bb13be"
+            ],
+            "started_at": "2026-09-19T22:01:40.711407+02:00",
+            "status": "succeeded",
+            "usage": {}
+          }
+        ],
+        "last_error": null,
+        "max_attempts": 3,
+        "model": "test",
+        "prompt_version": "alpha-4",
+        "provider": "scripted",
+        "schema_hash": "61d970edb19ac029c0f0627dc6579dffce1db3cf43243efa2c037c008b7c263b",
+        "stage": "reading",
+        "state": "succeeded"
+      },
+      {
+        "adapter_version": "alpha-4",
+        "artifact_id": "3c588d27-60ff-4f1f-895c-da4604df3577",
+        "attempt_count": 1,
+        "config_version": "alpha-4",
+        "created_at": "2026-09-19T22:01:40.729144+02:00",
+        "extra": {},
+        "id": "a896746c-3220-4c51-be96-efa6f45aa634",
+        "intentos": [
+          {
+            "attempt_number": 1,
+            "error": null,
+            "finished_at": "2026-09-19T22:01:40.746894+02:00",
+            "latency_seconds": "0.0143590000079712",
+            "provider_request_id": null,
+            "raw_artifact_ids": [],
+            "started_at": "2026-09-19T22:01:40.731325+02:00",
+            "status": "succeeded",
+            "usage": {}
+          }
+        ],
+        "last_error": null,
+        "max_attempts": 3,
+        "model": "test",
+        "prompt_version": "alpha-4",
+        "provider": "scripted",
+        "schema_hash": "d4227f051d6a8ad7a95ca404a535856db00efb65b5dcab7d7c8a71a9b2785326",
+        "stage": "interpretation",
+        "state": "succeeded"
+      }
+    ]
+  },
+  "file_id": "invoice.pdf",
+  "identidad": {
+    "batch_id": "564a7159-8e0f-4a68-a44b-9849559b6d16",
+    "bytes": 9,
+    "input_id": "522aadc2-efe4-4ba7-835d-979a222c6b9d",
+    "recibida_at": "2026-09-19T22:01:40.691036+02:00",
+    "sha256": "3c87d37f1dbea6909f917ce437c390fb8e655a774387d9e69301c0b2283d5b63"
+  },
+  "pago": null,
+  "resolucion": null,
+  "revision": {
+    "attention_required": true,
+    "error": null,
+    "findings": [
+      {
+        "code": "SCRIPTED_LIMITATION",
+        "evidence": [],
+        "explanation": "Not measured model accuracy",
+        "kind": "REVIEW_LIMITATION",
+        "rule_ids": [
+          "R_VENDOR"
+        ],
+        "severity": "blocking"
+      }
+    ],
+    "model": "contract-test",
+    "provider": "scripted",
+    "record_id": "er_ec5fc3964a90e0d6c2a4af52fc3aa2554a5e3c93e95c28f5589686595ae41261",
+    "reviewed_at": "2026-09-19T20:01:40.887596+00:00",
+    "rule_reviews": [
+      {
+        "assessment": "UNCERTAIN",
+        "evidence": [],
+        "explanation": "Scripted contract response",
+        "rule_id": "R_VENDOR"
+      }
+    ],
+    "status": "INCOMPLETE"
+  },
+  "salida": {
+    "basis": "evaluator",
+    "verdict": "ESCALAR"
+  }
+}

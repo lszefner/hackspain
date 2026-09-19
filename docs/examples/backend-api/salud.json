@@ -1,0 +1,9 @@
+{
+  "error": "KeyError",
+  "facturas_dir": "/tmp/test-runtime/pdfs",
+  "facturas_en_disco": 1,
+  "ok": false,
+  "postgres": true,
+  "procesando": false,
+  "storage_bucket": false
+}

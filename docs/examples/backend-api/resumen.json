@@ -1,0 +1,24 @@
+{
+  "conteo": {
+    "error": 0,
+    "hecha": 1,
+    "pendiente": 0,
+    "procesando": 0
+  },
+  "decisiones": {
+    "ESCALAR": 1,
+    "NO_PAGAR": 0,
+    "PAGAR": 0
+  },
+  "error": null,
+  "facturas": [
+    {
+      "decision": "ESCALAR",
+      "estado": "hecha",
+      "file_id": "invoice.pdf"
+    }
+  ],
+  "lote_tamano": 20,
+  "procesando": false,
+  "total": 1
+}

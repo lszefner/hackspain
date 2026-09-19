@@ -1,0 +1,21 @@
+{
+  "batch_id": "564a7159-8e0f-4a68-a44b-9849559b6d16",
+  "files": [
+    {
+      "attention_required": true,
+      "decision": "ESCALAR",
+      "error": null,
+      "evaluation_date": "2026-09-19",
+      "evaluation_record_id": "er_9744fd815806ef47a71bfacc927399bada5649762e8d38bcbc96639a902516f3",
+      "file_id": "invoice.pdf",
+      "review_record_id": "er_ec5fc3964a90e0d6c2a4af52fc3aa2554a5e3c93e95c28f5589686595ae41261",
+      "review_status": "INCOMPLETE"
+    }
+  ],
+  "request_key": "intent-1",
+  "revision_counts": {
+    "failed": 0,
+    "stored": 1
+  },
+  "state": "completed"
+}

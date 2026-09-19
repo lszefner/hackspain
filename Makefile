@@ -17,7 +17,7 @@ CON_ENV := set -a; [ -f .env ] && . ./.env; set +a;
 .DEFAULT_GOAL := help
 POLICY ?= balanced
 SCAN_INPUT ?= rules_ingestion/eval/fixtures
-.PHONY: help centralita export voces erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
+.PHONY: help centralita export voces erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login api api-status rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
 
 help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
@@ -64,6 +64,13 @@ erp-status: ## Check that the local ERP is running.
 erp-login: ## Request and print a local ERP session token.
 	@curl --fail --silent --show-error -X POST "http://$(ERP_HOST):$(ERP_PORT)/erp/login" \
 		-d 'usuario=alberto' -d 'clave=FACTURAS2009'
+	@printf '\n'
+
+API_PORT ?= 8010
+api: ## Start the engine JSON API on port 8010 (needs Supabase env; see docs/backend-api.md).
+	@$(CON_ENV) uv run --locked --extra worker --extra backend python -m backend.server --port $(API_PORT)
+api-status: ## Check that the engine API is running.
+	@curl --fail --silent --show-error "http://127.0.0.1:$(API_PORT)/api/salud"
 	@printf '\n'
 
 rules: ## Build outcome/<ver>/$(POLICY)/rules.json (POLICY=balanced|strict|conservative).

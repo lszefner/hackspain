@@ -1,0 +1,504 @@
+{
+  "attention_required": true,
+  "campos": {
+    "base": "100.00",
+    "currency": "EUR",
+    "date": "2026-09-01",
+    "iban": "ES9121000418450200051332",
+    "invoice_number": "INV-1",
+    "iva": "21.00",
+    "line_items": [
+      "100.00"
+    ],
+    "nif": "B12345678",
+    "pedido": "PO-1",
+    "total": "121.00",
+    "vendor_id": null
+  },
+  "checks": [
+    {
+      "reason": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+      "rule_id": "R_VENDOR",
+      "verdict": "NEEDS_REVIEW"
+    }
+  ],
+  "contextual_review": {
+    "attention_required": true,
+    "context_id": "dc_56a26c64c01fb7ddd6cec4e645d6b643aabaf05f3477d506228a5283f1d0fabe",
+    "context_schema_version": "decision-context/2",
+    "context_sha256": "38db638a1a3d1fb02e683f434605a53ef5570917c9f097ec19d85eaae8e25b80",
+    "coverage": {
+      "reviewed_rule_ids": [
+        "R_VENDOR"
+      ],
+      "reviewed_sources": [],
+      "unavailable_sources": [
+        "erp"
+      ],
+      "unreviewable_sources": [
+        "source_mapping",
+        "workbook"
+      ],
+      "unreviewed_rule_ids": [],
+      "unreviewed_sources": [
+        "checks",
+        "evidence",
+        "invoice",
+        "orders",
+        "processed",
+        "reading",
+        "ruleset",
+        "suppliers"
+      ]
+    },
+    "error": null,
+    "evaluation_id": "ev_9c5a9dff95326d81819eaf7f3e6a895983d81b3f1c06a864b5cca48379e2db6f",
+    "findings": [
+      {
+        "code": "SCRIPTED_LIMITATION",
+        "evidence": [],
+        "explanation": "Not measured model accuracy",
+        "kind": "REVIEW_LIMITATION",
+        "rule_ids": [
+          "R_VENDOR"
+        ],
+        "severity": "blocking"
+      }
+    ],
+    "limitations": [
+      "Scripted response",
+      "Not measured model accuracy",
+      "Unavailable sources: erp",
+      "Unreviewable non-JSON sources: source_mapping, workbook",
+      "Sources not reviewed: checks, evidence, invoice, orders, processed, reading, ruleset, suppliers",
+      "Deterministic evaluation is incomplete; contextual review cannot complete it."
+    ],
+    "original_preliminary_decision": "ESCALAR",
+    "payment_authorized": false,
+    "review_id": "rv_4176c7d550c840c1880dd0ae676975ee61fba2c8ebe9fce07dc722c42f68a67e",
+    "reviewed_at": "2026-09-19T20:01:40.887596+00:00",
+    "reviewer": {
+      "prompt_sha256": "4b0c1b1ee50361ab7b70c6708cc74d7b495b81b2c253fda0af3972aa9fda7008",
+      "prompt_version": "contextual-review/2",
+      "provider": "scripted",
+      "request_id": "scripted-request",
+      "request_sha256": "9014758d34e8de862b6078a12d12cd7c91e642e9aee8097bb122846e137774d8",
+      "requested_model": "contract-test",
+      "resolved_model": "contract-test",
+      "usage": {
+        "total_tokens": 0
+      }
+    },
+    "rule_reviews": [
+      {
+        "assessment": "UNCERTAIN",
+        "evidence": [],
+        "explanation": "Scripted contract response",
+        "rule_id": "R_VENDOR"
+      }
+    ],
+    "schema_version": "contextual-review/1",
+    "status": "INCOMPLETE"
+  },
+  "decision": "ESCALAR",
+  "error": null,
+  "estado": "hecha",
+  "evaluation_record_id": "er_9744fd815806ef47a71bfacc927399bada5649762e8d38bcbc96639a902516f3",
+  "evaluation_result": {
+    "completeness": {
+      "accounted_rule_ids": [
+        "R_VENDOR"
+      ],
+      "all_enabled_accounted": true,
+      "approval_eligible": false,
+      "enabled_rule_ids": [
+        "R_VENDOR"
+      ],
+      "evaluation_complete": false
+    },
+    "context_id": "dc_56a26c64c01fb7ddd6cec4e645d6b643aabaf05f3477d506228a5283f1d0fabe",
+    "context_schema_version": "decision-context/2",
+    "context_sha256": "38db638a1a3d1fb02e683f434605a53ef5570917c9f097ec19d85eaae8e25b80",
+    "decision_reasons": [
+      {
+        "code": "UNUSABLE_INPUT",
+        "consequence": "ESCALAR",
+        "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id",
+        "refs": [
+          {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          },
+          {
+            "field": "supplier.id"
+          }
+        ],
+        "rule_id": "R_VENDOR"
+      },
+      {
+        "code": "UNUSABLE_INPUT",
+        "consequence": "ESCALAR",
+        "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id",
+        "refs": [
+          {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          },
+          {
+            "field": "invoice.supplier_tax_id"
+          },
+          {
+            "field": "supplier.tax_id"
+          }
+        ],
+        "rule_id": "R_VENDOR"
+      },
+      {
+        "code": "UNUSABLE_INPUT",
+        "consequence": "ESCALAR",
+        "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+        "refs": [
+          {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          },
+          {
+            "field": "invoice.iban"
+          },
+          {
+            "field": "supplier.iban"
+          }
+        ],
+        "rule_id": "R_VENDOR"
+      },
+      {
+        "code": "SUPPLIER_IDENTITY_AMBIGUOUS",
+        "consequence": "ESCALAR",
+        "explanation": "Unresolved evidence or execution finding requires review: SUPPLIER_IDENTITY_AMBIGUOUS",
+        "refs": [
+          {
+            "pointer": "/records",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/0",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/1",
+            "source": "suppliers"
+          },
+          {
+            "field": "supplier.id"
+          },
+          {
+            "pointer": "",
+            "source": "suppliers"
+          }
+        ],
+        "rule_id": null
+      },
+      {
+        "code": "ERP_UNAVAILABLE",
+        "consequence": "ESCALAR",
+        "explanation": "The ERP snapshot does not provide a usable authoritative payment state.",
+        "refs": [
+          {
+            "field": "erp.order_payment_status"
+          }
+        ],
+        "rule_id": null
+      },
+      {
+        "code": "UNUSABLE_INPUT",
+        "consequence": "ESCALAR",
+        "explanation": "Unresolved evidence or execution finding requires review: UNUSABLE_INPUT",
+        "refs": [
+          {
+            "field": "supplier.id"
+          },
+          {
+            "field": "invoice.supplier_tax_id"
+          },
+          {
+            "field": "supplier.tax_id"
+          },
+          {
+            "field": "invoice.iban"
+          },
+          {
+            "field": "supplier.iban"
+          },
+          {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          }
+        ],
+        "rule_id": "R_VENDOR"
+      }
+    ],
+    "evaluation_date": "2026-09-19",
+    "evaluation_id": "ev_9c5a9dff95326d81819eaf7f3e6a895983d81b3f1c06a864b5cca48379e2db6f",
+    "evaluator": {
+      "capability_version": "decision-capabilities/3",
+      "implementation_sha256": "57bd8b9c926077810bdf6ce342a2bfc28d9df051e0c78fe195d1367daf63c196",
+      "version": "rule-evaluator/2"
+    },
+    "outstanding_findings": [
+      {
+        "code": "SUPPLIER_IDENTITY_AMBIGUOUS",
+        "refs": [
+          {
+            "pointer": "/records",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/0",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/1",
+            "source": "suppliers"
+          },
+          {
+            "field": "supplier.id"
+          },
+          {
+            "pointer": "",
+            "source": "suppliers"
+          }
+        ],
+        "rule_ids": [],
+        "severity": "blocking"
+      },
+      {
+        "code": "AUTHORITY_NOT_GRANTED",
+        "refs": [
+          {
+            "field": "order.currency"
+          },
+          {
+            "pointer": "",
+            "source": "orders"
+          }
+        ],
+        "rule_ids": [],
+        "severity": "info"
+      },
+      {
+        "code": "ERP_UNAVAILABLE",
+        "refs": [
+          {
+            "field": "erp.order_payment_status"
+          }
+        ],
+        "rule_ids": [],
+        "severity": "blocking"
+      },
+      {
+        "code": "UNUSABLE_INPUT",
+        "refs": [
+          {
+            "field": "supplier.id"
+          },
+          {
+            "field": "invoice.supplier_tax_id"
+          },
+          {
+            "field": "supplier.tax_id"
+          },
+          {
+            "field": "invoice.iban"
+          },
+          {
+            "field": "supplier.iban"
+          },
+          {
+            "pointer": "/rules/0",
+            "source": "ruleset"
+          }
+        ],
+        "rule_ids": [
+          "R_VENDOR"
+        ],
+        "severity": "blocking"
+      }
+    ],
+    "policy": {
+      "precedence": [
+        "NO_PAGAR",
+        "ESCALAR",
+        "PAGAR"
+      ],
+      "verdict_semantics": {
+        "FAIL": "on_fail",
+        "NEEDS_REVIEW": "ESCALAR",
+        "PASS": "PAGAR"
+      }
+    },
+    "preliminary_decision": "ESCALAR",
+    "rule_results": [
+      {
+        "applicability": "APPLICABLE",
+        "applied_consequence": "ESCALAR",
+        "capability_id": "canonical/VENDOR/3",
+        "complete": false,
+        "compliance": "NOT_EVALUATED",
+        "evidence_refs": [
+          {
+            "pointer": "/supplier/tax_id",
+            "source": "invoice"
+          },
+          {
+            "pointer": "/records",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/0",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/records/1",
+            "source": "suppliers"
+          },
+          {
+            "pointer": "/payment/iban",
+            "source": "invoice"
+          },
+          {
+            "pointer": "/~1supplier~1tax_id",
+            "source": "evidence"
+          },
+          {
+            "pointer": "/pages/0/blocks/0",
+            "source": "reading"
+          },
+          {
+            "pointer": "/~1payment~1iban",
+            "source": "evidence"
+          }
+        ],
+        "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+        "inputs": [
+          {
+            "fact_pointer": "/fields/supplier.id",
+            "field": "supplier.id",
+            "state": "ambiguous",
+            "value": null
+          },
+          {
+            "fact_pointer": "/fields/invoice.supplier_tax_id",
+            "field": "invoice.supplier_tax_id",
+            "state": "present",
+            "value": "B12345678"
+          },
+          {
+            "fact_pointer": "/fields/supplier.tax_id",
+            "field": "supplier.tax_id",
+            "state": "unavailable",
+            "value": null
+          },
+          {
+            "fact_pointer": "/fields/invoice.iban",
+            "field": "invoice.iban",
+            "state": "present",
+            "value": "ES9121000418450200051332"
+          },
+          {
+            "fact_pointer": "/fields/supplier.iban",
+            "field": "supplier.iban",
+            "state": "unavailable",
+            "value": null
+          }
+        ],
+        "on_fail": "ESCALAR",
+        "reason_codes": [
+          "UNUSABLE_INPUT"
+        ],
+        "rule_id": "R_VENDOR",
+        "rule_ref": {
+          "pointer": "/rules/0",
+          "source": "ruleset"
+        },
+        "status": "BLOCKED",
+        "trace": [
+          {
+            "effective_params": {
+              "check_nif_control_digit": false,
+              "require_active": false,
+              "require_iban_match": true,
+              "require_nif_in_master": true
+            },
+            "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.id",
+            "input_refs": [
+              {
+                "field": "supplier.id"
+              }
+            ],
+            "node": "/rules/0",
+            "operands": [
+              null
+            ],
+            "operation": "resolved_supplier",
+            "reason_code": "UNUSABLE_INPUT",
+            "required": true,
+            "result": "UNKNOWN",
+            "verdict": "BLOCKED"
+          },
+          {
+            "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.supplier_tax_id, supplier.tax_id",
+            "input_refs": [
+              {
+                "field": "invoice.supplier_tax_id"
+              },
+              {
+                "field": "supplier.tax_id"
+              }
+            ],
+            "node": "/rules/0",
+            "operands": [
+              "B12345678",
+              null
+            ],
+            "operation": "==",
+            "reason_code": "UNUSABLE_INPUT",
+            "required": true,
+            "result": "UNKNOWN",
+            "verdict": "BLOCKED"
+          },
+          {
+            "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: invoice.iban, supplier.iban",
+            "input_refs": [
+              {
+                "field": "invoice.iban"
+              },
+              {
+                "field": "supplier.iban"
+              }
+            ],
+            "node": "/rules/0",
+            "operands": [
+              "ES9121000418450200051332",
+              null
+            ],
+            "operation": "==",
+            "reason_code": "UNUSABLE_INPUT",
+            "required": true,
+            "result": "UNKNOWN",
+            "verdict": "BLOCKED"
+          }
+        ]
+      }
+    ],
+    "ruleset": {
+      "policy_id": "balanced",
+      "ruleset_version": "v-test",
+      "sha256": "5f6f0da7967c39ec00745126c80cff13dcf45dbda31e5c24e2a2e39cb50eb9c4",
+      "source": "ruleset"
+    },
+    "schema_version": "evaluation-result/1"
+  },
+  "file_id": "invoice.pdf",
+  "review_record_id": "er_ec5fc3964a90e0d6c2a4af52fc3aa2554a5e3c93e95c28f5589686595ae41261",
+  "review_status": "INCOMPLETE"
+}

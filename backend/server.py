@@ -102,7 +102,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlparse(self.path)
-        if url.path == "/api/resumen":
+        if url.path == "/api/salud":
+            self._salud()
+        elif url.path == "/api/resumen":
             self._json(200, _resumen())
         elif url.path.startswith("/api/factura/"):
             rest = url.path[len("/api/factura/"):]
@@ -200,11 +202,43 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._json(200, body)
 
+    def _salud(self):
+        body = {"ok": False, "postgres": False, "storage_bucket": None,
+                "facturas_dir": str(FACTURAS_DIR), "facturas_en_disco": 0,
+                "procesando": _procesando, "error": None}
+        try:
+            engine = get_store().engine
+            try:
+                engine.repository.preflight()
+                body["postgres"] = True
+            except Exception as exc:  # noqa: BLE001 - health probe must not raise
+                body["error"] = type(exc).__name__
+            try:
+                engine.storage.preflight()
+                body["storage_bucket"] = True
+            except Exception as exc:  # noqa: BLE001 - health probe must not raise
+                body["storage_bucket"] = False
+                body["error"] = body["error"] or type(exc).__name__
+            try:
+                body["facturas_en_disco"] = sum(1 for _ in FACTURAS_DIR.glob("*.pdf"))
+            except OSError as exc:
+                body["error"] = body["error"] or type(exc).__name__
+            body["ok"] = body["postgres"] and body["storage_bucket"] is not False
+        except Exception as exc:  # noqa: BLE001 - health probe must not raise
+            body["error"] = type(exc).__name__
+        self._json(200, body)
 
-def main(port: int = 8010) -> int:
+
+def main(argv=None) -> int:
+    import argparse
+
+    parser = argparse.ArgumentParser(prog="python -m backend.server")
+    parser.add_argument("--host", default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=8010)
+    args = parser.parse_args(argv)
     get_store()
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"revision API en http://127.0.0.1:{port}")
+    server = ThreadingHTTPServer((args.host, args.port), Handler)
+    print(f"revision API en http://{args.host}:{args.port}")
     server.serve_forever()
     return 0
 

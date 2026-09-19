@@ -402,6 +402,30 @@ async def test_flujo_extraction_failure_shows_failed_stage(runtime, monkeypatch)
     assert etapas['evaluada']['estado'] == 'pendiente'
 
 
+def test_salud_reports_dependency_state(runtime, monkeypatch):
+    from backend import server
+
+    engine, _kwargs, _calls, _rules, _workbook_path = runtime
+    monkeypatch.setattr(server, 'STORE', PostgresResultsStore(engine))
+    handler = object.__new__(server.Handler)
+    responses = []
+    handler._json = lambda status, body: responses.append((status, body))
+    handler._salud()
+    status, body = responses[-1]
+    assert status == 200
+    assert body['postgres'] is True
+
+    def fail():
+        raise RuntimeError('synthetic_store_outage')
+
+    monkeypatch.setattr(server, 'get_store', fail)
+    handler._salud()
+    status, body = responses[-1]
+    assert status == 200
+    assert body['ok'] is False
+    assert body['error'] == 'RuntimeError'
+
+
 @pytest.mark.asyncio
 async def test_flujo_pending_and_missing(runtime, monkeypatch):
     from backend import server
