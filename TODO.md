@@ -180,6 +180,58 @@ el modelo de coste medido (T07) y cualquier cosa que envíe correo (T27).
   decisiones cambian, que salte el test y se vea **cuáles**.
   *Hecho cuando:* cambiar un mapeo en la política rompe el test con un diff legible.
 
+- [ ] **T28 · Blindar el camino del lote 2: tres fallos ya localizados** 👤P1 ⏱45m
+  Van con T03, pero no hace falta ensayar a ciegas: los tres están leídos.
+  1. [alberto/cli.py:64](alberto/cli.py#L64) — `next(a.caja.glob("*.xlsx"))` sin
+     default. Si el directorio del lote 2 no trae Excel propio, `todo` revienta
+     con `StopIteration` a las 18:05.
+  2. [alberto/ingesta.py:31](alberto/ingesta.py#L31) — `ON CONFLICT(doc_id) DO
+     NOTHING` no cubre `file_id`, que es `UNIQUE` en el esquema. Un fichero del
+     lote 2 con nombre repetido y contenido distinto tumba la ingesta entera con
+     `IntegrityError`.
+  3. **El inverso, y es el peligroso:** un PDF del lote 2 byte-idéntico a uno del
+     lote 1 se ignora en silencio y conserva `lote='lote1'` → **falta una línea
+     en `outcomes_lote2.jsonl`** → suspende la validación sin que nadie lo vea.
+  *Hecho cuando:* hay un test que mete un PDF duplicado y otro con nombre
+  repetido, y los dos JSONL salen con el número de líneas correcto.
+
+- [ ] **T29 · Que `emite` no pueda mentir** 👤P1 ⏱30m
+  [alberto/salida.py](alberto/salida.py#L51): `verificar()` compara las líneas
+  contra `escritos`, que es el número que acaba de producir la propia escritura.
+  Si el deduplicado descarta un documento, el contador baja con él y la
+  verificación devuelve `ok: true`. Y `f["result"] or "ESCALAR"` **escribe
+  ESCALAR cuando no hay decisión**: lo reporta en `sin_decision` y no falla.
+  El único control que nos separa de suspender la puerta binaria tiene hoy dos
+  formas de mentir.
+  *Hecho cuando:* cuenta contra los PDFs del disco, no contra sí mismo, y aborta
+  con código distinto de 0 si `sin_decision` no está vacío.
+
+- [ ] **T30 · Persistir las métricas del ERP** 👤P1 ⏱15m
+  [alberto/pipeline.py:22](alberto/pipeline.py#L22) hace
+  `{k: v for k, v in informe.items() if k != "metricas"}`: **descartamos a
+  propósito** los contadores de reintentos `ORA-00600`, esperas 429 y relogins.
+  Es la mejor evidencia de resiliencia que tenemos y hoy va a la basura.
+  Guardarlos en `snapshots_erp` y enseñarlos en el parte de trabajo (T26).
+  *Hecho cuando:* tras un `snapshot` se puede responder «reintentamos N veces y
+  esperamos M segundos» con una consulta. Ⓟ 10 (resiliencia) por 15 minutos
+
+- [ ] **T31 · Sacar de `decidir()` lo que debería ser norma** 👤P3 ⏱30m
+  Dos grietas en la tesis «las reglas son datos», y la primera se rompe justo
+  esta tarde:
+  - [alberto/reglas/motor.py:144](alberto/reglas/motor.py#L144) —
+    `self.norma["reglas"][2].get("iva_estandar")` es un **índice posicional**.
+    Si la v4 inserta o reordena una regla, lee la regla equivocada en silencio.
+  - El IVA no estándar, el marcado para revisión y el documento ilegible viven
+    en `decidir()`, no como reglas: **no salen en la traza** como veredictos. Y
+    `iva_no_estandar` dispara **0 veces** hoy, así que nos creemos cubiertos por
+    código muerto.
+  - Bonus barato: [motor.py:42](alberto/reglas/motor.py#L42) `self.hoy =
+    date.today()` hace que una decisión dependa del reloj de pared sin quedar
+    registrado. Irrelevante hoy, crítico si la v4 trae la regla de vencimiento
+    (T23), que es el candidato más probable.
+  *Hecho cuando:* las reglas se buscan por `id`, no por posición, y los tres
+  chequeos aparecen en `reglas_json` con su evidencia.
+
 ---
 
 ## P1 · Los puntos gordos (45 de 100)
@@ -404,16 +456,112 @@ Escrito ahora para poder decir que no a las 4 de la mañana:
 
 ---
 
-## Orden recomendado
+## Orden recomendado · revisado el sábado 10:30
+
+El orden anterior (`T01 → T03 → T02 → T06 → T25 → T26 → T07 → T08 → T04 → T10 →
+T12 → T27 → T16 → T18`) estaba ordenado por **lo que es interesante construir**.
+Esto está ordenado por **lo que nos puede eliminar**.
+
+El diagnóstico, en una línea: hemos construido con criterio de ingeniero de
+producción y nos juzgan con criterio de jurado. Lo que falta no es sistema, es
+**evidencia del sistema** — docs/s, fórmula de coste, contador de reintentos, el
+PDF. Casi todo está ya en la BD; falta sacarlo.
+
+Estimación honesta si defendiéramos hoy: **~50-55 de 110**, con riesgo real de
+**no superar la puerta de validación** por las 29 imágenes.
+
+| Criterio | Pts | Hoy | Por qué |
+|---|---:|---:|---|
+| Producto, arquitectura y ADRs | 35 | ~15 | Falta el PDF (obligatorio) y 4 de los 5 ADRs. Nos presentamos como *pipeline*, no como *trabajador digital* |
+| Trazabilidad y observabilidad | 20 | ~13 | `explica` es excelente. Las señales operativas (reintentos, pendiente, coste) no existen en la BD |
+| Escalabilidad y coste | 25 | ~10 | Sin cifra propia de docs/s, sin fórmula de coste, sin respuesta a «¿y si llegan emails?» |
+| Resiliencia y recuperación | 10 | ~6 | El cliente ERP es bueno y está testeado, pero tira la evidencia (T30) y no hay LLM al que se le pueda caer |
+| Calidad de ejecución | 10 | ~8 | Código limpio y proporcionado, 46 tests |
+| Bonus | +10 | 0 | Nada |
+
+### Bloque 1 · Supervivencia — antes de las 18:00 (~5 h)
 
 ```
-T01 → T03 → T02 → T06 → T25 → T26 → T07 → T08 → T04 → T10 → T12 → T27 → T16 → T18
+T28 → T29 → T02 → T30
 ```
 
-T01 y T03 primero porque son baratos y destapan sorpresas. T06 pronto porque todo
-lo demás se enseña a través de la web — y T25 y T26 van pegados detrás porque son
-dos horas y media que cambian por completo la primera impresión. T16 y T18 tienen
-hora de corte dura: el PDF y el vídeo no se improvisan el domingo a las 9.
+T01 ya está hecho: el repo es público y hay commits de los cuatro.
+
+1. **T28 · blindar el lote 2.** Los tres fallos están localizados y leídos. Es
+   T03 pero sin ensayar a ciegas.
+2. **T29 · que `emite` no pueda mentir.** 30 minutos sobre el único control que
+   nos separa de suspender la puerta binaria.
+3. **T02 · visión para las 29 imágenes.** **Es la puerta, no son puntos.** 29 de
+   500 (5,8 %) van hoy a `ESCALAR` sin haber mirado el documento: si la
+   referencia privada espera `PAGAR` en alguna, no optamos al premio. Y encima
+   envenenan la traza — 29 de nuestros 49 escalados son «no supe leerlo», que es
+   el peor caso posible que enseñar en el minuto 4.
+4. **T30 · persistir las métricas del ERP.** Quince minutos por evidencia
+   directa de un criterio de 10 puntos.
+
+### Bloque 2 · El lote 2 y los puntos gordos — 18:00 a 23:00
+
+```
+T31 → (lote 2 + norma v4) → T10 → T07 + T09
+```
+
+T31 va **antes** de la v4: es exactamente donde se rompe el índice posicional.
+
+**T07 + T09 son 25 puntos casi vacíos y la peor relación puntos/esfuerzo
+restante de todo el backlog.** Tenemos los datos (5,4 ms/doc, 0 €, 471
+documentos) y no tenemos la respuesta. La rúbrica pregunta literalmente «cuántos
+archivos por segundo y con qué hardware» y «qué cambia si Alberto incorpora
+emails u hojas de cálculo». Hoy ninguna de las dos tiene respuesta defendible.
+La frase «500 facturas, 5,4 ms cada una, 0 €, y el LLM solo toca 29» es nuestra
+mejor diapositiva y todavía no existe.
+
+### Bloque 3 · La historia — 23:00 a 02:00
+
+```
+T26 → T25 (sobre un T06 recortado)
+```
+
+**T26 sigue siendo la mejor relación puntos/hora del backlog.** Maisa vende
+trabajadores digitales cuyo razonamiento es auditable, no cajas negras que
+alucinan: extracción determinista, reglas en YAML, y cada decisión con el
+veredicto de cada regla y su evidencia. Estamos contando su tesis sin decirlo, y
+un equipo que llegue con «le metimos un LLM a las 500 facturas» está contando la
+contraria. *«Su manual de empleado es un YAML y el sábado Alberto se lo actualizó
+sin tocar código»* es la frase que nos pueden recordar al día siguiente.
+
+**Recortar T06 a lo imprescindible.** La rúbrica dice explícitamente que un
+backend pequeño bien razonado gana a una app grande sin criterio, y
+`alberto explica` ya cubre el minuto 4-8. La pared de T25 es portada y escala;
+el detalle es `explica` proyectado. Nada más.
+
+### Bloque 4 · Domingo 02:00 a 10:30
+
+```
+T15 → T16
+```
+
+**Es el único documento obligatorio y vale 35 puntos.** Si el domingo a las 8 no
+está, hemos regalado un tercio de la nota por construir algo que nadie va a leer.
+
+### Qué cortamos
+
+- **T27 (agente redactor)**, salvo que todo lo anterior esté cerrado. 2 h 30 con
+  SMTP real a las 3 de la mañana es exactamente cómo se rompe una demo, y los
+  +10 del bonus valen menos que los 35 del PDF. **Descrito en el PDF como diseño
+  puntúa en arquitectura casi igual.**
+- **T13, T14, T22.** Mejoran una historia que ya se cuenta sola.
+- **Perseguir acierto más allá de las 29 imágenes.** Ya está escrito abajo y
+  sigue siendo verdad.
+
+### La pregunta que no tiene respuesta hoy
+
+La rúbrica dedica 10 puntos y 2 minutos de defensa a «qué ocurre si vuestro
+proveedor de LLM falla», y pide el «reparto entre agentes, modelos y personas».
+Hoy la respuesta es *no aplica*, y eso se lee como madurez o como que no hemos
+hecho el reto según cómo lo contemos. Con T02 hecho, la respuesta pasa a ser:
+**«el LLM está en dos sitios acotados, ninguno en el camino crítico de decidir;
+si se cae, esas 29 escalan con motivo y el email sale por plantilla»**. Esa frase
+vale los 10 puntos enteros — y es otra razón para que T02 no se caiga.
 
 ---
 
