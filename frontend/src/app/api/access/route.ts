@@ -18,12 +18,12 @@ export async function POST(request: NextRequest) {
     url.search = "";
     url.searchParams.set("next", safeNext);
     url.searchParams.set("error", "1");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 303);
   }
 
   url.pathname = safeNext;
   url.search = "";
-  const response = NextResponse.redirect(url);
+  const response = NextResponse.redirect(url, 303);
   response.cookies.set(GATE_COOKIE, "granted", {
     httpOnly: true,
     sameSite: "lax",
