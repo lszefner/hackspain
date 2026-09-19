@@ -1,0 +1,339 @@
+{
+  "store_schema_version": "1.0",
+  "ruleset_version": "v3",
+  "generated_at": "2026-09-19T03:17:32",
+  "generated_with": {
+    "rules_ingestion": "0.1.0"
+  },
+  "precedence": [
+    "NO_PAGAR",
+    "ESCALAR",
+    "PAGAR"
+  ],
+  "verdict_semantics": {
+    "PASS": "PAGAR",
+    "NEEDS_REVIEW": "ESCALAR",
+    "FAIL": "on_fail"
+  },
+  "rules": [
+    {
+      "rule_id": "R1",
+      "canonical": "VENDOR",
+      "title": "Proveedor válido y cuenta que coincide",
+      "description": "El proveedor existe en el maestro y está activo; el NIF está en el maestro; el IBAN de la factura coincide con el del maestro. IBAN distinto -> señal de fraude -> ESCALAR.",
+      "source": "master+predefined",
+      "ruleset_version": "v3",
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "vendor_id",
+        "nif",
+        "iban"
+      ],
+      "params": {
+        "require_active": true,
+        "require_nif_in_master": true,
+        "require_iban_match": true,
+        "check_nif_control_digit": true
+      },
+      "trace": {
+        "matched_from": [
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A2",
+            "row": 2,
+            "text": "1. Pagar solo si el NIF esta en el maestro y el IBAN de la factura coincide con el maestro.",
+            "is_rule_conf": 0.9933,
+            "maps_to_conf": 0.6667,
+            "method": "lexical"
+          }
+        ],
+        "backed_by_master": true,
+        "is_rule_conf": 0.9933,
+        "maps_to_conf": 0.6667,
+        "classifier": "jev",
+        "notes": "IBAN mismatch is the marzo-incident fraud signal."
+      }
+    },
+    {
+      "rule_id": "R2",
+      "canonical": "DUPLICATES",
+      "title": "Sin pagos duplicados",
+      "description": "Misma factura + mismo proveedor -> NO_PAGAR (ya pagado / doble envío). Mismo importe + misma fecha -> NEEDS_REVIEW. El estado ERP del pedido debe ser PENDIENTE; PAGADA -> ya pagado -> NO_PAGAR.",
+      "source": "master+predefined",
+      "ruleset_version": "v3",
+      "enabled": true,
+      "on_fail": "NO_PAGAR",
+      "soft_verdict": "NEEDS_REVIEW",
+      "input_fields": [
+        "invoice_number",
+        "vendor_id",
+        "amount",
+        "date",
+        "pedido"
+      ],
+      "params": {
+        "hard_key": [
+          "invoice_number",
+          "vendor_id"
+        ],
+        "soft_key": [
+          "amount",
+          "date"
+        ],
+        "require_erp_pending": true
+      },
+      "trace": {
+        "matched_from": [
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A6",
+            "row": 6,
+            "text": "5. Estado ERP del pedido: PENDIENTE. Nunca pagar dos veces el mismo pedido.",
+            "is_rule_conf": 0.9933,
+            "maps_to_conf": 0.8571,
+            "method": "lexical"
+          }
+        ],
+        "backed_by_master": true,
+        "is_rule_conf": 0.9933,
+        "maps_to_conf": 0.8571,
+        "classifier": "jev",
+        "notes": "Hard key (invoice+vendor) NO_PAGAR; soft key (amount+date) review."
+      }
+    },
+    {
+      "rule_id": "R3",
+      "canonical": "AMOUNT",
+      "title": "Importes e IVA cuadran",
+      "description": "Las líneas suman la base; el IVA está bien calculado; el total = base + IVA (±0,01); moneda EUR; y el importe de la factura coincide con el del pedido (±0,01).",
+      "source": "master+predefined",
+      "ruleset_version": "v3",
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "line_items",
+        "base",
+        "iva",
+        "total",
+        "currency",
+        "pedido"
+      ],
+      "params": {
+        "tolerance_eur": 0.01,
+        "check_line_items_sum": true,
+        "check_iva": true,
+        "check_total_is_base_plus_iva": true,
+        "check_matches_pedido": true,
+        "allowed_currencies": [
+          "EUR"
+        ]
+      },
+      "trace": {
+        "matched_from": [
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A3",
+            "row": 3,
+            "text": "2. El pedido debe existir, pertenecer al proveedor y el importe de la factura debe ser igual al del pedido (tolerancia 0,01 EUR).",
+            "is_rule_conf": 0.9933,
+            "maps_to_conf": 0.8333,
+            "method": "lexical"
+          },
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A4",
+            "row": 4,
+            "text": "3. El IVA debe estar bien calculado y el total debe ser base + IVA, con la misma tolerancia de 0,01 EUR.",
+            "is_rule_conf": 0.9933,
+            "maps_to_conf": 0.8571,
+            "method": "lexical"
+          }
+        ],
+        "backed_by_master": true,
+        "is_rule_conf": 0.9933,
+        "maps_to_conf": 0.8452,
+        "classifier": "jev",
+        "notes": "Absorbs norm sentences 2 (pedido/importe) and 3 (IVA/total)."
+      }
+    },
+    {
+      "rule_id": "R4",
+      "canonical": "AUTHORIZATION",
+      "title": "Autorización por importe (umbral)",
+      "description": "Importe por encima de un umbral -> requiere aprobación humana (ESCALAR). Adición nuestra; OFF en el perfil de la norma v3.",
+      "source": "predefined",
+      "ruleset_version": "v3",
+      "enabled": false,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "total"
+      ],
+      "params": {
+        "escalate_above_eur": 10000.0
+      },
+      "trace": {
+        "matched_from": [],
+        "backed_by_master": false,
+        "is_rule_conf": null,
+        "maps_to_conf": null,
+        "classifier": "predefined-only",
+        "notes": "Not present in norm v3 text; our addition, disabled by profile."
+      }
+    },
+    {
+      "rule_id": "R5",
+      "canonical": "DATES",
+      "title": "Fechas válidas y en plazo",
+      "description": "La fecha es válida y no futura; y está dentro del plazo de pago del proveedor (Condiciones, p.ej. '60 dias').",
+      "source": "master+predefined",
+      "ruleset_version": "v3",
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "date",
+        "vendor_id"
+      ],
+      "params": {
+        "allow_future": false,
+        "enforce_payment_terms": true
+      },
+      "trace": {
+        "matched_from": [
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A5",
+            "row": 5,
+            "text": "4. La fecha debe ser valida y no futura.",
+            "is_rule_conf": 0.982,
+            "maps_to_conf": 1.0,
+            "method": "lexical"
+          }
+        ],
+        "backed_by_master": true,
+        "is_rule_conf": 0.982,
+        "maps_to_conf": 1.0,
+        "classifier": "jev",
+        "notes": "Payment-term window derived from Proveedores.condiciones."
+      }
+    },
+    {
+      "rule_id": "R6",
+      "canonical": "MISSING",
+      "title": "Campos obligatorios presentes",
+      "description": "Faltan datos obligatorios (NIF / IBAN / PEDIDO / IMPORTE / IVA / FECHA) -> ESCALAR para que un humano los complete.",
+      "source": "master+predefined",
+      "ruleset_version": "v3",
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "nif",
+        "iban",
+        "pedido",
+        "importe",
+        "iva",
+        "fecha"
+      ],
+      "params": {
+        "required_fields": [
+          "nif",
+          "iban",
+          "pedido",
+          "importe",
+          "iva",
+          "fecha"
+        ]
+      },
+      "trace": {
+        "matched_from": [
+          {
+            "sheet": "Norma_Pagos_v3",
+            "cell": "A7",
+            "row": 7,
+            "text": "6. Cualquier anomalia que un humano deba ver: ESCALAR con motivo. Ante duda razonable, escalar antes que pagar.",
+            "is_rule_conf": 0.9478,
+            "maps_to_conf": 0.8333,
+            "method": "lexical"
+          }
+        ],
+        "backed_by_master": true,
+        "is_rule_conf": 0.9478,
+        "maps_to_conf": 0.8333,
+        "classifier": "jev",
+        "notes": "Also the catch-all for norm sentence 6 (escalar ante duda)."
+      }
+    }
+  ],
+  "flags": [],
+  "master_data": {
+    "proveedores": 11,
+    "pedidos": 516
+  },
+  "schema": {
+    "proveedores": {
+      "sheet": "Proveedores",
+      "expected_columns": [
+        "ID",
+        "Razon Social",
+        "NIF",
+        "IBAN",
+        "Ciudad",
+        "Condiciones"
+      ],
+      "found_columns": [
+        "ID",
+        "Razon Social",
+        "NIF",
+        "IBAN",
+        "Ciudad",
+        "Condiciones"
+      ],
+      "missing_columns": [],
+      "extra_columns": [],
+      "data_rows": 12
+    },
+    "pedidos": {
+      "sheet": "Pedidos_2026",
+      "expected_columns": [
+        "Pedido",
+        "ProveedorID",
+        "NIF",
+        "Importe_Total",
+        "Estado",
+        "Fecha_Pedido"
+      ],
+      "found_columns": [
+        "Pedido",
+        "ProveedorID",
+        "NIF",
+        "Importe_Total",
+        "Estado",
+        "Fecha_Pedido"
+      ],
+      "missing_columns": [],
+      "extra_columns": [],
+      "data_rows": 516
+    },
+    "norma": {
+      "sheet": "Norma_Pagos_v3",
+      "ruleset_version": "v3",
+      "candidate_lines": 6
+    }
+  },
+  "warnings": [
+    "[proveedores] 1 duplicate key(s) collapsed on 'id' (last-write-wins)"
+  ],
+  "stats": {
+    "rules_total": 6,
+    "rules_enabled": 5,
+    "rules_backed_by_master": 5,
+    "norma_lines": 6,
+    "activations": 6,
+    "flags": 0
+  }
+}

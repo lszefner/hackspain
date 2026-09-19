@@ -5,7 +5,8 @@ LOTE2_ERP ?= ../lote_2_sorpresa/erp_export_lote2.csv
 ERP := $(PYTHON) alberto_erp.py --puerto $(ERP_PORT)
 
 .DEFAULT_GOAL := help
-.PHONY: help erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login
+SCAN_INPUT ?= test_input
+.PHONY: help erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login rules rules-offline scan test
 
 help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
@@ -31,3 +32,15 @@ erp-login: ## Request and print a local ERP session token.
 	@curl --fail --silent --show-error -X POST "http://$(ERP_HOST):$(ERP_PORT)/erp/login" \
 		-d 'usuario=alberto' -d 'clave=FACTURAS2009'
 	@printf '\n'
+
+rules: ## Build the versioned ruleset (JEV + LLM fallback) -> rules.store.json.
+	$(PYTHON) -m rules_ingestion.build_rules
+
+rules-offline: ## Build the ruleset fully offline (no JEV API, no LLM).
+	$(PYTHON) -m rules_ingestion.build_rules --no-jev --no-llm
+
+scan: ## DISCOVERY: scan SCAN_INPUT (default test_input/) for rules hidden in text.
+	$(PYTHON) -m rules_ingestion.build_rules --scan "$(SCAN_INPUT)"
+
+test: ## Run the rules_ingestion test suite.
+	$(PYTHON) -m unittest discover -s tests

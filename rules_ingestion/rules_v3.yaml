@@ -1,0 +1,82 @@
+# rules_v3.yaml · the NORM PROFILE for ruleset version v3.
+#
+# This is the declarative bridge between the free-text norm (Norma_Pagos_v3)
+# and our canonical catalog (catalog.py). It says, for THIS norm version:
+#   - which canonical rules are enabled
+#   - their parameters
+#   - the precedence used to collapse per-rule verdicts into one decision
+#
+# When Alberto ships norm v4 on Saturday, we add rules_v4.yaml (a new profile)
+# and re-run build_rules.py. The old profile stays frozen -> impact analysis
+# is a diff between two stores. Nothing here is code; it is all config.
+
+ruleset_version: "v3"
+source_sheet: "Norma_Pagos_v3"
+description: >
+  Norma de Pagos a Proveedores v3 (vigente), actualizada por A. tras el
+  incidente de marzo. Ante duda razonable, escalar antes que pagar.
+
+# Strict precedence used by the (deterministic) decision layer.
+# A single FAIL that maps to NO_PAGAR beats any number of PAGARs.
+precedence: ["NO_PAGAR", "ESCALAR", "PAGAR"]
+
+# How a per-rule verdict becomes a decision contribution:
+#   PASS         -> PAGAR (this rule is satisfied)
+#   NEEDS_REVIEW -> ESCALAR
+#   FAIL         -> the rule's own `on_fail` (NO_PAGAR or ESCALAR)
+verdict_semantics:
+  PASS: "PAGAR"
+  NEEDS_REVIEW: "ESCALAR"
+  FAIL: "on_fail"
+
+# Canonical rules activated by norm v3. `enabled` here overrides the catalog
+# default. Params tune the catalog rule for this norm version.
+rules:
+  VENDOR:
+    enabled: true
+    params:
+      require_active: true
+      require_nif_in_master: true
+      require_iban_match: true      # IBAN mismatch -> fraud signal -> ESCALAR
+      check_nif_control_digit: true
+
+  DUPLICATES:
+    enabled: true
+    params:
+      # same invoice + same vendor -> NO_PAGAR (already paid / double submit)
+      hard_key: ["invoice_number", "vendor_id"]
+      # same amount + same date -> NEEDS_REVIEW (probable, not certain, dup)
+      soft_key: ["amount", "date"]
+      # ERP state PENDIENTE required; PAGADA -> already paid -> NO_PAGAR
+      require_erp_pending: true
+
+  AMOUNT:
+    enabled: true
+    params:
+      tolerance_eur: 0.01
+      check_line_items_sum: true    # sum(line items) == base
+      check_iva: true               # IVA correctly computed
+      check_total_is_base_plus_iva: true
+      check_matches_pedido: true    # importe factura == importe pedido (norm rule 2)
+      allowed_currencies: ["EUR"]
+
+  DATES:
+    enabled: true
+    params:
+      allow_future: false
+      enforce_payment_terms: true   # within vendor "Condiciones" window
+      # payment terms come from Proveedores.condiciones ("60 dias" -> 60)
+
+  MISSING:
+    enabled: true
+    params:
+      required_fields: ["nif", "iban", "pedido", "importe", "iva", "fecha"]
+      # any missing required field -> ESCALAR (a human must complete it)
+
+  # Our addition, NOT in the norm text. OFF in the v3 norm profile so that
+  # "same input -> same output" against the norm reference is preserved.
+  # Flip enabled:true (or set in rules_v4) to switch on amount-based approval.
+  AUTHORIZATION:
+    enabled: false
+    params:
+      escalate_above_eur: 10000.0   # amount > X -> human (ESCALAR)
