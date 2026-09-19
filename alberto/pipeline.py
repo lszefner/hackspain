@@ -8,6 +8,7 @@ from datetime import date
 from dataclasses import asdict, replace
 from decimal import Decimal
 from pathlib import Path
+from typing import Iterable
 
 from alberto import artefactos as arte
 from alberto.contratos import FacturaExtraida, nfc
@@ -41,15 +42,33 @@ def cargar_maestro(con: sqlite3.Connection, xlsx: Path) -> str:
     return guardar_maestro(con, cargar_excel(xlsx), origen=xlsx.name)
 
 
-def extraer(con: sqlite3.Connection, *, lote: str = "lote1", forzar: bool = False) -> dict:
+def _filtro_docs(doc_ids: Iterable[str] | None,
+                 columna: str = "doc_id") -> tuple[str, list[str]]:
+    """Restringe una consulta a unos documentos concretos.
+
+    None es "todos"; una lista vacia es "ninguno", NO "todos". La subida web
+    decide un solo documento y no puede permitirse reescribir las otras 500.
+    """
+    if doc_ids is None:
+        return "", []
+    ids = list(doc_ids)
+    if not ids:
+        return " AND 0", []
+    return f" AND {columna} IN ({','.join('?' * len(ids))})", ids
+
+
+def extraer(con: sqlite3.Connection, *, lote: str = "lote1", forzar: bool = False,
+            doc_ids: Iterable[str] | None = None) -> dict:
     """Fase 1: extraccion determinista. Barata, sin red y sin coste.
 
     Guarda ademas el texto crudo de pdfplumber como artefacto `raw`: es la
     capa intermedia de procedencia entre el PDF original y los campos.
     """
+    filtro, ids = _filtro_docs(doc_ids)
     pendientes = con.execute(
         "SELECT * FROM documentos WHERE lote=?" + ("" if forzar else
-        " AND doc_id NOT IN (SELECT doc_id FROM extracciones)"), (lote,)).fetchall()
+        " AND doc_id NOT IN (SELECT doc_id FROM extracciones)") + filtro,
+        (lote, *ids)).fetchall()
     hechos = sin_texto = incompletos = 0
     for d in pendientes:
         t0 = time.monotonic()
@@ -121,7 +140,8 @@ def _factura_de_fila(fila: sqlite3.Row) -> FacturaExtraida:
 
 def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str,
             norma: str = "v3", lote: str = "lote1",
-            hoy: date | None = None, pasada: Pasada | None = None) -> dict:
+            hoy: date | None = None, pasada: Pasada | None = None,
+            doc_ids: Iterable[str] | None = None) -> dict:
     asientos = snap.cargar(con, snapshot_erp)
     proveedores = cargar_proveedores(con, snapshot_maestro)
     # Filtrado por snapshot_maestro: sin esto la clave de `decisiones`
@@ -130,12 +150,15 @@ def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str
         r["clave"] for r in con.execute(
             "SELECT clave FROM notas WHERE version_id=? AND ambito='pedido'"
             " AND clave IS NOT NULL", (snapshot_maestro,)))
+    filtro, ids = _filtro_docs(doc_ids, "d.doc_id")
     propia = pasada is None
     if propia:
         pasada = abrir_pasada(con, "decide",
                               {"norma": norma, "lote": lote,
                                "snapshot_erp": snapshot_erp,
-                               "snapshot_maestro": snapshot_maestro}, hoy=hoy)
+                               "snapshot_maestro": snapshot_maestro}
+                              | ({"doc_ids": ids} if doc_ids is not None else {}),
+                              hoy=hoy)
     # El contenido de los dos YAML queda archivado como artefacto: es lo que
     # permite a `alberto audita` reconstruir el motor exacto mas adelante.
     shas = archivar_config(con, norma)
@@ -148,7 +171,7 @@ def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str
     # tabla devolveria dos filas y la decision dependeria del orden del cursor.
     filas = con.execute(
         "SELECT x.* FROM extraccion_vigente x JOIN documentos d USING(doc_id)"
-        " WHERE d.lote=?", (lote,)).fetchall()
+        " WHERE d.lote=?" + filtro, (lote, *ids)).fetchall()
     conteo: dict[str, int] = {}
     for fila in filas:
         f = _factura_de_fila(fila)

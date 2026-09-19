@@ -2,6 +2,39 @@
 
 Decisiones tomadas, no lista de commits. Una entrada por hito.
 
+## 2026-09-19 · Subir una factura sin volver a pagar el procesado
+
+`/subir` acepta un PDF desde la web. La identidad es el **sha256 del
+contenido**, no el nombre: si ya está en la plataforma no se sube ni se
+vuelve a procesar, y se enseña cuándo entró, qué se decidió y por qué.
+
+**Estado:** 133 tests rápidos (24 nuevos) · comprobado en navegador contra
+`alberto web`.
+
+### Lo que se hizo
+
+- `alberto/web/subida.py`: hashea los bytes **antes** de tocar disco, así un
+  duplicado no llega a escribirse. Si la última decisión (o la resolución
+  humana, que manda sobre el motor) fue `PAGAR`, se bloquea; si fue
+  `NO_PAGAR` o `ESCALAR`, hay botón de volver a procesar.
+- **Rechazar depende de las reglas.** Bloquear una factura pagada solo vale
+  si la norma y la política son las que la pagaron. Si han cambiado
+  (`v3@antigua → v3@806e4d`), el motor puede dar otro resultado y el
+  reproceso se ofrece igualmente: negarlo escondería justo la respuesta que
+  se viene a buscar. La huella cubre los dos YAML, que es lo que ya
+  distinguía `norma_version`.
+- `pipeline.extraer` y `pipeline.decidir` aceptan `doc_ids`: se decide **un**
+  documento sin reescribir las otras 500. Lista vacía es "ninguno".
+- `alberto web` ya acepta POST. No es una segunda forma de decidir: llama a
+  las mismas funciones que el CLI, abre su `pasada` y deja `eventos` con
+  `origen: "web"`.
+- Nombre repetido con contenido distinto → se guarda como `X (2).pdf` en vez
+  de reventar con `IntegrityError` (TODO.md T28.2).
+
+El reproceso reutiliza la extracción: la norma cambia, lo que pone el PDF no.
+Las decisiones viejas se conservan, salvo si norma y snapshots son los mismos
+— entonces se avisa de que no había nada que pudiera cambiarlas.
+
 ## 2026-09-19 13:30 CEST · La web enseña datos reales
 
 `frontend/src/lib/data.ts` declaraba una interfaz `DataSource` y la

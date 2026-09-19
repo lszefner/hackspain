@@ -238,3 +238,58 @@ export interface Salud {
   reintentos: number;
   errores24h: number;
 }
+
+// ── la subida web (alberto/web/subida.py) ───────────────────────────
+// Espejo de lo que devuelve la API. No entra en `DataSource`: esa costura
+// es de SOLO LECTURA y el mock no puede subir nada.
+
+/** Lo que se sabe de un fichero que YA estaba en la plataforma. */
+export interface EstadoDocumento {
+  documento: Documento;
+  decision: Decision | null;
+  /** todas las decisiones del doc, de la más reciente a la más antigua */
+  historial: Decision[];
+  resolucion: Resolucion | null;
+  /** la resolución humana manda sobre el motor */
+  ultimo_result: Resultado | null;
+  /** pagada Y con las mismas reglas = no. Si las reglas cambiaron, sí. */
+  reprocesable: boolean;
+  /** por qué NO se puede reprocesar */
+  motivo_bloqueo: string | null;
+  /** por qué SÍ merece la pena, aunque ya estuviera decidida */
+  motivo_reproceso: string | null;
+  /** la huella de las reglas que tomaron la decisión vigente */
+  norma_decision: string | null;
+  /** la huella de las reglas que hay ahora en disco */
+  norma_actual: string | null;
+  norma_cambiada: boolean;
+  aviso: string | null;
+}
+
+export interface ResultadoSubida {
+  ok: boolean;
+  file_id?: string;
+  doc_id?: string;
+  /** el nombre que se pidió, si hubo que renombrar por colisión */
+  renombrado_de?: string | null;
+  tiene_texto?: boolean;
+  decision?: Decision | null;
+  sin_decidir?: string | null;
+  aviso?: string | null;
+  /** solo cuando ok === false por duplicado */
+  duplicado?: EstadoDocumento;
+  nombre_subido?: string;
+  errores?: string[];
+}
+
+export interface ResultadoReproceso {
+  ok: boolean;
+  anterior?: Decision | null;
+  nueva?: Decision | null;
+  /** misma norma y mismos snapshots: la fila se pisa en vez de añadirse */
+  misma_clave?: boolean;
+  pasada_id?: string;
+  motivo?: string;
+  aviso?: string | null;
+  errores?: string[];
+}

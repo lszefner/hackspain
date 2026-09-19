@@ -161,7 +161,8 @@ def main(argv: list[str] | None = None) -> int:
                  "facturas": len(snap["facturas"]),
                  "bytes": a.instantanea.stat().st_size})
             return 0
-        return servir(a.db, puerto=a.puerto, lote=a.lote)
+        return servir(a.db, puerto=a.puerto, lote=a.lote, caja=a.caja,
+                      norma=a.norma)
     if a.cmd == "coste":
         from alberto import validacion
         return validacion.informe_coste(con, lote=a.lote)
