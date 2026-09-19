@@ -1,14 +1,20 @@
 import type { NextRequest } from "next/server";
 import { createHash } from "node:crypto";
 import archive from "@/desk-data/archive.json";
+import dossiers from "@/desk-data/dossiers.json";
 import facts from "@/desk-data/facts.json";
+import invoiceBlocks from "@/desk-data/invoice_blocks.json";
 import system from "@/desk-data/system.json";
 import { batchBlock } from "@/lib/desk/batch";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+// the box itself: the 500 in the archive, not the handful the seeded queue
+// uses. A document already in here has a decision; it does not need a new one.
 const KNOWN = new Set((archive as { file: string }[]).map((r) => r.file));
+const DOSSIERS = dossiers as Record<string, unknown>;
+const INVOICE_BLOCKS = invoiceBlocks as Record<string, unknown>;
 const { system: SYSTEM, model: MODEL, base_url: BASE_URL } = system as {
   system: string; model: string; base_url: string;
 };
@@ -70,7 +76,34 @@ export async function POST(request: NextRequest) {
 
   const said = String(body.text ?? "").trim().slice(0, 1500);
   const b = outcome(files);
-  const panel = batchBlock(b);
+
+  // A document the box already holds is not news, it is a lookup. Show the
+  // decision already taken on it -- the rules, how each came out, the verdict --
+  // instead of a "not run again" line that tells him nothing. Dropping an
+  // invoice off his own desk is how Alberto asks "what did you decide about
+  // this one?", and that answer is real: it comes from the archive, not from
+  // the demo verdicts a fresh file gets.
+  const known = b.dupes.filter((f) => f in INVOICE_BLOCKS).slice(0, 3);
+  const seen = known.map((f) => INVOICE_BLOCKS[f]);
+  const fresh = b.total - b.dupes.length;
+  const onlySeen = seen.length > 0 && fresh === 0;
+
+  const panels = onlySeen ? seen : [batchBlock(b), ...seen];
+  const onScreen = onlySeen
+    ? "the file he just dropped, as the desk already holds it: every rule that ran on it and how each came out"
+    : "the result of the batch Alberto just dropped (counts, amounts, duplicates, files you could not read)" +
+      (seen.length ? ", then the ones already in the box, with their real verdicts" : "");
+  const note = onlySeen
+    ? "\nThis one is NOT new. It is already in the box and already decided, so the verdict on screen is the real one, not demo data. Say what was decided and the single reason that settled it. Never say you just read the PDF."
+    : "\nThe verdicts for the NEW files are demo data and the panel says so; do not claim you truly read those PDFs.";
+  const ask = onlySeen
+    ? `What did you decide about ${known[0]}?`
+    : `I just sent you ${b.label}. In one or two sentences, what would you do first with it?`;
+
+  const world: Record<string, unknown> = { ...facts, the_batch_just_dropped: b };
+  if (known.length) {
+    world.already_in_the_box = Object.fromEntries(known.map((f) => [f, DOSSIERS[f]]));
+  }
   const key = process.env.HELMCODE_API_KEY || process.env.DEEPSEEK_API_KEY;
 
   const enc = new TextEncoder();
@@ -80,24 +113,19 @@ export async function POST(request: NextRequest) {
   const stream = new ReadableStream({
     async start(c) {
       const t0 = Date.now();
-      send(c, { type: "blocks", blocks: [panel] });
+      send(c, { type: "blocks", blocks: panels });
 
       const messages = [
         { role: "system", content: SYSTEM },
         {
           role: "system",
           content:
-            `FACTS (the only source of truth):\n${JSON.stringify({ ...facts, the_batch_just_dropped: b })}\n\n` +
-            `ON SCREEN under your sentence: the result of the batch Alberto just dropped ` +
-            `(counts, amounts, duplicates, files you could not read). Do not restate it.\n` +
-            `The verdicts in this batch are demo data and the panel says so; do not claim ` +
-            `you truly read the PDFs.` +
-            (said ? `\nAlberto sent the batch with a message; answer THAT, using the batch result.` : ""),
+            `FACTS (the only source of truth):\n${JSON.stringify(world)}\n\n` +
+            `ON SCREEN under your sentence: ${onScreen}. Do not restate it.` +
+            note +
+            (said ? `\nAlberto sent the batch with a message; answer THAT, using what is above.` : ""),
         },
-        {
-          role: "user",
-          content: said || `I just sent you ${b.label}. In one or two sentences, what would you do first with it?`,
-        },
+        { role: "user", content: said || ask },
       ];
 
       if (!key) {
