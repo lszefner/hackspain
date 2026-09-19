@@ -20,6 +20,16 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Private access gate
+
+The whole site sits behind an access-code wall (`src/proxy.ts`). Visitors are redirected
+to `/access` until they submit the code, which is then stored in an httpOnly cookie for
+30 days.
+
+Set the code via the `SITE_ACCESS_CODE` environment variable (add it as a Vercel project
+env var for production). It defaults to `albertito` when unset, which is fine for local
+dev but should be overridden for any real deployment.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
