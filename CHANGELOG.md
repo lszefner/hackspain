@@ -2,6 +2,61 @@
 
 Decisiones tomadas, no lista de commits. Una entrada por hito.
 
+## 2026-09-19 13:30 CEST · La web enseña datos reales
+
+`frontend/src/lib/data.ts` declaraba una interfaz `DataSource` y la
+implementaba un mock. Ahora hay una segunda implementación contra
+`alberto.db`, que es lo que de verdad se entrega.
+
+**Estado:** 109 tests rápidos · el frontend compila y renderiza con datos
+reales · ninguna vista tocada.
+
+### Por qué era urgente
+
+La web es real; los números que enseñaba, no. Si el domingo la demo sale de
+ahí, el jurado ve un mock mientras el JSONL dice otra cosa. Es el mismo
+fallo que tuvimos entre `emite` y `explica`, en el sitio más visible.
+
+### Lo que se hizo
+
+`alberto/web/datos.py` implementa los 13 métodos de la interfaz leyendo
+`extraccion_vigente`, `decisiones`, `decision_contexto`, `eventos`,
+`pasadas` y `snapshots_erp`. `alberto web` los sirve en 11 endpoints, y
+`frontend/src/lib/source/alberto.ts` los consume.
+
+**Una sola línea cambiada en `data.ts`**: la que elegía la fuente. Con
+`NEXT_PUBLIC_API_BASE` apuntando a `alberto web`, datos reales; sin él, el
+mock **con un aviso en consola**, porque caer al mock en silencio es
+exactamente lo que no queremos.
+
+Dos traducciones, y solo dos: importes en céntimos enteros en vez de
+`Decimal`, y veredictos `CUMPLE`/`FALLA`/`SIN_DATOS` en vez de
+`PASA`/`FALLA`/`NA`.
+
+### Verificado de verdad
+
+`tsc --noEmit` limpio, `next build` correcto, y la página servida contiene
+`v4@51c7cb`, `v3@806e4d`, los 60.034 € bloqueados y pedidos reales en la
+bandeja. El servidor loguea `[albertito] datos reales desde …`.
+
+Hay un test que compara **lo que se entrega con lo que se pinta** y falla
+si divergen.
+
+### De propina, cifras que no teníamos
+
+- **186,3 documentos/segundo** por la vía determinista, con p50 de 4 ms y
+  p95 de 18 ms. Es la respuesta de capacidad que pedía la rúbrica.
+- La bandeja se clasifica sola: **29 ilegibles, 14 por importe, 4 por campo
+  faltante, 2 a revisar**, y 20 de 49 con destinatario conocido — los
+  mismos números que T27 había contado a mano.
+- `diffNormas` enseña los 424 cambios entre v3 y v4. Solo es posible porque
+  `norma_version` lleva la huella del contenido.
+
+`POST /api/lanzar` sigue siendo un no-op deliberado: reprocesar es
+`alberto decide`, que abre una pasada y registra su contexto.
+
+---
+
 ## 2026-09-19 13:05 CEST · La web lee lo decidido, no vuelve a decidir
 
 Trae el frontend de Next.js desde `main` y le pone debajo un backend que

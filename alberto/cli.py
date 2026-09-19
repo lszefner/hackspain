@@ -153,7 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         from alberto.web import datos as wdatos
         from alberto.web.servidor import servir
         if a.instantanea:
-            snap = wdatos.instantanea(con, lote=a.lote, norma=a.norma)
+            snap = wdatos.instantanea(con, lote=a.lote)
             a.instantanea.parent.mkdir(parents=True, exist_ok=True)
             a.instantanea.write_text(
                 json.dumps(snap, ensure_ascii=False, default=str), encoding="utf-8")
@@ -161,7 +161,7 @@ def main(argv: list[str] | None = None) -> int:
                  "facturas": len(snap["facturas"]),
                  "bytes": a.instantanea.stat().st_size})
             return 0
-        return servir(a.db, puerto=a.puerto, lote=a.lote, norma=a.norma)
+        return servir(a.db, puerto=a.puerto, lote=a.lote)
     if a.cmd == "coste":
         from alberto import validacion
         return validacion.informe_coste(con, lote=a.lote)

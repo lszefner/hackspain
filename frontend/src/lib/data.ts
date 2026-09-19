@@ -258,4 +258,27 @@ const mockSource: DataSource = {
 
 };
 
-export const data: DataSource = mockSource;
+// ── eleccion de fuente ──────────────────────────────────────────────
+// Con NEXT_PUBLIC_API_BASE apuntando a `alberto web`, las vistas leen
+// alberto.db: los mismos numeros que salen en outcomes.jsonl. Sin el, el
+// mock. El aviso de abajo es deliberado: una demo con datos inventados
+// delante del jurado es peor que no tener demo, asi que si caemos al mock
+// tiene que verse en la consola del servidor.
+async function elegirFuente(): Promise<DataSource> {
+  const base = process.env.NEXT_PUBLIC_API_BASE;
+  if (!base) {
+    console.warn("[albertito] sin NEXT_PUBLIC_API_BASE -> DATOS DE MOCK");
+    return mockSource;
+  }
+  try {
+    const { albertoSource, precargarNormas } = await import("./source/alberto");
+    await precargarNormas();
+    console.info(`[albertito] datos reales desde ${base}`);
+    return albertoSource;
+  } catch (e) {
+    console.warn(`[albertito] ${base} no responde -> DATOS DE MOCK`, e);
+    return mockSource;
+  }
+}
+
+export const data: DataSource = await elegirFuente();
