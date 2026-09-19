@@ -19,8 +19,8 @@ worker = [
     "python-dotenv>=1.0,<2",
     "Pillow>=11,<12",
 ]
-# rules_ingestion (master workbook) + the local webui/ review server
-webui = [
+# rules_ingestion (master workbook) + the local backend/ review server
+backend = [
     "openpyxl>=3.1,<4",
     "PyYAML>=6.0,<7",
 ]

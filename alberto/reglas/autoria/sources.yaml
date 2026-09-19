@@ -1,0 +1,97 @@
+# sources.yaml · declarative mapping: file -> sheet -> columns.
+#
+# The loader reads ONLY what is declared here. Everything else in the workbook
+# is treated as noise. This is how we tame "FINAL_v7_DEFINITIVO_ahorasi.xlsx":
+# the chaos lives in the file, the contract lives here.
+#
+# Adding a new file type later (a new sheet, a CSV export, an email dump) is a
+# config change here, not a code change in loader.py.
+
+workbook:
+  # resolved relative to this file's directory (rules_ingestion/), so it is
+  # stable regardless of the current working directory.
+  path: "../FINAL_v7_DEFINITIVO_ahorasi.xlsx"
+
+  # Sheets we deliberately ignore. Kept explicit (not just "everything not
+  # listed") so a reviewer can see we SAW them and chose to drop them.
+  ignore_sheets:
+    - "Pedidos_2025_OLD"    # superseded by Pedidos_2026
+    - "NO_TOCAR"            # literally "do not touch"
+    - "backup_marzo"        # stale backup
+    - "Hoja1"               # empty default sheet
+    - "Hoja1 (2)"           # empty default sheet
+    - "notas_alberto"       # free-form human notes, not data
+    - "pendiente_revisar"   # Alberto's TODO list, not authoritative
+    - "MACROS_ROTAS"        # broken macros
+    - "v6_deprecated"       # previous norm version, superseded by v3 sheet
+    - "tablas_dinamicas"    # pivot tables (derived, not source)
+    - "Sheet3"             # empty
+
+  sheets:
+
+    # --- Master data: vendors -------------------------------------------------
+    proveedores:
+      sheet: "Proveedores"
+      header_row: 1
+      key: "id"                 # dedup key: last-write-wins (handles duplicate P007)
+      columns:
+        id: "ID"
+        razon_social: "Razon Social"
+        nif: "NIF"
+        iban: "IBAN"
+        ciudad: "Ciudad"
+        condiciones: "Condiciones"   # payment terms, e.g. "60 dias"
+      normalize:
+        nif: nif
+        iban: iban
+        razon_social: text
+        condiciones: text
+
+    # --- Master data: purchase orders ----------------------------------------
+    # NOTE: the "Estado" column here is NOT authoritative. The ERP bridge
+    # (alberto_erp.py) owns PENDIENTE/PAGADA. Excel says ABIERTO for everything;
+    # we keep it only for cross-check/telemetry, never for the pay/no-pay state.
+    pedidos:
+      sheet: "Pedidos_2026"
+      header_row: 1
+      key: "pedido"
+      columns:
+        pedido: "Pedido"
+        proveedor_id: "ProveedorID"
+        nif: "NIF"
+        importe_total: "Importe_Total"
+        estado_excel: "Estado"       # renamed to make non-authority explicit
+        fecha_pedido: "Fecha_Pedido"
+      normalize:
+        nif: nif
+        importe_total: importe
+        fecha_pedido: fecha
+      authoritative_state_source: "erp"   # documented, consumed at decision time
+
+    # --- The master NORM (free text -> rules) --------------------------------
+    # Column A holds one rule sentence per row. These strings are fed to JEV
+    # (classify.py) to decide is_rule + maps_to. This is the "master" source.
+    norma:
+      sheet: "Norma_Pagos_v3"
+      header_row: null          # no header; every non-empty A-cell is a candidate
+      ruleset_version: "v3"
+      text_column: "A"
+      # This is the authoritative rules sheet: every line IS a rule by
+      # definition. The classifier skips Noul(is_rule) here and routes on
+      # Choice(maps_to) only. (Noul is used for DISCOVERY of rules hidden in
+      # non-declared sources — see scan mode.)
+      declared_rules: true
+      # Lines matching these (after strip) are metadata, not rules.
+      skip_if_matches:
+        - "^NORMA DE PAGOS"
+        - "^\\(actualizado"
+
+# The ERP is a source too, but a live one (HTTP bridge), not a workbook.
+# Declared here for documentation + so the decision layer knows where truth lives.
+erp:
+  kind: "http_bridge"
+  base_url: "http://127.0.0.1:8009"
+  authoritative_for: ["estado_pedido"]   # PENDIENTE / PAGADA
+  encoding: "ISO-8859-1"
+  date_format: "%d/%m/%Y"
+  amount_format: "es"                     # Spanish format: 12.874,40

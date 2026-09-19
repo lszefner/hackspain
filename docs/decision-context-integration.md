@@ -4,8 +4,8 @@ Status: implemented and verified offline against a disposable local Postgres and
 filesystem backend. No live Supabase deployment has been performed; see "Deployment" below.
 
 All commands in this document run **from the repository root**. Install extras once with
-`uv sync --locked --extra worker --extra webui`. `rules_ingestion` and `webui` are repository
-modules; they are not a published wheel API.
+`uv sync --locked --extra worker --extra backend`. `rules_ingestion` and `backend` are
+repository modules; they are not a published wheel API.
 
 This document describes the implemented boundary between invoice extraction and business-rule
 evaluation, and how to run, persist, and verify it. Where this document disagrees with older
@@ -36,7 +36,7 @@ payment-execution path anywhere in this layer.
 
 - Schema: `rules_ingestion/decision_context.schema.json`, JSON Schema draft 2020-12.
   `Draft202012Validator.check_schema` passes on it; `check_schema` is exercised in
-  `tests/test_decision_integration.py`.
+  `tests/decision_context/test_decision_integration.py`.
 - The schema adds, relative to the original design excerpts: root `file_id`, derived
   `invoice.line_amounts`, `Finding.source_ids`, and additional source kinds
   `master_workbook`, `source_mapping`, `extraction_auxiliary`.
@@ -124,7 +124,7 @@ See `docs/examples/decision-context/snapshots.json` for complete synthetic paylo
   captured; a page containing the token or password is rejected rather than stored.
 - `processed` (kind `history`): payload `{kind: "processed", records: [{file_id,
   invoice_number, supplier_id, total, currency, issue_date, context_id?, captured_at?}],
-  complete: false}` from the review UI's latest-per-file cache. Availability is always
+  complete: false}` from the backend's latest-per-file review cache. Availability is always
   `partial` — this is not a complete ledger and is never used as paid/approved evidence.
   When the current file is evaluated, its own row is excluded (`exclude_file_id`).
 
@@ -142,7 +142,7 @@ VENDOR rule uses only supported parameters and is **not** the deployed balanced 
 all supplier/order/ERP values are synthetic).
 
 ```bash
-uv run --locked --extra worker --extra webui python -m rules_ingestion.decision_cli \
+uv run --locked --extra worker --extra backend python -m rules_ingestion.decision_cli \
   --outcome docs/examples/decision-context/outcome.json \
   --ruleset docs/examples/decision-context/ruleset.json \
   --snapshots docs/examples/decision-context/snapshots.json \
@@ -166,8 +166,9 @@ Two backends; exactly one index per store.
 - `local`: content-addressed blobs under `<local_root>/objects`, immutable
   receipts under `<local_root>/contexts/<context_id>.json` (exclusive create via
   temp-file + fsync + hard link; a conflicting existing receipt is an error, never
-  overwritten). The web UI defaults to this backend (`REVISION_BACKEND` unset → `local`),
-  but `create_decision_store` has no default and the CLI requires explicit `--backend`.
+  overwritten). The revision path defaults to this backend (`REVISION_BACKEND` unset →
+  `local`), but `create_decision_store` has no default and the CLI requires explicit
+  `--backend`.
 - `supabase`: artifacts go through `SupabaseStorage` (existing private bucket, default
   `invoice-ingestion-private`, overridable via `SUPABASE_STORAGE_BUCKET`) and
   `PostgresRepository` (`ingestion.artifacts` plus the new index table). If the Supabase
@@ -203,10 +204,11 @@ A database owner/admin can still modify records — this is not cryptographic ta
 integrity is enforced because `load` re-verifies every digest and replays the evaluation, so
 drift is detected rather than silently trusted.
 
-The web UI's SQLite store is a **latest-per-file cache**, not the record of truth. On a
-failed re-run it clears the current decision/checks but retains the prior `decision_context`
-and `context_receipt` as labelled evidence ("Ultima evidencia guardada; no recomendacion
-vigente"); the durable receipt/context bytes live in the decision store.
+The backend's SQLite store (`backend/results_store.py`) is a **latest-per-file cache**, not
+the record of truth. On a failed re-run it clears the current decision/checks but retains
+the prior `decision_context` and `context_receipt` as stored evidence for API/CLI access;
+the durable receipt/context bytes live in the decision store. No presentation changes ship
+in this work.
 
 ## Environment
 
@@ -269,10 +271,17 @@ against the installed CLI). Then apply for real only after operator review of th
 ## Tests
 
 ```bash
-uv run --locked --extra worker --extra webui pytest -q \
-  tests/test_decision_storage.py tests/test_decision_integration.py tests/test_storage.py
-uv run --locked --extra worker --extra webui pytest -q tests   # full suite
+uv run --locked --extra worker --extra backend pytest -q tests/decision_context
 ```
 
-Postgres tests use only the disposable local instance from `tests/conftest.py` and skip when
-`initdb`/`postgres` binaries are unavailable. No test calls paid APIs or shared databases.
+Postgres tests use only the disposable local instance from
+`tests/decision_context/conftest.py` and skip when `initdb`/`postgres` binaries are
+unavailable. No test calls paid APIs or shared databases.
+
+## Compatibility note
+
+`main` now includes the separate `alberto/` pipeline and a Next.js frontend;
+`backend/server.py` is the preserved JSON API, not the frontend server. This work extends the preserved `ingestion`/`rules_ingestion` modules
+plus the `backend/` revision path and the offline decision CLI; it does **not** wire this
+context into `alberto/` and changes no current frontend. `frontend/`, `backend/server.py`,
+and `alberto/` are preserved from `main` unchanged.

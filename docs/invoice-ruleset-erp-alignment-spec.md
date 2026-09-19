@@ -1,6 +1,7 @@
 # Invoice–ruleset–ERP alignment: traceable decision-context specification
 
-Date: 2026-09-19  
+Date: 2026-09-19
+
 Status: implemented and verified offline; see `docs/decision-context-integration.md` for the
 authoritative implemented contract. This document remains the design rationale; where its
 illustrative excerpts differ from `rules_ingestion/decision_context.schema.json`, the machine
@@ -726,12 +727,15 @@ Challenge 3 receives the structured invoice, resolved master/ERP context, applic
 | `rules_ingestion/decision_storage.py` | Immutable artifact persistence, local + fail-closed Supabase backends, replay-verified load |
 | `rules_ingestion/decision_cli.py` | Offline `python -m rules_ingestion.decision_cli` entrypoint |
 | `supabase/migrations/20260919111816_decision_contexts.sql` | Private `ingestion.decision_contexts` index, RLS, no frontend grants |
-| `webui/map_invoice.py` | Conservative mapping (no invented VAT/currency) plus `to_decision_context` seam |
+| `backend/map_invoice.py` | Conservative mapping (no invented VAT/currency) plus `to_decision_context` seam |
 | `rules_ingestion/loader.py` | Original row/cell provenance and uncollapsed candidates while preserving legacy consumers |
-| `webui/master_data.py` | Explicit source availability/coverage, snapshot metadata, bounded ERP capture |
-| `webui/results_store.py` | Decision-context/receipt columns, retained evidence, processed-history snapshot |
-| `webui/run_revision.py`, `webui/server.py` | Revision seam, persistence-before-done ordering, escaped evidence display |
-| `tests/test_decision_*.py`, `docs/decision-context-integration.md`, `docs/examples/decision-context/` | Focused tests, integration guide, synthetic runnable inputs |
+| `backend/master_data.py` | Explicit source availability/coverage, snapshot metadata, bounded ERP capture |
+| `backend/results_store.py` | Decision-context/receipt columns, retained evidence, processed-history snapshot |
+| `backend/run_revision.py` | Revision seam and persistence-before-done ordering |
+| `tests/decision_context/`, `docs/decision-context-integration.md`, `docs/examples/decision-context/` | Focused tests, integration guide, synthetic runnable inputs |
+
+No UI changes: `frontend/`, `backend/server.py`, and `alberto/` are preserved from `main`
+unchanged.
 
 No extraction-schema, provider-prompt, benchmark, canonical-check-body, or profile changes
 were made. Persistence scope (private Supabase Storage + `ingestion.decision_contexts`) was

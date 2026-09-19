@@ -1,100 +1,143 @@
-# MAISA TRACK · 500 sombras de Alberto
+# Alberto · pipeline de decisión de pago
 
-**Construid una solución en el formato que el problema merezca. Defended por qué.**
+Track Maisa, HackSpain '26. Decide `PAGAR` / `NO_PAGAR` / `ESCALAR` sobre las
+facturas de La Caja, con traza completa de cada decisión.
 
-Alberto procesa facturas, Excel y datos de un ERP legado. Hoy son 500 facturas; mañana querrá nuevos tipos de archivo, más volumen y respuestas aunque un proveedor de modelos falle. Vuestro trabajo no es acertar un benchmark: es construir un sistema al que Alberto pueda confiar una operación real.
+## Son DOS repos
 
-| Cuándo | Dónde | Equipos | Caso común |
-| --- | --- | --- | --- |
-| 18-20 sep 2026 | ETSIT UPM, Madrid | 2-5 personas, hasta 15 equipos | 500 Sombras de Alberto |
+| Repo | Qué es | Quién lo toca |
+|---|---|---|
+| **este repo** | Nuestra solución **y La Caja**: las 500 facturas, el Excel y `alberto_erp.py` (el bridge de 2009) viven en la raíz | Los 4, todo el fin de semana |
+| **`la-caja-outcomes`** | La entrega. Público, con **exactamente 3 ficheros** en la raíz: `outcomes.jsonl`, `outcomes_lote2.jsonl`, `albertitos_plan.pdf` | Se crea el domingo por la mañana |
 
-## El reto
+El segundo es el que se entrega. **Nunca subimos ahí nuestro código**: las bases
+del reto lo prohíben explícitamente (`no subáis vuestra solución, credenciales ni
+una aplicación ejecutable`). Esa prohibición es sobre el repo de entrega, no
+sobre este: aquí La Caja está commiteada, igual que en `main`, para que el repo
+sea autosuficiente y nadie tenga que configurar rutas.
 
-Recibís 500 Sombras de Alberto: 500 facturas en PDF, un Excel caótico y un ERP de 2009. Construid una solución que procese ese mundo y tome decisiones de pago. El formato es libre: un binario de backend, una herramienta para agentes, una CLI, una app web o algo distinto. Elegidlo porque resuelve mejor el problema, no porque sea lo habitual.
+Por eso `alberto` encuentra La Caja solo: si existe `ALBERTO_CAJA` la usa, si
+tienes un clon en `caja/` lo usa, y si no tira de la raíz del repo, que es donde
+están `facturas/` y el Excel.
 
-La Caja es el caso común para comprobar que el sistema funciona. La organización conserva los resultados esperados y los usa solo para validar entregas. La competición empieza después: queremos ver vuestro criterio de producto e ingeniería.
+## Puesta en marcha
 
-## Lo que queremos entender
-
-En la defensa tendréis que sostener estas seis cuestiones:
-
-1. **Producto, arquitectura y ADRs.** ¿Qué problema resolvéis, para quién, y por qué esta forma de producto, arquitectura y uso de agentes era la elección correcta? Compartid el resumen de las decisiones y alternativas que registrasteis.
-2. **Trazabilidad y observabilidad.** ¿Cómo seguís una decisión desde el input hasta el resultado? ¿Qué señales permiten a Alberto detectar errores, reintentos, trabajo pendiente y coste?
-3. **Escala, evolución y coste.** ¿Cuántos archivos procesáis por segundo, con qué hardware y bajo qué condiciones? ¿Cómo calculáis el coste? Si Alberto incorpora PDFs escaneados, emails, hojas de cálculo u otros tipos de archivo, ¿qué cambia: configuración, conectores, prompts, esquemas o código?
-4. **Resiliencia y recuperación.** ¿Qué ocurre si vuestro proveedor de LLM falla, rate-limita o devuelve una respuesta inválida? ¿Cómo conserváis el trabajo, evitáis duplicados, degradáis y recuperáis?
-5. **Calidad de ejecución.** ¿Es una solución clara, proporcionada y agradable de operar? ¿Sus decisiones y límites tienen sentido para Alberto?
-6. **Bonus: una mejora para Alberto (+10!).** ¿Qué necesidad adicional habéis detectado, implementado y mostrado, más allá del flujo obligatorio?
-
-No hay una respuesta o interfaz única. Un backend pequeño y bien razonado puede superar a una aplicación grande sin criterio.
-
-## La Caja y la validación
-
-Para participar por el premio, vuestro sistema debe procesar la Caja y entregar sus outcomes en JSONL. La organización los contrasta contra los resultados de referencia, que no se publican.
-
-La validación es **binaria y no da puntos**: debe haber exactamente un outcome por cada archivo y su `result` debe coincidir con uno de los resultados esperados de la referencia privada. Si no superáis la validación, podéis defender el proyecto y recibir feedback, pero no optar al premio. No se publica un ranking y esos resultados no rompen empates.
-
-El sábado Alberto enviará un lote adicional y una regla nueva. El domingo podrá cambiar un dato de la Caja. La organización conoce el efecto esperado para comprobar que la demo es real; no se asignan puntos por el número de coincidencias. La conversación se centra en cómo diseñasteis el cambio, el reprocesado y los límites de vuestro sistema.
-
-## Qué recibís
-
-| Viernes 21:00 | Sábado 18:00 |
-| --- | --- |
-| 500 facturas PDF, Excel, ERP local| 40 facturas adicionales, actualización del ERP y norma v4 |
-| Esta guía y la rúbrica | Escenario sorpresa |
-
-## Qué se entrega (domingo 10:30, Madrid)
-
-Compartid el `teamId` y la URL de un repositorio público de GitHub. Usad un repositorio separado para esta entrega: no subáis vuestra solución, credenciales ni una aplicación ejecutable. La única documentación requerida es `albertitos_plan.pdf`.
-
-La raíz del repositorio debe contener exactamente estos tres archivos:
-
-```text
-la-caja-outcomes/
-├── outcomes.jsonl
-├── outcomes_lote2.jsonl
-└── albertitos_plan.pdf
+```bash
+# una vez
+python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ```
 
-Cada archivo contiene un objeto JSON por archivo de La Caja. Solo son obligatorios `file_id` y `result`. Podéis añadir campos de traza si os ayudan a explicar la decisión durante el pitch.
+La Caja ya está en el repo, así que no hay nada que clonar ni que configurar.
+Si prefieres usar tu propio clon:
 
-```json
-{"file_id":"factura_5518.pdf","result":"PAGAR"}
-{"file_id":"FA-4475_informática.pdf","result":"ESCALAR"}
+```bash
+export ALBERTO_CAJA=~/HackSpain/500-sombras-de-alberto
 ```
 
-`albertitos_plan.pdf` debe tener dos secciones: **Arquitectura** y **ADRs / trade-offs**. La primera debe explicar componentes, flujo de datos y estado, reparto entre agentes, modelos y personas, y cómo se observan y recuperan los fallos. La segunda debe resumir entre dos y cinco decisiones relevantes, con contexto, alternativas consideradas, decisión, consecuencias aceptadas y evidencia. No hace falta que sea largo: debe servir para preparar la defensa y hacer explícito vuestro criterio.
+## Dos terminales
 
-La organización clonará el repositorio a las 10:30, registrará el commit y ejecutará su verificador privado sobre los dos JSONL. No ejecutará código del equipo y no verá ni pedirá credenciales. La ausencia o mala calidad de `albertitos_plan.pdf` no elimina la elegibilidad si los dos JSONL son correctos, pero puede dejar sin puntos el criterio de Producto, arquitectura y ADRs. Los organizadores podrán hacer preguntas sobre cualquier decisión, alternativa o trade-off registrado en el PDF.
+```bash
+# Terminal 1 — el bridge ERP de 2009. Se queda abierto.
+make erp                     # make erp-fast le quita la latencia artificial
 
-## Cómo se evalúa
+# Terminal 2 — el pipeline
+./venv/bin/python -m alberto.cli todo
+```
 
-Un solo tribunal ve todos los proyectos con el mismo guion de 10 minutos. La validación funcional ya estará resuelta y no ocupa la puntuación.
+`todo` encadena las cinco etapas y deja `outcomes.jsonl` listo. Tarda ~10 s.
 
-1. **Demo y contexto (2 min).** Enseñad la solución y el problema concreto que resuelve.
-2. **Arquitectura y ADRs (2 min).** Explicad el formato, la arquitectura, el reparto entre agentes, modelos y personas, y el resumen de decisiones registradas.
-3. **Trazabilidad, observabilidad, escala y coste (4 min).** Seguid una decisión real, mostrad las señales operativas y defended capacidad, fórmula de coste, supuestos y evolución ante nuevos inputs. Si habéis construido una mejora adicional para Alberto, enseñadla durante la demo.
-4. **Resiliencia y preguntas (2 min).** Explicad o demostrad qué sucede ante una caída del proveedor de LLM, y responded a preguntas del tribunal.
+## Los verbos, por separado
 
-| Criterio | Qué mide | Puntos |
-| --- | --- | ---: |
-| **Producto, arquitectura y ADRs** | Problema, formato, decisiones, alternativas y trade-offs | 35 |
-| **Trazabilidad y observabilidad** | Decisiones auditables, estado y señales operativas | 20 |
-| **Escalabilidad y coste** | Capacidad, límites, cálculo económico y evolución | 25 |
-| **Resiliencia y recuperación** | Fallos de proveedor, estado, degradación y recuperación | 10 |
-| **Calidad de ejecución** | Claridad, proporción, experiencia y calidad de ejecución | 10 |
-| **Bonus: mejora adicional para Alberto** | Necesidad real, originalidad, implementación y demostración | 10 |
+| Comando | Qué hace |
+|---|---|
+| `alberto ingesta` | Recorre `facturas/`, hashea, normaliza a NFC, registra estado |
+| `alberto snapshot` | Descarga los 516 asientos del ERP y los versiona |
+| `alberto maestro` | Carga el Excel: proveedores (deduplicados) y notas de Alberto |
+| `alberto extrae` | PDF → campos. `--forzar` para reextraer |
+| `alberto decide` | Aplica `reglas/norma_v3.yaml` + `politica.yaml` |
+| `alberto emite` | Escribe el JSONL y lo verifica antes de entregarlo |
+| `alberto estado` | En qué punto está cada documento |
 
-## Qué no os pedimos
+Cada uno acepta `--caja`, `--erp-url`, `--db`, `--lote`.
 
-- No una interfaz concreta ni un stack concreto.
-- No un benchmark de OCR ni una demo de un modelo aislado.
-- No una promesa abstracta de escala: explicad las condiciones y evidencias de vuestras cifras.
-- No alta disponibilidad perfecta en un fin de semana: sí una estrategia honesta cuando un proveedor falla.
+## El sábado a las 18:00 (lote 2 y norma v4)
 
-Todos los datos son sintéticos.
+Por diseño, esto **no debería tocar código**:
 
-## Premio
+```bash
+# 1. ERP actualizado
+cd caja && make erp-lote2
 
-Un viaje al HQ de Maisa en Valencia para vivir la experiencia Maisa, más un teclado para cada integrante del equipo ganador.
+# 2. las 40 facturas nuevas
+./venv/bin/python -m alberto.cli --lote lote2 --caja ruta/al/lote2 todo \
+    --salida outcomes_lote2.jsonl
 
-# la_intersecion
+# 3. la norma nueva: se copia el YAML, se edita, y se reprocesa
+cp alberto/reglas/norma_v3.yaml alberto/reglas/norma_v4.yaml
+$EDITOR alberto/reglas/norma_v4.yaml
+./venv/bin/python -m alberto.cli decide --norma v4
+```
+
+Las decisiones v3 **no se borran**: la clave primaria es
+`(doc_id, norma_version, snapshot_erp, snapshot_maestro)`. Una sola consulta
+enseña qué cambió entre v3 y v4 y por qué — eso es el minuto 3 de la defensa.
+
+```sql
+SELECT a.file_id, a.result AS v3, b.result AS v4, b.motivo
+FROM decisiones a JOIN decisiones b USING (doc_id)
+WHERE a.norma_version='v3' AND b.norma_version='v4' AND a.result <> b.result;
+```
+
+## Cómo probar
+
+**Tests automáticos.** Los rápidos no necesitan nada:
+
+```bash
+./venv/bin/python -m pytest tests -q -m "not lento"   # 39 tests, 0,1 s
+./venv/bin/python -m pytest tests -q                  # los 46, con ERP levantado
+```
+
+Cubren el vocabulario (`RECHAZAR` es imposible), los dos formatos numéricos y
+los tres de fecha, cada regla con su fallo, la idempotencia de la ingesta y el
+reproceso, que los 9 pedidos ya pagados nunca se pagan, y que el JSONL es
+entregable.
+
+**Seguir UNA factura de principio a fin.** Es la herramienta de depuración y a
+la vez el minuto 4-8 de la defensa:
+
+```bash
+./venv/bin/python -m alberto.cli explica 2026-01-08_P001      # una que se paga
+./venv/bin/python -m alberto.cli explica 2026-07-08_P010      # IBAN que no cuadra
+./venv/bin/python -m alberto.cli explica 2026-0811-B_catering # total inflado
+```
+
+Acepta cualquier trozo del nombre. Muestra los campos extraídos, si la
+aritmética cierra, el veredicto de cada regla con su evidencia, la decisión con
+su motivo, y las notas de Alberto que apliquen.
+
+**Ver el reparto y hurgar en SQL:**
+
+```bash
+./venv/bin/python -m alberto.cli estado
+sqlite3 alberto.db "SELECT result, count(*) FROM decisiones GROUP BY result"
+sqlite3 alberto.db "SELECT file_id, motivo FROM decisiones JOIN documentos USING(doc_id) WHERE result='NO_PAGAR'"
+```
+
+## Antes de entregar
+
+`alberto emite` ya verifica JSON válido, vocabulario (`PAGAR`/`NO_PAGAR`/`ESCALAR`),
+`file_id` en NFC, sin duplicados y con el número de líneas esperado. Si sale
+`"ok": true`, el fichero se puede entregar.
+
+## Qué NO está hecho todavía
+
+- **Visión para las 29 facturas que son imagen.** Hoy se escalan con motivo.
+- La web de traza (seguir una decisión en pantalla) y la bandeja de escalados.
+- El modelo de coste medido.
+
+## `legacy/`
+
+El primer prototipo que circuló por el equipo. Se conserva como referencia pero
+**no se usa**: emitía `RECHAZAR` (que no es un resultado válido y suspende la
+validación binaria) y acertaba el pedido en 219 de 471 facturas. El porqué está
+en `docs/adr/ADR-001`.

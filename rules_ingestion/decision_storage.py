@@ -396,7 +396,7 @@ class DecisionStore:
 
 def create_decision_store(backend: str, *, local_root: Path) -> DecisionStore:
     if backend == "local":
-        from webui.local_backend import LocalStorage
+        from backend.local_backend import LocalStorage
 
         root = Path(local_root)
         return DecisionStore(LocalStorage(root / "objects"),
