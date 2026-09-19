@@ -34,7 +34,8 @@ async def test_request_and_response_are_explicit_and_bounded():
         body = json.loads(request.content)
         assert body["model"] == "explicit-model"
         assert body["temperature"] == 0
-        assert body["max_tokens"] == 8192
+        assert body["max_tokens"] == 32768
+        assert body["reasoning_effort"] == "low"
         assert body["response_format"] == {"type": "json_object"}
         assert body["messages"][0] == {"role": "system", "content": SYSTEM_PROMPT}
         user = json.loads(body["messages"][1]["content"])

@@ -67,7 +67,8 @@ class DeepSeekReviewProvider:
         body = {"model": self.model, "messages": [
             {"role": "system", "content": request["system_prompt"]},
             {"role": "user", "content": canonical_bytes(user).decode("utf-8")},
-        ], "temperature": 0, "response_format": {"type": "json_object"}, "max_tokens": 8192}
+        ], "temperature": 0, "response_format": {"type": "json_object"},
+            "max_tokens": 32768, "reasoning_effort": "low"}
         chunks = bytearray()
         try:
             async with (

@@ -349,11 +349,11 @@ def _duplicates(frame):
             wording = {"processed": "submitted", "approved": "approved", "paid": "paid"}[name]
             frame.add("FAIL", code, f"The same invoice number and supplier already has a {wording} record.", names, "hard_duplicate", refs=hard)
         if soft:
-            frame.add("NEEDS_REVIEW", "SOFT_DUPLICATE_MATCH", "Another record has the same amount, date, and currency; this alone does not prove a duplicate invoice.", ["invoice.total", "invoice.issue_date", "invoice.currency"], "soft_duplicate", refs=soft)
+            frame.add("NEEDS_REVIEW", "SOFT_DUPLICATE_MATCH", "Another record has the same amount and date; this alone does not prove a duplicate invoice.", ["invoice.total", "invoice.issue_date"], "soft_duplicate", refs=soft)
         if observation["coverage"] != "complete":
             frame.add("BLOCKED", "HISTORY_COVERAGE_INCOMPLETE", f"The {name} history cannot establish absence of other duplicates.", names, "history_coverage", refs=[r for r in observation["inputs"] if "source" in r])
         elif not hard and not soft:
-            frame.add("PASS", "NO_HISTORY_DUPLICATE", f"No hard or soft match in complete {name} history.", ["invoice.number", "supplier.id", "invoice.total", "invoice.issue_date", "invoice.currency"], "history_match", refs=[r for r in observation["inputs"] if "source" in r])
+            frame.add("PASS", "NO_HISTORY_DUPLICATE", f"No hard or soft match in complete {name} history.", ["invoice.number", "supplier.id", "invoice.total", "invoice.issue_date"], "history_match", refs=[r for r in observation["inputs"] if "source" in r])
 
 
 def execute_rule(rule: dict, plan: dict, context: dict) -> dict:

@@ -495,6 +495,55 @@ def test_malformed_evidence_links_still_produce_accountable_results(links):
     assert result["rule_results"][0]["status"] == "BLOCKED"
 
 
+def test_missing_invoice_currency_does_not_block_complete_history():
+    # The soft key is amount+date; an unprinted currency is not a coverage gap.
+    invoice = fixtures.make_invoice(currency=None)
+    snapshots = fixtures.make_snapshots()
+    bundle, result = run([rule("DUPLICATES")], invoice=invoice, snapshots=snapshots)
+    observation = bundle.context["history_observations"]["processed"]
+    assert observation["coverage"] == "complete"
+    assert result["rule_results"][0]["status"] == "PASS"
+    assert result["preliminary_decision"] == "PAGAR"
+    assert any(step.get("reason_code") == "NO_HISTORY_DUPLICATE"
+               for step in result["rule_results"][0].get("trace", []))
+
+
+def test_record_without_currency_keeps_history_complete():
+    snapshots = fixtures.make_snapshots()
+    snapshots["processed"] = history(rows=[record(
+        invoice_number="OTHER", supplier_id="P999",
+        total="999.00", currency=None)])
+    bundle, _result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert bundle.context["history_observations"]["processed"]["coverage"] == "complete"
+
+
+def test_soft_match_currency_rules():
+    base = record(invoice_number="OTHER", supplier_id="P999")
+    snapshots = fixtures.make_snapshots()
+    # Both currencies present and different: not a soft match.
+    snapshots["processed"] = history(rows=[{**base, "currency": "USD"}])
+    bundle, _result = run([rule("DUPLICATES")], snapshots=snapshots)
+    observation = bundle.context["history_observations"]["processed"]
+    assert observation["soft_matches"] == []
+    assert observation["coverage"] == "complete"
+    # One currency missing: the soft match stands.
+    snapshots["processed"] = history(rows=[{**base, "currency": None}])
+    bundle, result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert len(bundle.context["history_observations"]["processed"]["soft_matches"]) == 1
+    assert result["rule_results"][0]["status"] == "NEEDS_REVIEW"
+    assert result["preliminary_decision"] == "ESCALAR"
+
+
+def test_malformed_record_currency_marks_coverage_partial():
+    snapshots = fixtures.make_snapshots()
+    snapshots["processed"] = history(rows=[record(
+        invoice_number="OTHER", supplier_id="P999", currency="eur")])
+    bundle, result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert bundle.context["history_observations"]["processed"]["coverage"] == "partial"
+    assert result["rule_results"][0]["status"] == "BLOCKED"
+    assert result["preliminary_decision"] == "ESCALAR"
+
+
 def test_implementation_drift_fails_explicitly(monkeypatch):
     bundle, _ = run()
     monkeypatch.setattr(evaluator, "implementation_identity", lambda: "0" * 64)
