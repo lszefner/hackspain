@@ -9,7 +9,7 @@ import psycopg
 import pytest
 
 ROOT = Path(__file__).parents[1]
-MIGRATION = next((ROOT / "supabase" / "migrations").glob("*.sql"))
+MIGRATIONS = sorted((ROOT / "supabase" / "migrations").glob("*.sql"))
 
 
 @pytest.fixture(scope="session")
@@ -69,7 +69,8 @@ def postgres_dsn(tmp_path_factory: pytest.TempPathFactory) -> str:
                 raise RuntimeError(f"postgres exited during startup: {details}")
             try:
                 with psycopg.connect(dsn, connect_timeout=1) as connection:
-                    connection.execute(MIGRATION.read_text(encoding="utf-8"))
+                    for migration in MIGRATIONS:
+                        connection.execute(migration.read_text(encoding="utf-8"))
                     connection.commit()
                 break
             except psycopg.OperationalError:
@@ -96,5 +97,6 @@ def db(postgres_dsn: str):
     with psycopg.connect(postgres_dsn) as connection:
         connection.execute("DROP SCHEMA IF EXISTS ingestion CASCADE")
         connection.commit()
-        connection.execute(MIGRATION.read_text(encoding="utf-8"))
+        for migration in MIGRATIONS:
+            connection.execute(migration.read_text(encoding="utf-8"))
         connection.commit()
