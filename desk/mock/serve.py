@@ -410,7 +410,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(400)
         name = str(req.get("act") or "")
         out = (state.undo() if name == "undo"
-               else state.act(name, req.get("key"), req.get("reason")))
+               else state.act(name, req.get("key"), req.get("reason"),
+                              req.get("payload")))
         if out.get("refresh"):
             out["panels"] = {k: state.block(k) for k in ("queue", "payments", "report")}
         return self._json(out)
