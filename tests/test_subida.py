@@ -13,6 +13,7 @@ from urllib.parse import quote
 import httpx
 import pytest
 
+from alberto import caja
 from alberto.contratos import Asiento, FacturaExtraida, Proveedor
 from alberto.db import conectar
 from alberto.erp import snapshot as snap
@@ -23,8 +24,9 @@ from alberto.web import subida
 from alberto.web.servidor import crear_handler
 
 RAIZ = Path(__file__).resolve().parents[1]
-CON_TEXTO = RAIZ / "facturas" / "2026-01-08_P001.pdf"
-SIN_TEXTO = RAIZ / "facturas" / "scan_001.pdf"
+# Muestras de solo lectura: salen de La Caja resuelta, no de la raiz.
+CON_TEXTO = caja.facturas() / "2026-01-08_P001.pdf"
+SIN_TEXTO = caja.facturas() / "scan_001.pdf"
 
 NIF, IBAN, PEDIDO = "B46102331", "ES2100491500051234567890", "PO-2026-0096"
 # La huella de las reglas que hay en disco AHORA. Una decision tomada con

@@ -10,7 +10,10 @@
 workbook:
   # resolved relative to this file's directory (rules_ingestion/), so it is
   # stable regardless of the current working directory.
-  path: "../FINAL_v7_DEFINITIVO_ahorasi.xlsx"
+  #
+  # La Caja is no longer loose in the repo root: `caja/` is the live copy,
+  # seeded with `make caja` from the newest snapshot in `caja_de_alberto/`.
+  path: "../caja/FINAL_v7_DEFINITIVO_ahorasi.xlsx"
 
   # Sheets we deliberately ignore. Kept explicit (not just "everything not
   # listed") so a reviewer can see we SAW them and chose to drop them.

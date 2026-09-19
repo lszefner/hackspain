@@ -1,6 +1,7 @@
-# La Caja SI esta commiteada en la raiz (facturas/, el Excel, alberto_erp.py),
-# por consistencia con main y para que el repo sea autosuficiente. Lo que se
-# ignora es un clon local aparte, por si alguien prefiere trabajar asi.
+# La Caja esta commiteada, pero en caja_de_alberto/vN: instantaneas con
+# manifiesto de lo que publica la organizacion. Lo que se ignora es la copia
+# VIVA, `caja/`, porque la subida web escribe dentro y no queremos los PDF
+# subidos en la historia. Se siembra con `make caja`.
 caja/
 500-sombras-de-alberto/
 

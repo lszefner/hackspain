@@ -8,6 +8,7 @@ from pathlib import Path
 
 import httpx
 
+from alberto import caja as mod_caja
 from alberto import explica as mod_explica
 from alberto import pipeline, salida
 from alberto.db import RUTA_DB, conectar
@@ -16,12 +17,7 @@ from alberto.ingesta import registrar
 
 
 def _caja_por_defecto() -> Path:
-    entorno = os.environ.get("ALBERTO_CAJA")
-    if entorno:
-        return Path(entorno)
-    if Path("caja/facturas").is_dir():
-        return Path("caja")
-    return Path(".")
+    return mod_caja.resolver()
 
 
 def _cfg_vision(verificar: bool) -> dict:
@@ -88,8 +84,9 @@ def main(argv: list[str] | None = None) -> int:
                    help="fija la cobertura actual como referencia de no regresion")
     a = args = p.parse_args(argv)
     if a.cmd not in ("valida", "vision", "explica", "estado", "audita", "coste", "web") and not a.caja.is_dir():
-        p.error(f"no encuentro la Caja en {a.caja}. Clonala y pasa --caja RUTA "
-                f"o exporta ALBERTO_CAJA=RUTA")
+        p.error(f"no encuentro La Caja en {a.caja}.\n"
+                f"         Siembrala:  make caja\n"
+                f"         (o pasa --caja RUTA / exporta ALBERTO_CAJA=RUTA)")
     con = conectar(args.db)
 
     def ver(x): print(json.dumps(x, ensure_ascii=False, indent=2, default=str))

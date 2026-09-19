@@ -2,7 +2,13 @@ PYTHON ?= python3
 ERP_PORT ?= 8009
 ERP_HOST ?= 127.0.0.1
 LOTE2_ERP ?= ../lote_2_sorpresa/erp_export_lote2.csv
-ERP := $(PYTHON) alberto_erp.py --puerto $(ERP_PORT)
+
+# La Caja ya no esta suelta en la raiz. `caja/` es la copia viva (gitignored,
+# se siembra con `make caja`) y `caja_de_alberto/vN/` son las instantaneas.
+# INSTANTANEA coge la mas reciente ordenando por numero: `sort -V` para que
+# v10 vaya despues de v9 y no antes, como haria el orden alfabetico.
+INSTANTANEA := $(shell ls -d caja_de_alberto/v* 2>/dev/null | sort -V | tail -1)
+ERP := $(PYTHON) caja/alberto_erp.py --puerto $(ERP_PORT)
 
 .DEFAULT_GOAL := help
 POLICY ?= balanced
@@ -13,7 +19,16 @@ help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
 	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z0-9_-]+:.*##/ {printf "  make %-18s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-erp: ## Start the local ERP on port 8009.
+# `caja` es el DIRECTORIO, no un phony: en cuanto existe, make lo da por hecho
+# y no vuelve a copiarlo. Por eso los demas targets pueden depender de el sin
+# resembrar nada. Para rehacerlo: rm -rf caja && make caja
+caja: ## Seed the live Caja (caja/) from the newest snapshot.
+	@test -n "$(INSTANTANEA)" || { echo "no hay ninguna captura en caja_de_alberto/"; exit 1; }
+	@cp -R "$(INSTANTANEA)" caja
+	@rm -f caja/MANIFIESTO.sha256 caja/PROCEDENCIA.md
+	@echo "caja/ sembrada desde $(INSTANTANEA) ($$(ls caja/facturas | wc -l | tr -d ' ') facturas)"
+
+erp: caja ## Start the local ERP on port 8009.
 	$(ERP)
 
 erp-fast: ## Start the local ERP without artificial latency.

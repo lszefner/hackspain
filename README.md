@@ -7,7 +7,7 @@ facturas de La Caja, con traza completa de cada decisión.
 
 | Repo | Qué es | Quién lo toca |
 |---|---|---|
-| **este repo** | Nuestra solución **y La Caja**: las 500 facturas, el Excel y `alberto_erp.py` (el bridge de 2009) viven en la raíz | Los 4, todo el fin de semana |
+| **este repo** | Nuestra solución **y La Caja**: las 500 facturas, el Excel y `alberto_erp.py` (el bridge de 2009) viven en `caja_de_alberto/v1/` | Los 4, todo el fin de semana |
 | **`la-caja-outcomes`** | La entrega. Público, con **exactamente 3 ficheros** en la raíz: `outcomes.jsonl`, `outcomes_lote2.jsonl`, `albertitos_plan.pdf` | Se crea el domingo por la mañana |
 
 El segundo es el que se entrega. **Nunca subimos ahí nuestro código**: las bases
@@ -16,22 +16,38 @@ una aplicación ejecutable`). Esa prohibición es sobre el repo de entrega, no
 sobre este: aquí La Caja está commiteada, igual que en `main`, para que el repo
 sea autosuficiente y nadie tenga que configurar rutas.
 
-Por eso `alberto` encuentra La Caja solo: si existe `ALBERTO_CAJA` la usa, si
-tienes un clon en `caja/` lo usa, y si no tira de la raíz del repo, que es donde
-están `facturas/` y el Excel.
+## Dónde está La Caja
+
+Hay **dos cosas distintas** y conviene no confundirlas:
+
+| | Qué es | En git |
+|---|---|---|
+| `caja_de_alberto/vN/` | Instantáneas de lo que publica la organización, con `MANIFIESTO.sha256`. **No se editan** | Sí |
+| `caja/` | La copia **viva**: la que lee el pipeline y donde `alberto web` escribe los PDF subidos | No |
+
+Están separadas porque la subida web guarda los ficheros dentro de la carpeta
+de facturas: con una sola copia, la primera subida invalidaba el manifiesto y
+la captura dejaba de servir como prueba de con qué datos se generó una entrega.
+
+`alberto` la encuentra solo, en este orden: `ALBERTO_CAJA` si está puesta,
+luego `caja/`, y si no la instantánea más reciente (así un clon recién hecho
+puede ejecutar los comandos de solo lectura sin sembrar nada).
 
 ## Puesta en marcha
 
 ```bash
 # una vez
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+make caja      # siembra caja/ desde la instantánea más reciente
 ```
 
-La Caja ya está en el repo, así que no hay nada que clonar ni que configurar.
-Si prefieres usar tu propio clon:
+`make erp` siembra `caja/` solo si falta, así que en la práctica basta con
+arrancar el ERP. Para rehacerla desde cero: `rm -rf caja && make caja`.
+
+Para apuntar a otra captura o a un clon tuyo:
 
 ```bash
-export ALBERTO_CAJA=~/HackSpain/500-sombras-de-alberto
+export ALBERTO_CAJA=caja_de_alberto/v2
 ```
 
 ## Dos terminales

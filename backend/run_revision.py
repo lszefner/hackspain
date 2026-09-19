@@ -30,7 +30,11 @@ from backend.map_invoice import to_raw_invoice  # noqa: E402
 from backend.master_data import build_master  # noqa: E402
 from backend.results_store import ResultsStore  # noqa: E402
 
-FACTURAS_DIR = ROOT / "facturas"
+# La Caja ya no esta en la raiz: se resuelve (caja/ viva, o la instantanea
+# mas reciente de caja_de_alberto/). Ver alberto/caja.py.
+from alberto import caja as _caja  # noqa: E402
+
+FACTURAS_DIR = _caja.facturas()
 DATA_DIR = Path(__file__).resolve().parent / "data"
 RULESET_PATH = ROOT / "rules_ingestion" / "outcome" / "v3" / "balanced" / "rules.json"
 SOURCES_YAML = ROOT / "rules_ingestion" / "sources.yaml"

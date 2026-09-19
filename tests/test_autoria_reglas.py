@@ -9,13 +9,15 @@ from pathlib import Path
 import pytest
 import yaml
 
+from alberto import caja
 from alberto.reglas import Motor, cargar_politica
 from alberto.reglas.autoria import exportar_norma, ingerir
 from alberto.reglas.autoria.exportador import MAPEO, SIN_EQUIVALENTE, escribir
 
-# La Caja vive en la raiz del repo, no en una ruta absoluta de nadie.
+# La Caja se resuelve: caja/ si esta sembrada, si no la instantanea mas
+# reciente. Nunca una ruta absoluta de nadie ni la raiz del repo.
 RAIZ = Path(__file__).resolve().parents[1]
-EXCEL = RAIZ / "FINAL_v7_DEFINITIVO_ahorasi.xlsx"
+EXCEL = caja.excel() or (RAIZ / "FINAL_v7_DEFINITIVO_ahorasi.xlsx")
 
 necesita_caja = pytest.mark.skipif(
     not EXCEL.exists(), reason="necesita el Excel de La Caja")

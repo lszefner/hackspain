@@ -29,7 +29,14 @@ def registrar_uno(con: sqlite3.Connection, ruta: Path, *,
     con.execute(
         "INSERT INTO documentos (doc_id, file_id, ruta, bytes, tiene_texto,"
         " lote, estado, creado_at) VALUES (?,?,?,?,?,?,'pendiente',?)"
-        " ON CONFLICT(doc_id) DO NOTHING",
+        # La ruta SI se refresca; lo demas no. El doc_id es el hash del
+        # CONTENIDO, asi que mover La Caja no cambia la identidad del
+        # documento pero si donde esta: con DO NOTHING, una reingesta
+        # despues de mover la carpeta dejaba las 500 filas apuntando a un
+        # sitio que ya no existe, y como texto_de_pdf devolvia "" ante
+        # cualquier fallo, salian 500 extracciones vacias sin un solo error.
+        # El file_id no se toca: es la identidad de cara al entregable.
+        " ON CONFLICT(doc_id) DO UPDATE SET ruta = excluded.ruta",
         (doc.doc_id, doc.file_id, str(ruta), doc.bytes,
          int(doc.tiene_texto), lote, ahora()),
     )
