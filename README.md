@@ -76,13 +76,14 @@ Modo rápido (exportar estas variables desde el launcher; el backend no carga `.
 
 ```bash
 export REVISION_REVIEW_ENABLED=false
-export REVISION_JSON_STORAGE=postgres
 # Opcional: fijar las reglas de una ejecución completada; exige las mismas fuentes.
 export REVISION_RULESET_RUN_KEY=e2e-1d-221545
 ```
 
 Con revisión desactivada, la salida es la del evaluador, incluido `PAGAR`, y la
 traza registra `DISABLED`. No se inventa una revisión ni se ejecuta un pago.
+El backend guarda los JSON en Postgres siempre, sin variable de configuración.
+La API consulta los JSON exclusivamente en Postgres, sin fallback a Storage.
 Los JSON canónicos quedan durables en Postgres; PDFs y fuentes originales siguen
 en Storage privado. Los snapshots ERP completos se reutilizan como máximo 30 s,
 conservando su fecha original. Véase [medición y límites](docs/revision-fast-path.md).

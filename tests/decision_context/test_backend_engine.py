@@ -209,7 +209,9 @@ async def test_missing_result_and_corrupt_outcome_cannot_approve(runtime, monkey
     def corrupted(**values):
         row = engine.repository.extraction(values['input_id'], values['interpreter'])
         ref = engine.archive.ref(str(row['outcome_artifact_id']))
-        engine.storage.client.objects[engine.storage._url(ref['object_key'])] = b'corrupt'
+        engine.repository._query(
+            "UPDATE ingestion.artifacts SET payload = '{}'::jsonb WHERE id = %s RETURNING id",
+            (ref['artifact_id'],))
         return evaluate(**values)
 
     monkeypatch.setattr(engine, 'evaluate', corrupted)

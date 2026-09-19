@@ -28,10 +28,22 @@ class EngineRepository(PostgresRepository):
         value = cached(self, str(artifact_id))
         return json.loads(value) if value is not None else super().get_artifact(artifact_id)
 
-    def extraction_trace(self, input_id):
-        return self._rows('''SELECT j.*, COALESCE((
-SELECT jsonb_agg(to_jsonb(a) ORDER BY a.attempt_number) FROM ingestion.attempts a WHERE a.job_id = j.id
-), '[]'::jsonb) AS attempts FROM ingestion.jobs j WHERE j.input_id = %s''', (input_id,))
+    def extraction_trace(self, input_id, *, api_projection=False):
+        attempt = ("to_jsonb(a) || jsonb_build_object('latency_seconds', a.latency_seconds::text)"
+                   if api_projection else 'to_jsonb(a)')
+        return self._rows(f'''SELECT j.*, COALESCE((
+SELECT jsonb_agg({attempt} ORDER BY a.attempt_number) FROM ingestion.attempts a WHERE a.job_id = j.id
+), '[]'::jsonb) AS attempts FROM ingestion.jobs j WHERE j.input_id = %s
+ORDER BY j.created_at, j.id''', (input_id,))
+
+    def audit_artifacts(self, artifact_ids):
+        return self._rows('''SELECT id, sha256, kind, object_key, content_type, byte_size, payload
+FROM ingestion.artifacts WHERE id = ANY(%s::uuid[])''', (list(artifact_ids),))
+
+    def audit_records(self, record_ids):
+        return self._rows('''SELECT r.*, to_jsonb(a) AS artifact
+FROM ingestion.engine_records r LEFT JOIN ingestion.artifacts a ON a.id = r.artifact_id
+WHERE r.record_id = ANY(%s::text[])''', (list(record_ids),))
 
     def record_local_job(self, *, batch_id, input_id, stage, source_hash, provider,
                          model, config, settings, artifact_id, status, latency_seconds):
@@ -236,17 +248,26 @@ WHERE request_key = %s AND request_sha256 = %s AND state = 'running' RETURNING *
                 return [dict(row) for row in cur.fetchall()]
         return self._run(op)
 
-    def latest_results(self, file_id=None):
-        return self._rows('''
-SELECT DISTINCT ON (i.file_name) i.file_name AS file_id, i.id AS input_id, i.batch_id,
+    def latest_results(self, file_id=None, *, summary=False):
+        review_projection = ("jsonb_build_object('status', review_body.payload->'status', "
+                             "'attention_required', review_body.payload->'attention_required', "
+                             "'error', review_body.payload->'error')" if summary else 'review_body.payload')
+        return self._rows(f'''
+WITH latest_inputs AS MATERIALIZED (
+ SELECT DISTINCT ON (file_name) id, batch_id, file_name, content_hash, size_bytes, created_at
+ FROM ingestion.inputs WHERE (%s::text IS NULL OR file_name = %s)
+ ORDER BY file_name, created_at DESC, id DESC
+)
+SELECT i.file_name AS file_id, i.id AS input_id, i.batch_id,
  i.content_hash, i.size_bytes, i.created_at AS received_at,
  r.status AS extraction_status, r.error AS extraction_error, b.status AS batch_status,
  r.artifact_id AS outcome_artifact_id,
  e.record_id AS evaluation_record_id, e.decision,
- v.record_id AS review_record_id, review_body.payload AS contextual_review,
+ v.record_id AS review_record_id, {review_projection} AS contextual_review,
  run.state AS run_state, run.error_code AS run_error, run.request_key,
+ run.input_artifact_id AS run_input_artifact_id,
  run_input.payload->'review_policy' AS review_policy
-FROM ingestion.inputs i JOIN ingestion.batches b ON b.id = i.batch_id
+FROM latest_inputs i JOIN ingestion.batches b ON b.id = i.batch_id
 LEFT JOIN ingestion.input_results r ON r.input_id = i.id AND r.interpreter = b.config->>'interpreter'
 LEFT JOIN LATERAL (
  SELECT er.record_id, er.decision FROM ingestion.engine_records er
@@ -260,8 +281,7 @@ LEFT JOIN ingestion.artifacts review_packet ON review_packet.id = v.artifact_id
 LEFT JOIN ingestion.artifacts review_body ON review_body.id = (review_packet.payload->'review'->>'artifact_id')::uuid
 LEFT JOIN ingestion.engine_runs run ON run.batch_id = i.batch_id
 LEFT JOIN ingestion.artifacts run_input ON run_input.id = run.input_artifact_id
-WHERE (%s::text IS NULL OR i.file_name = %s)
-ORDER BY i.file_name, i.created_at DESC, i.id DESC
+ORDER BY i.file_name
 ''', (file_id, file_id))
 
     def processed_records(self, exclude_file_id=None):

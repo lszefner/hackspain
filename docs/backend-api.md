@@ -20,7 +20,10 @@ make api-status   # -> GET /api/salud
 `centralita` does — that is shell-level env export only; the Python process
 itself never reads dotenv. Frontend base URL: `NEXT_PUBLIC_API_BASE=http://127.0.0.1:8010`.
 
-Environment variables the process requires (names only; values stay in `.env`):
+Read-only startup and GET requests require only `SUPABASE_DB_URL`. Storage and
+provider credentials are initialized lazily when a revision is launched.
+
+Environment variables for launching revisions (names only):
 
 - `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL` — Postgres +
   private Storage bucket (`SUPABASE_STORAGE_BUCKET`, default
@@ -39,6 +42,29 @@ Environment variables the process requires (names only; values stay in `.env`):
 
 Server flags: `--host` (default `127.0.0.1`), `--port` (default `8010`).
 
+## Postgres-only audit reads
+
+The backend always writes canonical audit JSON to Postgres. There is no
+storage-mode environment switch. Original PDFs and exact
+source bytes remain in private Storage.
+
+All GET responses load audit JSON exclusively from `ingestion.artifacts.payload`.
+Historical Storage-addressed artifacts work when their canonical JSON payload
+is already in Postgres; no address rewrite or backfill is needed for those rows.
+A missing payload never falls back to Storage: invoice detail and run status
+return **503** with `postgres_audit_missing` (or an integrity error); the flow
+endpoint preserves its section-level error contract and escalates the output
+when required audit sections are unavailable.
+
+The API verifies JSON hashes, sizes, references and record identities. It projects
+stored evaluations; it does not replay the evaluator or download original
+sources. Use `rules_ingestion.engine_cli show --record-id er_HASH` for full
+forensic source verification. No cross-request cache can mask a new run or a
+changed artifact. Summary reads omit full reviewer findings; detail retains them.
+
+Query budgets: summary **1**, detail **3**, full flow **4**, run status **2**;
+Storage HTTP calls **0**. See [read-path validation](postgres-api-reads.md).
+
 ## Routes
 
 ### GET /api/salud
@@ -46,16 +72,16 @@ Server flags: `--host` (default `127.0.0.1`), `--port` (default `8010`).
 Dependency health. Always 200; never raises.
 
 ```json
-{"ok": true, "postgres": true, "storage_bucket": true,
+{"ok": true, "postgres": true, "storage_bucket": null,
  "facturas_dir": "/path/caja/facturas", "facturas_en_disco": 500,
  "procesando": false, "error": null}
 ```
 
-- `postgres` — `engine.repository.preflight()` table probes.
-- `storage_bucket` — `engine.storage.preflight()`, a cheap GET on the bucket
-  metadata (verifies it exists and is private). `false` when it fails,
-  `null` only if the check never ran.
-- `ok` = `postgres and storage_bucket is not False`.
+- `postgres` — repository table probes.
+- `storage_bucket` — always `null`: GET requests do not contact Storage.
+  The field is retained for existing clients. Ingestion checks the private bucket
+  when its writer is initialized.
+- `ok` = `postgres`; this checks API read availability, not ingestion readiness.
 - `error` — exception class name when any check raised, else `null`.
 
 ### GET /api/resumen

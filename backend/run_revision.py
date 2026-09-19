@@ -211,7 +211,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                  'rule_sources': {source.name: digest(source.content) for source in rule_sources},
                  'master_workbook': digest(loaded.workbook_bytes), 'master_mapping': digest(loaded.source_config_bytes),
                  'rule_generation_signature': rule_signature,
-                 'json_storage': os.environ.get('REVISION_JSON_STORAGE', 'storage'),
+                 'json_storage': 'postgres',
                  'reviewer': {'provider': provider.provider, 'model': provider.model,
                               'endpoint': getattr(provider, 'endpoint', None)} if enabled else {'enabled': False}}
     request_sha = digest(canonical_bytes(signature))
@@ -223,13 +223,8 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     engine = engine or InvoiceDecisionEngine.from_supabase()
     store = store or PostgresResultsStore(engine)
     repo = engine.repository
-    json_storage = os.environ.get('REVISION_JSON_STORAGE', 'storage')
-    if json_storage not in ('storage', 'postgres'):
-        if owned:
-            engine.close()
-        raise ValueError('REVISION_JSON_STORAGE must be storage or postgres')
     previous_compact = engine.storage.compact_json
-    engine.storage.compact_json = json_storage == 'postgres'
+    engine.storage.compact_json = True
     acquired = False
     session = ExitStack()
     session.enter_context(artifact_session())
