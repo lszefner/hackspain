@@ -1,0 +1,12 @@
+# Dependencias SOLO de ingestion/ (el pipeline de vision y OCR de main).
+#
+# Van aparte a proposito: el pipeline principal (alberto/) corre sin nada de
+# esto, y psycopg arrastra Postgres. Quien use ingestion/ instala:
+#
+#     ./venv/bin/pip install -r requirements-ingestion.txt
+#
+-r requirements.txt
+
+jsonschema>=4.23,<5          # ingestion/contracts.py
+psycopg[binary,pool]>=3.2,<4 # ingestion/storage.py (Supabase / Postgres)
+python-dotenv>=1.0,<2        # ingestion/benchmark_evidence.py

@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan del frontend · Albertito</title>
+<style>
+  :root {
+    --bg: #f5f2ec; --ink: #1c1a17; --muted: #6b6459; --card: #fffdf9;
+    --line: #e2dccf; --green: #1f6b4a; --amber: #b26a00; --red: #b0271e;
+    --accent: #1c4587;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+         font: 15px/1.55 ui-sans-serif, system-ui, sans-serif; }
+  main { max-width: 980px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 30px; margin: 0 0 4px; }
+  h2 { font-size: 20px; margin: 44px 0 12px; border-bottom: 2px solid var(--line); padding-bottom: 6px; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+          padding: 16px 18px; margin-bottom: 14px; }
+  .route { font: 600 14px ui-monospace, monospace; color: var(--accent); }
+  .pts { float: right; font: 700 12px ui-monospace, monospace; background: var(--ink);
+         color: var(--bg); border-radius: 20px; padding: 3px 10px; }
+  ul { margin: 8px 0 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  .muted { color: var(--muted); }
+  .wire { display: grid; gap: 6px; background: var(--bg); border: 1px dashed var(--muted);
+          border-radius: 8px; padding: 10px; margin-top: 12px; font: 11px ui-monospace, monospace;
+          color: var(--muted); }
+  .wire div { background: var(--card); border: 1px solid var(--line); border-radius: 4px;
+              padding: 6px 8px; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .tiles { display: grid; grid-template-columns: repeat(25, 1fr); gap: 2px; padding: 6px; }
+  .tiles i { display: block; aspect-ratio: 1; border-radius: 1px; background: var(--green); }
+  .tiles i.a { background: var(--amber); } .tiles i.r { background: var(--red); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  code { background: #ece7db; border-radius: 4px; padding: 1px 5px; font-size: 13px; }
+  .flow { font: 13px ui-monospace, monospace; background: var(--card); border: 1px solid var(--line);
+          border-radius: 8px; padding: 14px 18px; white-space: pre; overflow-x: auto; }
+  .tag { display: inline-block; font: 600 11px ui-monospace, monospace; border: 1px solid var(--line);
+         border-radius: 20px; padding: 1px 8px; margin-right: 4px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Albertito · plan del frontend</h1>
+  <p class="sub">Next.js (App Router, TS, Tailwind) · español · mock data primero, contrato de datos = esquema de <code>alberto.db</code>.
+  Cada página compra puntos concretos de la rúbrica (100 + 10).</p>
+
+  <h2>La tesis del producto</h2>
+  <div class="card">
+    No es «un dashboard del pipeline»: es <strong>la ficha y el escritorio de un trabajador digital</strong>.
+    Albertito es un empleado con un puesto, un manual (<code>norma_v3.yaml</code>), unos límites declarados
+    (qué NO hace) y un parte de trabajo. Alberto (el humano) supervisa, resuelve escalados y le
+    actualiza el manual — nunca el código. Toda pantalla responde a una de tres preguntas del jurado:
+    <em>¿qué decidió?, ¿por qué exactamente?, ¿qué pasa cuando algo cambia o falla?</em>
+  </div>
+
+  <h2>Mapa de rutas</h2>
+
+  <div class="card">
+    <span class="pts">20 pts traza · demo</span>
+    <h3><span class="route">/</span> — El muro · portada</h3>
+    <ul>
+      <li><strong>Cabecera-ficha de Albertito</strong>: puesto, qué hace, qué NO hace, a quién escala, enlace a su «manual de empleado» (la norma YAML en crudo).</li>
+      <li><strong>KPIs</strong>: 431 PAGAR · 49 ESCALAR · 20 NO_PAGAR · 2,4 M€ aprobados · <strong>60.034 € bloqueados</strong> · 92.068 € esperando a un humano.</li>
+      <li><strong>Pared de 500 baldosas</strong> coloreadas por resultado, sin scroll. Hover = motivo; clic = expediente. Filtros por resultado, motivo y búsqueda; selector de norma (v3/v4).</li>
+    </ul>
+    <div class="wire">
+      <div>FICHA ALBERTITO — puesto · límites · manual (norma v3) · escala a: Alberto</div>
+      <div class="row3"><div>431 PAGAR · 2.407.583 €</div><div>49 ESCALAR · 92.068 €</div><div>20 NO_PAGAR · 60.034 €</div></div>
+      <div>[filtro resultado] [filtro motivo] [buscar file_id] [norma v3 ▾]</div>
+      <div class="tiles">
+        <i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i>
+        <i></i><i class="a"></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i class="r"></i><i></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="pts">20 pts traza · minuto 4-8</span>
+    <h3><span class="route">/expediente/[fileId]</span> — Seguir UNA decisión</h3>
+    <p class="muted" style="margin:4px 0 0">La proyección de <code>alberto explica</code>: input → estado → evidencia → reglas → resultado. Es la página que se enseña al tribunal.</p>
+    <ul>
+      <li><strong>Cadena de custodia</strong>: PDF (visor embebido) → sha256 → ingesta → extracción (vía, latencia, coste, ¿cuadra la aritmética?) → decisión.</li>
+      <li><strong>Veredicto de cada regla</strong> con su evidencia literal (IBAN factura vs IBAN maestro, importe vs ERP…), en verde/ámbar/rojo.</li>
+      <li><strong>Versiones</strong>: norma, snapshot ERP, snapshot maestro con los que se decidió. Si existe una decisión v4, se muestra el diff aquí mismo.</li>
+      <li>Notas de Alberto <em>solo si aplican</em> a este proveedor/pedido/regla. Timeline de eventos y reintentos. Navegación prev/next dentro del filtro activo.</li>
+    </ul>
+    <div class="wire">
+      <div class="row">
+        <div>PDF embebido<br>&nbsp;<br>&nbsp;</div>
+        <div>ESCALAR — importe no cuadra con el pedido<br>norma v3 · snapshot ERP #3 · maestro #1<br>vía determinista · 5,4 ms · 0,00 €</div>
+      </div>
+      <div>R1 NIF+IBAN ✓ · R2 aritmética ✓ · R3 IVA ✓ · R4 importe ✗ (4.549,60 € vs 4.219,00 € · desvío +330,60 €) · R5 ERP ✓</div>
+      <div>eventos: ingesta 10:01 → extrae 10:02 → decide 10:02 · nota: «PO-2026-0007 pendiente_revisar»</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="pts">+10 bonus · 10 resiliencia</span>
+    <h3><span class="route">/bandeja</span> — Bandeja de escalados (el escritorio de Alberto)</h3>
+    <ul>
+      <li>Los 49 escalados agrupados por motivo: 14 discrepancia de importe · 4 campo faltante · 2 revisar · 29 ilegibles.</li>
+      <li>Resolver en línea: PAGAR / NO_PAGAR / mantener, con autor y motivo → <code>resoluciones</code>. <strong>Nunca toca outcomes.jsonl.</strong></li>
+      <li><strong>Agente redactor (T27)</strong>: «¿escribimos al proveedor?» → borrador de email con las cifras inyectadas por plantilla (jamás generadas). Aprobar / editar / descartar. Estado «esperando proveedor».</li>
+    </ul>
+    <div class="wire">
+      <div class="row"><div>◉ importe (14) ◯ faltante (4) ◯ revisar (2) ◯ ilegible (29)</div><div>2026-07-08_P010 · IBAN no coincide</div></div>
+      <div>borrador: «Estimado proveedor: su factura F-2026-081 indica 4.549,60 € y nuestro pedido PO-2026-0007…» [aprobar] [editar] [descartar]</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <span class="pts">25 pts escala · 35 arq.</span>
+    <h3><span class="route">/operacion</span> — Coste, capacidad y cambios</h3>
+    <ul>
+      <li><strong>Coste por ruta</strong>: determinista (471 docs, 5,4 ms, 0 €) vs visión (29 docs, coste real por doc). Coste por documento y por lote; proyección 10k / 100k facturas/mes y punto de cruce del OCR local.</li>
+      <li><strong>Diff de normas</strong> (<code>alberto compara v3 v4</code> en pantalla): qué decisiones cambian y por qué. El minuto 3 de la defensa.</li>
+      <li><strong>Parte de trabajo</strong>: una fila por pasada (docs vistos, duración, coste, reparto, escalados). Salud: eventos, errores, reintentos, trabajo pendiente; estado del ERP y del proveedor LLM (aquí se enseña el modo degradado de <code>alberto caos</code>).</li>
+    </ul>
+    <div class="wire">
+      <div class="row3"><div>€/doc: 0,0004<br>p50 5 ms · p95 210 ms</div><div>10k/mes ≈ 4 €<br>100k/mes ≈ 40 €</div><div>ERP ● ok · LLM ● ok<br>pendientes: 0 · reintentos: 3</div></div>
+      <div>v3 → v4: 12 decisiones cambian · 8 PAGAR→ESCALAR (vencimiento) · 4 ESCALAR→PAGAR</div>
+    </div>
+  </div>
+
+  <h2>Arquitectura del frontend</h2>
+  <div class="flow">frontend/  (Next.js 15 · App Router · TypeScript · Tailwind)
+├── src/app/
+│   ├── page.tsx                      → /            muro + KPIs + ficha
+│   ├── expediente/[fileId]/page.tsx  → /expediente  traza completa
+│   ├── bandeja/page.tsx              → /bandeja     escalados + redactor
+│   └── operacion/page.tsx            → /operacion   coste · diff · salud
+├── src/lib/
+│   ├── types.ts      ← espejo 1:1 del esquema SQLite (documentos, decisiones,
+│   │                    extracciones, eventos, resoluciones, notas, reglas)
+│   ├── data.ts       ← interfaz DataSource: LA COSTURA. Hoy mock, mañana
+│   │                    better-sqlite3 sobre alberto.db o fetch al FastAPI.
+│   └── mock/         ← fixtures realistas generados con el reparto real
+│                        (431/49/20, motivos y cifras del TODO.md)
+└── src/components/   ← Muro, Kpi, Regla, Timeline, FichaAlbertito, …</div>
+  <div class="card" style="margin-top:14px">
+    <strong>Decisión clave (candidata a ADR):</strong> las páginas consumen únicamente
+    <code>src/lib/data.ts</code>. Los tipos calcan las tablas reales (<code>doc_id</code>,
+    <code>norma_version</code>, <code>snapshot_erp</code>, <code>snapshot_maestro</code>, <code>reglas_json</code>…),
+    de modo que enchufar la BD real es implementar una segunda <code>DataSource</code>, sin tocar ninguna vista.
+  </div>
+
+  <h2>Qué compra cada página</h2>
+  <table>
+    <tr><th>Rúbrica</th><th>Pts</th><th>Dónde se defiende</th></tr>
+    <tr><td>Producto, arquitectura y ADRs</td><td>35</td><td>Ficha de Albertito (manual = YAML), encuadre de trabajador digital, la costura data.ts como ADR</td></tr>
+    <tr><td>Trazabilidad y observabilidad</td><td>20</td><td><code>/expediente</code> (una decisión punta a punta) + eventos, versiones, latencia, reintentos</td></tr>
+    <tr><td>Escalabilidad y coste</td><td>25</td><td><code>/operacion</code>: coste por ruta medido, proyecciones, docs/segundo</td></tr>
+    <tr><td>Resiliencia y recuperación</td><td>10</td><td>Salud en <code>/operacion</code> (modo degradado, reintentos, reanudar sin duplicar)</td></tr>
+    <tr><td>Calidad de ejecución</td><td>10</td><td>Una web sobria, rápida y proporcionada, agradable de operar</td></tr>
+    <tr><td>Bonus</td><td>+10</td><td><code>/bandeja</code>: el escalado que se desbloquea solo (email aprobado por Alberto)</td></tr>
+  </table>
+
+  <h2>Guion de demo que habilita (10 min)</h2>
+  <div class="card">
+    <span class="tag">min 0-2</span> ficha + muro: escala y reparto en dos segundos →
+    <span class="tag">min 3</span> selector v3/v4 y el diff en /operacion →
+    <span class="tag">min 4-8</span> clic en una baldosa ámbar: la traza completa →
+    <span class="tag">min 8-9</span> /bandeja: redactar, aprobar, «esperando proveedor» →
+    <span class="tag">min 9-10</span> coste y salud: tumbar el LLM y ver la degradación.
+  </div>
+</main>
+</body>
+</html>
