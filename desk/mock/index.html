@@ -85,7 +85,33 @@ body.chatting .thread{opacity:1}
 .think{display:inline-flex;align-items:center;gap:11px;padding:7px 20px 7px 8px;border-radius:999px;
   background:var(--load-soft);border:1px solid var(--load-line);color:var(--load);
   font-size:15px;letter-spacing:-.008em;animation:enter .3s var(--ease) both}
-.think canvas{flex:none;display:block}
+.think canvas{flex:none;display:block;position:relative;z-index:2}
+
+/* ── thinking orbs ────────────────────────────────────────────────────
+   Three orbs circle the globe while the desk works. The globe is 34px at
+   padding-left 8px, so its centre sits at x=25; the orbit is wider than
+   the globe on purpose -- inside it, the orbs hide behind the canvas.
+   Same 2.6s circle, three start delays, so they trail each other. The
+   pill breathes too, which is what makes the wait read as alive. */
+.think{position:relative;overflow:visible}
+.think .orbit{position:absolute;left:1px;top:50%;width:48px;height:48px;
+  margin-top:-24px;pointer-events:none;z-index:3}
+.think .orbit i{position:absolute;inset:0;display:block;
+  animation:orbspin 2.6s linear infinite}
+.think .orbit i:nth-child(2){animation-delay:-.87s}
+.think .orbit i:nth-child(3){animation-delay:-1.73s}
+.think .orbit i::before{content:'';position:absolute;top:-3px;left:50%;
+  width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--load);
+  box-shadow:0 0 7px 1px color-mix(in srgb,var(--load) 75%,transparent);
+  animation:orbpulse 2.6s ease-in-out infinite}
+.think .orbit i:nth-child(2)::before{animation-delay:-.87s}
+.think .orbit i:nth-child(3)::before{animation-delay:-1.73s}
+@keyframes orbspin{to{transform:rotate(360deg)}}
+@keyframes orbpulse{0%,100%{opacity:.35;transform:scale(.7)}50%{opacity:1;transform:scale(1.25)}}
+.think{animation:enter .3s var(--ease) both,breathe 2.6s ease-in-out infinite .3s}
+@keyframes breathe{
+  0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--load) 0%,transparent)}
+  50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--load) 9%,transparent)}}
 .think .lbl{min-width:184px}
 .think .lbl:after{content:"";animation:dots 1.5s steps(1,end) infinite}
 @keyframes dots{0%{content:"."}25%{content:".."}50%{content:"..."}75%{content:"...."}}
@@ -97,7 +123,41 @@ body.chatting .thread{opacity:1}
 
 /* ───────────────── panel: the list first, the actions after */
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:16px;
-  box-shadow:var(--shadow);overflow:hidden;animation:enter .4s var(--ease) both}
+  box-shadow:var(--shadow);overflow:hidden;animation:enter .4s var(--ease) both;position:relative}
+
+/* ── border beam ──────────────────────────────────────────────────────
+   A beam rides the border while the panel builds itself, then leaves.
+   The conic gradient fills the whole box; the xor mask keeps only the
+   ring, so nothing paints over the rows. It runs in --load, the colour
+   the desk already uses for "working": --accent on paper is too
+   low-contrast to read as motion. @property makes the angle animatable;
+   where it is unsupported the ring sits still and the panel looks the
+   way it always did. */
+@property --beam{syntax:'<angle>';initial-value:0deg;inherits:false}
+.panel.beam::before{
+  content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;pointer-events:none;z-index:2;
+  background:conic-gradient(from var(--beam),
+    transparent 0 40%,
+    color-mix(in srgb,var(--load) 18%,transparent) 58%,
+    color-mix(in srgb,var(--load) 62%,transparent) 76%,
+    var(--load) 88%,
+    color-mix(in srgb,#fff 70%,var(--load)) 92%,
+    transparent 97%);
+  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+  -webkit-mask-composite:xor;mask-composite:exclude;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--load) 55%,transparent));
+  animation:beamspin 1.8s linear infinite,beamin .4s var(--ease) both}
+@keyframes beamspin{to{--beam:360deg}}
+@keyframes beamin{from{opacity:0}to{opacity:1}}
+.panel.beam::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+  background:radial-gradient(120% 60% at 50% 0%,
+    color-mix(in srgb,var(--load) 9%,transparent),transparent 70%);
+  animation:beamin .5s var(--ease) both}
+.panel.beam-out::before,.panel.beam-out::after{
+  animation:beamspin 1.8s linear infinite,beamfade .6s var(--ease) both}
+@keyframes beamfade{from{opacity:1}to{opacity:0}}
 .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
   padding:13px 18px 12px;border-bottom:1px solid var(--line)}
 .panel-head h4{margin:0;font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mut)}
@@ -227,6 +287,14 @@ body.chatting .composer-in{max-width:800px}
 .tick{animation:pop .3s var(--ease) both;display:inline-block}
 @keyframes pop{from{opacity:0;scale:.5}to{opacity:1;scale:1}}
 .msg.user .att{box-shadow:none}
+
+/* ── liquid gooey ─────────────────────────────────────────────────────
+   Only while the staged files land in the bubble: the blur fattens the
+   shapes so they merge, the colour matrix hardens that blur back into an
+   edge, and feComposite atop paints the untouched original over it -- so
+   the boxes flow together while the filenames stay readable. */
+.stack.goo{filter:url(#goo)}
+.stack.goo .att{transition:transform .5s var(--ease)}
 
 .composer{display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);
   border-radius:16px;padding:6px 6px 6px 8px;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .25s}
@@ -666,7 +734,7 @@ function think(labels){
   const d = document.createElement('div');
   d.className = 'msg';
   d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
-    <div class="say"><span class="think"><span class="lbl"></span></span></div>`;
+    <div class="say"><span class="think"><span class="orbit"><i></i><i></i><i></i></span><span class="lbl"></span></span></div>`;
   thread.append(d);
   const lbl = d.querySelector('.lbl');
   const stop = globe(d.querySelector('.think'), 34, '#2f62d8');
@@ -751,7 +819,18 @@ async function consume(res, labels){
                                 info.tokens ? info.tokens + ' tokens' : null].filter(Boolean).join(' · ');
   if (pending){
     const html = pending.map(panelHTML).join('');
-    setTimeout(() => { blocks.innerHTML = html; scroll(); }, 200);
+    setTimeout(() => {
+      blocks.innerHTML = html; scroll();
+      /* the beam rides the border while the rows stagger in (the last one
+         starts at .30s and runs .3s), then fades out on its own */
+      blocks.querySelectorAll('.panel').forEach(el => {
+        el.classList.add('beam');
+        setTimeout(() => {
+          el.classList.add('beam-out');
+          setTimeout(() => el.classList.remove('beam', 'beam-out'), 700);
+        }, 2400);
+      });
+    }, 200);
   }
   scroll();
   return buf;
@@ -866,6 +945,11 @@ async function sendBatch(text, items){
     const x = s.el.querySelector('.x'); if (x) x.remove();
     stack.prepend(s.el);
   });
+  /* they merge on the way in; one file has nothing to merge with */
+  if (items.length > 1){
+    stack.classList.add('goo');
+    setTimeout(() => stack.classList.remove('goo'), 620);
+  }
   staged = []; tray.innerHTML = '';
   refreshSend(); scroll();
 
@@ -1417,5 +1501,13 @@ main.addEventListener('drop', e => {
 refreshSend();
 $('#q').focus();
 </script>
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+  <filter id="goo" color-interpolation-filters="sRGB">
+    <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>
+    <feColorMatrix in="blur" type="matrix"
+      values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" result="goo"/>
+    <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+  </filter>
+</svg>
 </body>
 </html>
