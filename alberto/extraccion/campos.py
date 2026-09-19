@@ -37,6 +37,8 @@ RE_FECHA_LARGA = re.compile(
 #   "1.409,40" (espanol) y "EUR 1409.40" (punto decimal, 91 facturas).
 # Se captura cualquier token numerico y se desambigua en _num().
 RE_NUM = re.compile(r"-?\d[\d.,]*")
+# Un numero pegado a un '%' es un tipo, no un importe: "IVA (21%): 197,40".
+RE_PORCENTAJE = re.compile(r"\s*%")
 
 SINONIMOS: dict[str, tuple[str, ...]] = {
     "base": ("base imponible", "importe base", "base", "subtotal", "suma y sigue"),
@@ -45,6 +47,37 @@ SINONIMOS: dict[str, tuple[str, ...]] = {
     "fecha": ("fecha factura", "fecha de emision", "fecha emision", "fecha"),
     "num_factura": ("factura n", "n de factura", "ref factura", "factura"),
 }
+
+
+def sin_invisibles(texto: str) -> tuple[str, int]:
+    """Quita los caracteres invisibles y devuelve (texto, cuantos habia).
+
+    Dos facturas de la Caja intercalan U+200B entre cada digito para que el
+    parser no vea el dato: 'TOTAL: 2\u200b.\u200b6\u200b3\u200b7\u200b,\u200b8\u200b0'
+    se leia como el numero '2', y un IBAN igual de troceado no casaba con
+    RE_IBAN y el documento escalaba por 'faltan datos'. Un humano lee 2.637,80
+    y el IBAN entero: el extractor debe leer lo mismo.
+
+    Se borra la categoria Cf (formato: anchos cero, marcas de direccion,
+    guion blando), que no aporta texto, y los Zs raros pasan a espacio normal
+    para que sigan separando tokens. Los saltos de linea son Cc y no se tocan.
+
+    El texto ORIGINAL se archiva igual como artefacto: la procedencia debe
+    conservar lo que traia el PDF, incluida la ofuscacion.
+    """
+    fuera = []
+    for c in texto:
+        cat = unicodedata.category(c)
+        if cat == "Cf":
+            fuera.append(c)
+        elif cat == "Zs" and c != " ":
+            fuera.append(c)
+    if not fuera:
+        return texto, 0
+    limpio = "".join(
+        " " if unicodedata.category(c) == "Zs" else c
+        for c in texto if unicodedata.category(c) != "Cf")
+    return limpio, len(fuera)
 
 
 def _plano(texto: str) -> str:
@@ -80,12 +113,36 @@ def _num(bruto: str) -> Decimal | None:
         return None
 
 
+def _importes_en(fragmento: str) -> list[Decimal]:
+    """Los importes de un fragmento, en orden, saltandose los porcentajes.
+
+    Un numero seguido de '%' es un tipo impositivo, no un importe: en
+    "IVA (21%): 197,40" el 21 no es dinero. Se filtra aqui y no en el
+    llamador porque es una propiedad del token, no del campo que se busca.
+    """
+    salida: list[Decimal] = []
+    for m in RE_NUM.finditer(fragmento):
+        if RE_PORCENTAJE.match(fragmento, m.end()):
+            continue
+        valor = _num(m.group())
+        if valor is not None:
+            salida.append(valor)
+    return salida
+
+
 def _valor_de_etiqueta(lineas: list[str], claves: tuple[str, ...]) -> Decimal | None:
-    """Ultimo importe de la linea cuya etiqueta empieza por una de las claves.
+    """PRIMER importe de la linea cuya etiqueta empieza por una de las claves.
 
     Se ancla al COMIENZO de la etiqueta dentro de la linea y se recorre en el
     orden de `claves`, de mas especifica a menos: asi 'total a pagar' gana a
     'total' y 'base imponible' a 'base'.
+
+    PRIMERO y no ultimo: los escaneos meten dos campos en una linea,
+    "Base 1.292,88 IVA 21% 271,50", y quedarse con el ultimo numero le daba
+    a la base la cuota del IVA. Con el porcentaje ya descartado, el importe
+    que sigue a la etiqueta es siempre el primero: en las maquetas con
+    puntos guia ("BASE IMPONIBLE... 940,00") no hay mas que uno, asi que
+    primero y ultimo coinciden y esas no cambian.
     """
     for clave in claves:
         for linea in lineas:
@@ -98,11 +155,9 @@ def _valor_de_etiqueta(lineas: list[str], claves: tuple[str, ...]) -> Decimal | 
             if pos > 0 and (plano[pos - 1].isalnum() or plano[pos - 1] in "._"):
                 continue
             resto = RE_FECHA.sub(" ", linea[pos:])   # una fecha no es un importe
-            numeros = RE_NUM.findall(resto)
-            if numeros:
-                valor = _num(numeros[-1])
-                if valor is not None:
-                    return valor
+            importes = _importes_en(resto)
+            if importes:
+                return importes[0]
     return None
 
 
@@ -157,6 +212,7 @@ def _nif_emisor(texto: str, lineas: list[str]) -> str | None:
 
 
 def extraer_campos(texto: str) -> dict:
+    texto, invisibles = sin_invisibles(texto)
     lineas = [l for l in texto.splitlines() if l.strip()]
     plano_total = _plano(texto)
 
@@ -187,6 +243,7 @@ def extraer_campos(texto: str) -> dict:
         "iva_importe": iva_imp,
         "total": total,
         "_plantilla": huella(plano_total),
+        "_invisibles": invisibles,
     }
 
 

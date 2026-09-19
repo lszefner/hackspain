@@ -31,6 +31,9 @@ def test_ningun_documento_pierde_un_campo(con):
 
 def test_la_cobertura_no_baja(con):
     m = medir(con)
-    assert m["listos"] >= 467, (
+    # 467 era la linea base con la fase 2 a medias: 16 lecturas de vision se
+    # tiraban porque el parser confundia la cuota de IVA con la base, y dos
+    # documentos escondian su total y su IBAN tras caracteres de ancho cero.
+    assert m["listos"] >= 494, (
         f"solo {m['listos']} de {m['total']} documentos tienen los campos "
-        f"que exigen las reglas; la linea base medida era 467")
+        f"que exigen las reglas; la linea base medida era 494")
