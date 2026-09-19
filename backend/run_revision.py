@@ -11,7 +11,7 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent.parent
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv  # noqa: E402
@@ -25,13 +25,13 @@ from rules_ingestion.checks import run_checks  # noqa: E402
 from rules_ingestion.invoice import normalize_invoice as rules_normalize_invoice  # noqa: E402
 from rules_ingestion.store import load_store  # noqa: E402
 
-from webui.backend.local_backend import LocalRepository, LocalStorage  # noqa: E402
-from webui.backend.map_invoice import to_raw_invoice  # noqa: E402
-from webui.backend.master_data import build_master  # noqa: E402
-from webui.backend.results_store import ResultsStore  # noqa: E402
+from backend.local_backend import LocalRepository, LocalStorage  # noqa: E402
+from backend.map_invoice import to_raw_invoice  # noqa: E402
+from backend.master_data import build_master  # noqa: E402
+from backend.results_store import ResultsStore  # noqa: E402
 
 FACTURAS_DIR = ROOT / "facturas"
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+DATA_DIR = Path(__file__).resolve().parent / "data"
 RULESET_PATH = ROOT / "rules_ingestion" / "outcome" / "v3" / "balanced" / "rules.json"
 SOURCES_YAML = ROOT / "rules_ingestion" / "sources.yaml"
 
