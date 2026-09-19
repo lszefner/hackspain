@@ -1,0 +1,105 @@
+{
+ "proveedores": [
+  {
+   "id": "P001",
+   "razon_social": "Suministros Levante S.L.",
+   "nif": "B46102331",
+   "iban": "ES2100491500051234567890",
+   "ciudad": "Valencia",
+   "condiciones": "60 dias"
+  },
+  {
+   "id": "P002",
+   "razon_social": "Transportes Guadaira S.A.",
+   "nif": "A41220987",
+   "iban": "ES7621000813610123456789",
+   "ciudad": "Sevilla",
+   "condiciones": "45 dias"
+  },
+  {
+   "id": "P003",
+   "razon_social": "Ofimática Cieza S.L.",
+   "nif": "B30455812",
+   "iban": "ES6001825322180201588391",
+   "ciudad": "Murcia",
+   "condiciones": "60 dias"
+  },
+  {
+   "id": "P004",
+   "razon_social": "Limpiezas Turia S.L.",
+   "nif": "B98120774",
+   "iban": "ES4414650100951704302211",
+   "ciudad": "Valencia",
+   "condiciones": "45 dias"
+  },
+  {
+   "id": "P005",
+   "razon_social": "Catering Hermanos Pico S.L.",
+   "nif": "B96233419",
+   "iban": "ES1800815290070001234567",
+   "ciudad": "Valencia",
+   "condiciones": "45 dias"
+  },
+  {
+   "id": "P006",
+   "razon_social": "Electricidad Montcada S.A.",
+   "nif": "A46990201",
+   "iban": "ES3520385778983000765410",
+   "ciudad": "Valencia",
+   "condiciones": "60 dias"
+  },
+  {
+   "id": "P007",
+   "razon_social": "Papelería Ruzafa S.C.",
+   "nif": "J40112358",
+   "iban": "ES5531590012348765123407",
+   "ciudad": "Valencia",
+   "condiciones": "30 dias"
+  },
+  {
+   "id": "P008",
+   "razon_social": "Seguridad Alcores S.L.",
+   "nif": "B91455230",
+   "iban": "ES0900730100510505331902",
+   "ciudad": "Sevilla",
+   "condiciones": "30 dias"
+  },
+  {
+   "id": "P009",
+   "razon_social": "Construcciones Benimaclet S.A.",
+   "nif": "A46311208",
+   "iban": "ES8201280011230100044571",
+   "ciudad": "Valencia",
+   "condiciones": "60 dias"
+  },
+  {
+   "id": "P010",
+   "razon_social": "Informática Benimámet S.L.",
+   "nif": "B98455101",
+   "iban": "ES2702390806667122334455",
+   "ciudad": "Valencia",
+   "condiciones": "30 dias"
+  },
+  {
+   "id": "P011",
+   "razon_social": "Mensajería Rápida del Sur S.L.",
+   "nif": "B90233808",
+   "iban": "ES9368884400123588900142",
+   "ciudad": "Málaga",
+   "condiciones": "30 dias"
+  }
+ ],
+ "notas": {
+  "generales": [
+   "los de Guadaira siempre llaman los viernes",
+   "cafe 3a planta roto desde 2023",
+   "acordarse: NUNCA pagar sin cruzar con el ERP",
+   "preguntar a Sonia lo del IVA reducido (aplica??)"
+  ],
+  "en_revision": [
+   "PO-2026-0007",
+   "PO-2026-0141"
+  ]
+ },
+ "capturado_at": "2026-09-19T10:00:00Z"
+}
