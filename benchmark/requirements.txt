@@ -1,6 +1,0 @@
-jsonschema==4.26.0
-scipy==1.17.1
-pytest==9.0.2
-PyMuPDF==1.27.2
-httpx==0.28.1
-python-dotenv==1.2.2
