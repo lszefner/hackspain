@@ -947,3 +947,79 @@ def invoice_block(file):
             "meta": f"{r['vendor']} · {money(r['total'])} · "
                     + (f"{_VERB[done['action']]} at {done['when']}" if done else r["action"]),
             "rows": rows, "actions": acts}
+
+
+# --------------------------------------------------------------------------- #
+# The Summary. Every figure here is folded from the 500 real invoices, so it
+# moves when a decision moves. Nothing is a target and nothing is a forecast.
+# --------------------------------------------------------------------------- #
+_RULE_SAYS = {
+    "VENDOR": "the account on the page is not the one on the master",
+    "AMOUNT": "base and VAT do not add up to the total",
+    "DUPLICATES": "the same invoice number was already paid",
+    "DATES": "no readable issue date",
+    "MISSING": "no purchase order on the page",
+    "READABLE": "a scan with no text layer, nothing could be read",
+}
+
+
+def summary():
+    rows = archive()
+    n = len(rows)
+
+    def side(kind):
+        got = [r for r in rows if r["action"] == kind]
+        return {"n": len(got), "eur": round(sum(r["total"] for r in got), 2)}
+
+    pay, review, stop = side("PAY"), side("ESCALATE"), side("DO NOT PAY")
+
+    # why the work exists at all: one line per rule that stopped something
+    blocking = {}
+    for r in rows:
+        for b in r["blocking"]:
+            slot = blocking.setdefault(b, {"n": 0, "eur": 0.0})
+            slot["n"] += 1
+            slot["eur"] = round(slot["eur"] + r["total"], 2)
+    why = sorted(({"rule": k, "says": _RULE_SAYS.get(k, k), **v} for k, v in blocking.items()),
+                 key=lambda x: -x["n"])
+
+    # per supplier, both ways round
+    per = {}
+    for r in rows:
+        s = per.setdefault(r["vendor_id"], {"id": r["vendor_id"], "name": r["vendor"],
+                                            "n": 0, "eur": 0.0, "review_n": 0, "review_eur": 0.0})
+        s["n"] += 1
+        s["eur"] = round(s["eur"] + r["total"], 2)
+        if r["action"] == "ESCALATE":
+            s["review_n"] += 1
+            s["review_eur"] = round(s["review_eur"] + r["total"], 2)
+    people = list(per.values())
+    spend = round(sum(p["eur"] for p in people), 2)
+    by_count = sorted(people, key=lambda p: -p["n"])
+    by_money = sorted(people, key=lambda p: -p["eur"])
+
+    # volume and money by month, from the dates on the pages
+    months = {}
+    for r in rows:
+        if not r["issued"]:
+            continue
+        key = r["issued"][:7]
+        m = months.setdefault(key, {"month": key, "n": 0, "eur": 0.0})
+        m["n"] += 1
+        m["eur"] = round(m["eur"] + r["total"], 2)
+    trend = sorted(months.values(), key=lambda m: m["month"])
+
+    top = by_money[0] if by_money else {"name": "—", "eur": 0}
+    return {
+        "total": n, "spend": spend,
+        "pay": pay, "review": review, "stop": stop,
+        "suppliers": len(people),
+        "scanned": sum(1 for r in rows if r["scanned"]),
+        "why": why,
+        "by_count": by_count, "by_money": by_money,
+        "trend": trend,
+        "concentration": {"name": top["name"], "eur": top["eur"],
+                          "share": round(top["eur"] / spend * 100, 1) if spend else 0},
+        "touched": len(DECIDED),
+        "ruleset": TOTALS["ruleset"],
+    }

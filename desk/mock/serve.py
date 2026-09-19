@@ -347,6 +347,9 @@ class Handler(SimpleHTTPRequestHandler):
                 limit=int((q.get("limit") or ["60"])[0]),
                 offset=int((q.get("offset") or ["0"])[0])))
 
+        if path == "/api/summary":
+            return self._json(state.summary())
+
         if path == "/api/lanes":
             return self._json(state.lanes(q=(q.get("q") or [""])[0],
                                           action=(q.get("action") or [""])[0]))
