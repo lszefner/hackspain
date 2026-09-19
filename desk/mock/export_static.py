@@ -24,7 +24,13 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
 sys.path.insert(0, str(HERE))
-os.environ.setdefault("HELMCODE_API_KEY", "export-only")   # serve.py needs one to import
+# serve.py resolves a key at import time and exits without one. Freezing the
+# desk never calls the model, so a placeholder is enough -- but it has to
+# survive the key being *defined and empty*, which is what a Vercel build
+# looks like before anyone fills the variable in. setdefault() does not
+# replace an empty string, and the build died on exactly that.
+if not (os.environ.get("HELMCODE_API_KEY") or os.environ.get("DEEPSEEK_API_KEY")):
+    os.environ["HELMCODE_API_KEY"] = "export-only"
 
 import serve                                               # noqa: E402
 import state                                               # noqa: E402
@@ -64,7 +70,11 @@ def main() -> int:
     shutil.copy2(HERE / "index.html", PUBLIC / "index.html")
     print(f"  public/index.html        {(PUBLIC / 'index.html').stat().st_size / 1024:8.1f} KB")
 
+    # wipe first: a rebuild after the box changed would otherwise leave the
+    # documents of the previous snapshot sitting next to the current ones
     pdfs = PUBLIC / "facturas"
+    if pdfs.exists():
+        shutil.rmtree(pdfs)
     pdfs.mkdir(parents=True, exist_ok=True)
     for src in sorted(state.CAJA.glob("*.pdf")):
         shutil.copy2(src, pdfs / src.name)
