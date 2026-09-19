@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-19T04:47:51Z",
+  "generated_at": "2026-09-19T19:20:11Z",
   "mode": "offline_lexical",
   "policy": "balanced",
   "seed": 42,
@@ -690,7 +690,7 @@
     "duplicate_canonical_ids": false,
     "hallucinated_canonicals": [],
     "irpf_leaked_into_amount": false,
-    "enabled": 5,
+    "enabled": 7,
     "ok": true
   }
 }

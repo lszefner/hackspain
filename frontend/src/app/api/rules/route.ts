@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import rules from "@/desk-data/rules.json";
-
-export function GET() {
-  return NextResponse.json(rules);
+import type { NextRequest } from "next/server";
+import { proxyDesk } from "@/lib/desk/backend";
+export const dynamic = "force-dynamic";
+export async function GET(request: NextRequest) {
+  return proxyDesk("rules", request.nextUrl.searchParams);
 }

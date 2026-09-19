@@ -7,6 +7,12 @@ const PUBLIC_PATHS = ["/access", "/api/access"];
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Retire previously exported invoice PDFs and demo remittances. Original
+  // documents now come through the authenticated canonical backend proxy.
+  if (pathname.startsWith("/desk/facturas/") || pathname === "/desk/sepa.xml") {
+    return new NextResponse("Static demo document retired", { status: 410 });
+  }
+
   const isPublic =
     PUBLIC_PATHS.some((path) => pathname.startsWith(path)) ||
     pathname.startsWith("/_next") ||

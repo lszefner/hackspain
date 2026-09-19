@@ -16,7 +16,7 @@
 
 export type Decision = "PAGAR" | "ESCALAR" | "NO_PAGAR";
 export type EstadoRevision = "pendiente" | "procesando" | "hecha" | "error";
-export type ReviewStatus = "COMPLETED" | "INCOMPLETE" | "FAILED";
+export type ReviewStatus = "COMPLETED" | "INCOMPLETE" | "FAILED" | "DISABLED";
 export type FlujoEtapaNombre =
   | "recibida"
   | "extraida"
@@ -25,7 +25,8 @@ export type FlujoEtapaNombre =
   | "emitida"
   | "resuelta"
   | "pagada";
-export type FlujoEtapaEstado = "hecha" | "pendiente" | "error" | "no_registrada";
+export type FlujoEtapaEstado =
+  "hecha" | "pendiente" | "error" | "no_registrada" | "desactivada";
 
 // ── GET /api/salud ──────────────────────────────────────────────────
 
@@ -107,7 +108,7 @@ export interface FlujoEjecucion {
   error: string | null;
   captured_at: string | null;
   evaluation_date_policy: string | null;
-  rule_generation: "pinned" | "generated" | "pending" | null;
+  rule_generation: "pinned" | "generated" | "pending" | "reused" | null;
   snapshots: Record<string, FlujoSnapshot> | null;
   /** present when the frozen run-input artifact could not be loaded */
   artifact_error?: { code: string };
@@ -158,7 +159,7 @@ export interface FlujoExtraccion {
   /** why vision ran: determinista.gaps when ruta === 'vision', else [] */
   por_que_vision: string[];
   paginas: number | null;
-  trabajos: FlujoTrabajo[];
+  trabajos: FlujoTrabajo[] | { error: { code: string } };
   /** parsed invoice artifact; schema: benchmark/schemas invoice */
   factura: Record<string, unknown> | null;
   /** stored structural checks artifact; schema: ingestion validation */
@@ -183,7 +184,7 @@ export interface FlujoEvaluacion {
 }
 
 export interface FlujoRevision {
-  record_id: string;
+  record_id: string | null;
   status?: ReviewStatus | null;
   attention_required?: boolean;
   error?: unknown;

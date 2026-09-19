@@ -1,9 +1,2 @@
-import { data } from "@/lib/data";
-import { Bandeja } from "./ui";
-
-export const metadata = { title: "Bandeja de escalados · tito.ai" };
-
-export default async function BandejaPage() {
-  const escalados = await data.bandeja();
-  return <Bandeja escalados={escalados} />;
-}
+import { redirect } from "next/navigation";
+export default function LegacyPage() { redirect("/?view=invoices"); }
