@@ -12,7 +12,7 @@ import {
   Clock3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Flujo, FlujoTrabajo } from "@/lib/engine/types";
+import type { Flujo, FlujoExtraccion, FlujoTrabajo } from "@/lib/engine/types";
 import type { Detail } from "@/lib/desk/types";
 import { money } from "@/lib/desk/types";
 import {
@@ -40,6 +40,7 @@ import {
   RuleResults,
   EvidenceRefs,
 } from "./journey-evidence";
+import type { EvidenceRecord } from "@/lib/desk/journey";
 
 // An invoice is a case history: recorded events, then the evidence behind each
 // decision. The cream/brown reference palette remains the visual authority.
@@ -352,98 +353,12 @@ function CaseHistory({
                   <AuditRecord value={extraction.error} label="Error details" />
                 </div>
               ) : null}
-              <div className="attempt-heading">
-                <h4>Processing attempts</h4>
-                <span>{savedAttempts.length} recorded</span>
-              </div>
-              {savedAttempts.length ? (
-                <ol className="journey-attempts">
-                  {savedAttempts.map(({ job, attempt }) => (
-                    <li
-                      key={`${job.id}:${attempt.attempt_number}`}
-                      className={
-                        attempt.status === "failed" ? "attempt-failed" : ""
-                      }
-                    >
-                      <div className="attempt-head">
-                        <span>
-                          {stageTitles[job.stage] ?? humanize(job.stage)}
-                          <small>Attempt {attempt.attempt_number}</small>
-                        </span>
-                        <strong
-                          className={
-                            attempt.status === "succeeded"
-                              ? "is-success"
-                              : attempt.status === "failed"
-                                ? "is-danger"
-                                : ""
-                          }
-                        >
-                          {humanize(attempt.status)}
-                        </strong>
-                      </div>
-                      <div className="attempt-provider">
-                        {[job.provider, job.model]
-                          .filter(Boolean)
-                          .join(" / ") || "Provider not recorded"}
-                      </div>
-                      <div className="attempt-times">
-                        <div>
-                          <span>Started</span>
-                          <Timestamp value={attempt.started_at} />
-                        </div>
-                        <ArrowRight size={13} />
-                        <div>
-                          <span>Finished</span>
-                          <Timestamp value={attempt.finished_at} />
-                        </div>
-                        {attempt.latency_seconds != null ? (
-                          <span className="attempt-duration">
-                            {Number(attempt.latency_seconds).toFixed(2)} s
-                          </span>
-                        ) : null}
-                      </div>
-                      {attempt.error ? (
-                        <p className="attempt-error">
-                          {text(
-                            record(attempt.error).message,
-                            text(
-                              record(attempt.error).code,
-                              "An error was recorded for this attempt.",
-                            ),
-                          )}
-                        </p>
-                      ) : null}
-                      <AuditRecord
-                        label="Attempt evidence and identifiers"
-                        value={{
-                          ...attempt,
-                          job_id: job.id,
-                          stage: job.stage,
-                          provider: job.provider,
-                          model: job.model,
-                          artifact_id: job.artifact_id,
-                          prompt_version: job.prompt_version,
-                          config_version: job.config_version,
-                        }}
-                      />
-                    </li>
-                  ))}
-                </ol>
-              ) : (
-                <p className="journey-muted">
-                  No individual attempts are available in this history.
-                </p>
-              )}
-              {jobs(flow).map((job) => (
-                <JobGap key={job.id} job={job} />
-              ))}
-              {extraction?.trabajos && !Array.isArray(extraction.trabajos) ? (
-                <p className="journey-problem">
-                  The processing log could not be read:{" "}
-                  {extraction.trabajos.error.code}.
-                </p>
-              ) : null}
+              <ExtractionPath
+                flow={flow}
+                extraction={extraction}
+                invoice={invoice}
+                savedAttempts={savedAttempts}
+              />
               {extraction?.gaps?.length ? (
                 <Disclosure title="Unresolved extraction gaps">
                   <ul>
@@ -451,12 +366,6 @@ function CaseHistory({
                       <li key={i}>{humanize(gap)}</li>
                     ))}
                   </ul>
-                </Disclosure>
-              ) : null}
-              {extraction?.factura ? (
-                <Disclosure title="Extracted invoice fields">
-                  <InvoiceFacts invoice={invoice} />
-                  <AuditRecord value={invoice} label="All extracted fields" />
                 </Disclosure>
               ) : null}
               {extraction?.checks ? (
@@ -710,45 +619,205 @@ function CaseHistory({
               <h2>Invoice details</h2>
               <InvoiceFacts invoice={invoice} />
             </section>
-            <nav aria-label="Invoice journey sections">
-              <h2>In this history</h2>
-              {[
-                ["received", "Receipt"],
-                ["extraction", "Extraction & attempts"],
-                ["evaluation", "Rule decisions"],
-                ["review", "Contextual review"],
-                ["output", "Recommendation"],
-                ["resolution", "Resolution & payment"],
-              ].map(([id, label]) => (
-                <a key={id} href={`#event-${id}`}>
-                  {label}
-                  <ArrowRight size={12} />
-                </a>
-              ))}
-            </nav>
-            {flow.ejecucion ? (
-              <Disclosure title="Processing run">
-                <FactList
-                  items={{
-                    Request: flow.ejecucion.request_key,
-                    State: flow.ejecucion.state,
-                    Rules: flow.ejecucion.rule_generation,
-                  }}
-                />
-                {flow.ejecucion.error ? (
-                  <p className="journey-problem">{flow.ejecucion.error}</p>
-                ) : null}
-                <AuditRecord
-                  value={flow.ejecucion}
-                  label="Run configuration and evidence snapshot"
-                />
-              </Disclosure>
-            ) : null}
-            <AuditRecord value={flow} label="Complete audit record" />
           </div>
         </aside>
       </div>
     </div>
+  );
+}
+function extractionStepTitle(
+  stage: string,
+  ruta: FlujoExtraccion["ruta"] | undefined,
+): string {
+  if (stage === "reading") {
+    return ruta === "vision"
+      ? "Vision was needed"
+      : "No vision needed";
+  }
+  if (stage === "interpretation") return "Invoice interpreted";
+  return stageTitles[stage] ?? humanize(stage);
+}
+
+function extractionStepSummary(
+  stage: string,
+  ruta: FlujoExtraccion["ruta"] | undefined,
+  isFirst: boolean,
+): string {
+  if (stage === "reading") {
+    return ruta === "vision"
+      ? "Native text was not enough, so the document was read with vision."
+      : "The document’s text layer was readable, so vision was skipped.";
+  }
+  if (stage === "interpretation") {
+    return isFirst
+      ? "Invoice fields were structured from the document reading."
+      : "Fields were taken from that reading — the document was not read again.";
+  }
+  return `${stageTitles[stage] ?? humanize(stage)} ran as part of extraction.`;
+}
+
+function groupAttemptsByJob(
+  savedAttempts: ReturnType<typeof attempts>,
+): { job: FlujoTrabajo; attempts: ReturnType<typeof attempts>[number]["attempt"][] }[] {
+  const groups: {
+    job: FlujoTrabajo;
+    attempts: ReturnType<typeof attempts>[number]["attempt"][];
+  }[] = [];
+  for (const item of savedAttempts) {
+    const last = groups[groups.length - 1];
+    if (last && last.job.id === item.job.id) {
+      last.attempts.push(item.attempt);
+    } else {
+      groups.push({ job: item.job, attempts: [item.attempt] });
+    }
+  }
+  return groups;
+}
+
+function primaryAttempt(
+  stepAttempts: ReturnType<typeof attempts>[number]["attempt"][],
+) {
+  return (
+    [...stepAttempts].reverse().find((attempt) => attempt.status === "succeeded") ??
+    stepAttempts[stepAttempts.length - 1]
+  );
+}
+
+function ExtractionPath({
+  flow,
+  extraction,
+  invoice,
+  savedAttempts,
+}: {
+  flow: Flujo;
+  extraction: FlujoExtraccion | null | undefined;
+  invoice: EvidenceRecord;
+  savedAttempts: ReturnType<typeof attempts>;
+}) {
+  const steps = groupAttemptsByJob(savedAttempts);
+  const ruta = extraction?.ruta;
+
+  return (
+    <>
+      <div className="attempt-heading">
+        <h4>How the invoice was read</h4>
+        <span>
+          {steps.length
+            ? `${steps.length} ${steps.length === 1 ? "step" : "steps"}`
+            : "No steps recorded"}
+        </span>
+      </div>
+      {steps.length ? (
+        <ol className="extraction-path">
+          {steps.map(({ job, attempts: stepAttempts }, index) => {
+            const attempt = primaryAttempt(stepAttempts);
+            const failed = attempt?.status === "failed";
+            const showFacts = index === 0;
+            return (
+              <li key={job.id} className="extraction-path-item">
+                {index > 0 ? (
+                  <div className="extraction-path-arrow" aria-hidden="true">
+                    <ArrowRight size={18} strokeWidth={1.6} />
+                  </div>
+                ) : null}
+                <div
+                  className={[
+                    "extraction-path-step",
+                    index > 0 ? "is-compact" : "",
+                    failed ? "attempt-failed" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  <div className="attempt-head">
+                    <span>{extractionStepTitle(job.stage, ruta)}</span>
+                    <strong
+                      className={
+                        attempt?.status === "succeeded"
+                          ? "is-success"
+                          : attempt?.status === "failed"
+                            ? "is-danger"
+                            : ""
+                      }
+                    >
+                      {humanize(attempt?.status ?? job.state)}
+                    </strong>
+                  </div>
+                  <p className="extraction-path-summary">
+                    {extractionStepSummary(job.stage, ruta, index === 0)}
+                  </p>
+                  {stepAttempts.length > 1 ? (
+                    <p className="journey-muted">
+                      {stepAttempts.length} attempts recorded
+                      {attempt
+                        ? ` · showing attempt ${attempt.attempt_number}`
+                        : ""}
+                    </p>
+                  ) : null}
+                  {attempt?.error ? (
+                    <p className="attempt-error">
+                      {text(
+                        record(attempt.error).message,
+                        text(
+                          record(attempt.error).code,
+                          "An error was recorded for this step.",
+                        ),
+                      )}
+                    </p>
+                  ) : null}
+                  {showFacts ? (
+                    <>
+                      <FactList
+                        items={{
+                          Method: job.provider,
+                          Model: job.model,
+                          Pages: extraction?.paginas,
+                          Duration:
+                            attempt?.latency_seconds != null
+                              ? `${Number(attempt.latency_seconds).toFixed(2)} s`
+                              : null,
+                        }}
+                      />
+                      {attempt?.started_at || attempt?.finished_at ? (
+                        <div className="attempt-times">
+                          <div>
+                            <span>Started</span>
+                            <Timestamp value={attempt.started_at} />
+                          </div>
+                          <ArrowRight size={13} />
+                          <div>
+                            <span>Finished</span>
+                            <Timestamp value={attempt.finished_at} />
+                          </div>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              </li>
+            );
+          })}
+        </ol>
+      ) : (
+        <p className="journey-muted">
+          No individual reading steps are available in this history.
+        </p>
+      )}
+      {jobs(flow).map((job) => (
+        <JobGap key={job.id} job={job} />
+      ))}
+      {extraction?.trabajos && !Array.isArray(extraction.trabajos) ? (
+        <p className="journey-problem">
+          The processing log could not be read: {extraction.trabajos.error.code}.
+        </p>
+      ) : null}
+      {extraction?.factura ? (
+        <div className="extraction-fields">
+          <h4>Extracted fields</h4>
+          <InvoiceFacts invoice={invoice} />
+        </div>
+      ) : null}
+    </>
   );
 }
 function JobGap({ job }: { job: FlujoTrabajo }) {

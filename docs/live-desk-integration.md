@@ -59,14 +59,23 @@ code changes; this integration does not read `.env` or change credentials.
 
 ## Agent
 
-The existing Helmcode chat now has bounded, read-only tools: `search_invoices`,
-`get_invoice`, `get_rule_evidence`, and `invoice_totals`. They call the same query
-layer as the UI. Search pages have 25 rows; tools reject traversal and unknown
-operations; the loop allows at most six calls across four model rounds. Tool
-results over 32 KB are explicitly marked incomplete. Instructions distinguish
-recommendations from approvals/payments and require invoice/rule identifiers.
-No static facts or invoice blocks are sent to the model. Missing provider
-configuration or lookup failures produce explicit unavailable messages.
+The Agent view is the default desk home (`/` or `?view=agent`). Chat replies
+stream over `/api/chat` as SSE (`delta` then `done`).
+
+For known intents (escalations, ready to pay, do not pay, day numbers, rules,
+named `*.pdf`), the server builds structured panels from the same `/api/ui/*`
+query layer as Invoices/Summary. The model only phrases a short sentence from
+those FACTS; it does not choose the panel. Open questions without a panel intent
+still use the bounded read-only tools: `search_invoices`, `get_invoice`,
+`get_rule_evidence`, and `invoice_totals`.
+
+Search pages have 25 rows; tools reject traversal and unknown operations; the
+tool loop allows at most six calls across four model rounds. Tool results over
+32 KB are explicitly marked incomplete. Instructions distinguish recommendations
+from approvals/payments and require invoice/rule identifiers. Missing provider
+configuration still returns panels with a fixed fallback sentence when an intent
+matched. Panel foot buttons call `POST /api/action`, which remains a no-op (409):
+human decisions, payments and supplier sends are not connected yet.
 
 ## Retired demo surfaces
 

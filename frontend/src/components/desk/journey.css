@@ -398,7 +398,8 @@
   margin: 18px 0 9px;
 }
 .attempt-heading h4,
-.decision-reasons h4 {
+.decision-reasons h4,
+.extraction-fields h4 {
   font-size: 11px;
   font-weight: 500;
   margin: 0;
@@ -407,56 +408,90 @@
   font-size: 10px;
   color: var(--mut);
 }
-.journey-attempts {
+.extraction-path {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+.extraction-path-item {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+.extraction-path-item:first-child {
+  flex: 1 1 0;
+}
+.extraction-path-item:not(:first-child) {
+  flex: 0 1 260px;
+}
+.extraction-path-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 32px;
+  color: var(--mut);
+}
+.extraction-path-step {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 15px;
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
-  overflow: hidden;
 }
-.journey-attempts > li {
-  padding: 13px 15px;
-  border-bottom: 1px solid var(--line);
+.extraction-path-step.is-compact {
+  flex: 0 1 auto;
+  width: 100%;
+  max-width: 260px;
+  padding: 12px 13px;
 }
-.journey-attempts > li:last-child {
-  border: 0;
+.extraction-path-step.is-compact .extraction-path-summary {
+  margin-top: 6px;
 }
-.journey-attempts > li.attempt-failed {
+.extraction-path-step.attempt-failed {
   background: color-mix(in srgb, var(--no-soft) 40%, var(--panel));
+}
+.extraction-path-summary {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--mut);
+  line-height: 1.45;
+}
+.extraction-path-step .journey-facts {
+  margin-top: 12px;
+}
+.extraction-path-step .attempt-times {
+  margin-top: 12px;
+}
+.extraction-fields {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.extraction-fields h4 {
+  margin-bottom: 10px;
 }
 .attempt-head {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 10px;
-  font-size: 11px;
+  font-size: 12px;
 }
 .attempt-head > span {
-  font-weight: 500;
-}
-.attempt-head small {
-  font-size: 10px;
-  font-weight: 400;
-  color: var(--mut);
-  margin-left: 8px;
+  font-weight: 560;
 }
 .attempt-head > strong {
   font-size: 10px;
   font-weight: 500;
 }
-.attempt-provider {
-  font-size: 10px;
-  color: var(--mut);
-  margin-top: 2px;
-  overflow-wrap: anywhere;
-}
 .attempt-times {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-top: 11px;
   font-size: 10px;
   color: var(--mut);
 }
@@ -473,18 +508,10 @@
   display: block;
   font: 9px/1.6 var(--sans);
 }
-.attempt-duration {
-  margin-left: auto;
-  font: 10px var(--mono);
-  white-space: nowrap;
-}
 .event-content .attempt-error {
   color: var(--no);
   font-size: 11px;
-  margin-bottom: 0;
-}
-.journey-attempts .journey-disclosure {
-  font-size: 10px;
+  margin: 8px 0 0;
 }
 .journey-problem {
   font-size: 11px;
@@ -726,8 +753,7 @@
 .reference-document > a:hover {
   text-decoration-color: var(--accent);
 }
-.case-reference section,
-.case-reference nav {
+.case-reference section {
   padding: 20px 0;
   border-bottom: 1px solid var(--line);
 }
@@ -748,21 +774,6 @@
 }
 .case-reference .journey-facts dd {
   font-size: 11px;
-}
-.case-reference nav > a {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 5px 0;
-  color: var(--mut);
-  font-size: 11px;
-}
-.case-reference nav > a:hover {
-  color: var(--ink);
-}
-.case-reference .journey-disclosure {
-  margin-top: 14px;
 }
 .journey-source {
   border-top: 1px solid var(--line);
@@ -867,9 +878,6 @@
   }
   .case-reference section {
     padding-top: 0;
-  }
-  .case-reference nav {
-    display: none;
   }
   .case-header h1 {
     font-size: 23px;
@@ -998,19 +1006,30 @@
     gap: 8px;
     flex-wrap: wrap;
   }
-  .attempt-duration {
-    margin-left: 0;
-  }
   .attempt-head {
     flex-wrap: wrap;
     gap: 3px;
   }
-  .attempt-head small {
-    display: block;
-    margin-left: 0;
+  .extraction-path {
+    flex-direction: column;
+    gap: 0;
   }
-  .journey-attempts > li {
-    padding: 11px;
+  .extraction-path-item,
+  .extraction-path-item:first-child,
+  .extraction-path-item:not(:first-child) {
+    flex: 1 1 auto;
+    width: 100%;
+  }
+  .extraction-path-step.is-compact {
+    max-width: none;
+  }
+  .extraction-path-item {
+    flex-direction: column;
+  }
+  .extraction-path-arrow {
+    flex: 0 0 auto;
+    height: 28px;
+    transform: rotate(90deg);
   }
   .journey-footer {
     margin-left: 31px;

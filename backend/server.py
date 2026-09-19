@@ -59,8 +59,9 @@ def _lanzar_en_fondo(file_ids: list[str], request_key: str) -> None:
     global _procesando, _ultimo_error
     try:
         revisar_lote_sync(file_ids, store=get_store(), request_key=request_key)
+        _ultimo_error = None
     except Exception as exc:  # noqa: BLE001 - report background failures to the API
-        _ultimo_error = type(exc).__name__
+        _ultimo_error = f"{type(exc).__name__}: {exc}"
     finally:
         with _estado_lock:
             _procesando = False
