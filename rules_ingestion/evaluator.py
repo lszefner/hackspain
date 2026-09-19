@@ -21,7 +21,7 @@ from .execution_rules import (
     plan_rule,
 )
 
-VERSION = "rule-evaluator/1"
+VERSION = "rule-evaluator/2"
 RANK = {"PAGAR": 0, "ESCALAR": 1, "NO_PAGAR": 2}
 POLICY = {"precedence": ["NO_PAGAR", "ESCALAR", "PAGAR"],
           "verdict_semantics": {"PASS": "PAGAR", "NEEDS_REVIEW": "ESCALAR", "FAIL": "on_fail"}}
