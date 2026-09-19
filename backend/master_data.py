@@ -234,14 +234,14 @@ def _unavailable_snapshot(kind: str, scopes: tuple, scope: str,
                           availability="unavailable")
 
 
-def capture_master_snapshots(sources_yaml: str, *, captured_at: str) -> dict:
+def capture_master_snapshots(sources_yaml: str, *, captured_at: str, loaded=None) -> dict:
     from rules_ingestion import loader
     from rules_ingestion.decision_context import SourceSnapshot
 
     supplier_scopes = ("supplier.identity", "supplier.bank_details",
                        "supplier.payment_terms")
     try:
-        result = loader.load(sources_yaml)
+        result = loaded if loaded is not None else loader.load(sources_yaml)
         cfg = yaml.safe_load(result.source_config_bytes) or {}
         sheets_cfg = (cfg.get("workbook") or {}).get("sheets") or {}
     except Exception as exc:

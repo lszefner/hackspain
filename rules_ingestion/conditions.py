@@ -36,6 +36,8 @@ def usable(fact: dict) -> bool:
 def field_type(name: str) -> str:
     if MONEY.fullmatch(name):
         return "money"
+    if re.fullmatch(r"invoice\.taxes\.[0-9]+\.rate_percent", name):
+        return "decimal"
     kind = registry.FIELD_TYPES.get(name)
     if kind == "nonnegative_integer":
         return "integer"

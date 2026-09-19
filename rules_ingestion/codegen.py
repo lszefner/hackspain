@@ -21,10 +21,6 @@ import urllib.request
 from decimal import Decimal
 from typing import Optional
 
-from .classify import _load_dotenv
-
-_load_dotenv()
-
 # The exact field contracts the generated code may read (matches invoice.py).
 _INVOICE_FIELDS = ["invoice_number", "vendor_id", "nif", "iban", "pedido",
                    "base", "iva", "total", "currency", "date", "line_items"]

@@ -39,5 +39,5 @@ rules_ingestion/outcome/**/rules.json
 nueva.db
 
 # Frontend
-frontend/node_modules/
-frontend/.next/
+**/frontend/node_modules/
+**/frontend/.next/

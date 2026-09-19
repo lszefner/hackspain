@@ -13,15 +13,19 @@ import sys
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, unquote, urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backend.results_store import ResultsStore  # noqa: E402
-from backend.run_revision import DATA_DIR, FACTURAS_DIR, revisar_lote_sync  # noqa: E402
+from backend.results_store import PostgresResultsStore  # noqa: E402
+from backend.run_revision import (  # noqa: E402
+    FACTURAS_DIR,
+    revisar_lote_sync,
+    run_status,
+)
 
-STORE = ResultsStore(DATA_DIR / "revisiones.db")
+STORE = None
 LOTE_TAMANO = 20
 
 _estado_lock = threading.Lock()
@@ -29,20 +33,25 @@ _procesando = False
 _ultimo_error = None
 
 
+def get_store():
+    global STORE
+    if STORE is None:
+        from rules_ingestion.engine import InvoiceDecisionEngine
+
+        STORE = PostgresResultsStore(InvoiceDecisionEngine.from_supabase())
+    return STORE
+
+
 def _facturas() -> list[str]:
-    return sorted(p.name for p in FACTURAS_DIR.glob("*.pdf"))
+    return sorted({p.name for p in FACTURAS_DIR.glob("*.pdf")} | set(get_store().all()))
 
 
-def _lanzar_en_fondo(file_ids: list[str]) -> None:
+def _lanzar_en_fondo(file_ids: list[str], request_key: str) -> None:
     global _procesando, _ultimo_error
     try:
-        revisar_lote_sync(file_ids, store=STORE)
+        revisar_lote_sync(file_ids, store=get_store(), request_key=request_key)
     except Exception as exc:  # keep the API alive; surface the error instead of crashing the thread
-        _ultimo_error = f"{type(exc).__name__}: {exc}"
-        for file_id in file_ids:
-            row = STORE.get(file_id)
-            if row is None or row["estado"] == "procesando":
-                STORE.set_error(file_id, _ultimo_error)
+        _ultimo_error = type(exc).__name__
     finally:
         with _estado_lock:
             _procesando = False
@@ -50,7 +59,7 @@ def _lanzar_en_fondo(file_ids: list[str]) -> None:
 
 def _resumen() -> dict:
     todas = _facturas()
-    estado = STORE.all()
+    estado = get_store().all()
     conteo = {"pendiente": 0, "procesando": 0, "hecha": 0, "error": 0}
     decisiones = {"PAGAR": 0, "ESCALAR": 0, "NO_PAGAR": 0}
     facturas = []
@@ -97,6 +106,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, _resumen())
         elif url.path.startswith("/api/factura/"):
             self._factura(url.path[len("/api/factura/"):])
+        elif url.path.startswith('/api/ejecucion/'):
+            key = unquote(url.path[len('/api/ejecucion/'):])
+            try:
+                self._json(200, run_status(get_store().engine, key))
+            except KeyError:
+                self._json(404, {'error': 'run_not_found'})
         elif url.path == "/api/estado":
             self._json(200, {"procesando": _procesando, "error": _ultimo_error})
         else:
@@ -105,8 +120,11 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         url = urlparse(self.path)
         if url.path == "/api/lanzar":
-            ok = self._lanzar(parse_qs(self._body()))
-            self._json(200, {"ok": ok, "procesando": _procesando})
+            try:
+                ok = self._lanzar(parse_qs(self._body()))
+                self._json(200, {"ok": ok, "procesando": _procesando})
+            except ValueError:
+                self._json(422, {'ok': False, 'error': 'invalid_run_request'})
         else:
             self._json(404, {"error": "not_found"})
 
@@ -116,30 +134,35 @@ class Handler(BaseHTTPRequestHandler):
 
     def _lanzar(self, campos: dict[str, list[str]]) -> bool:
         global _procesando
-        with _estado_lock:
-            if _procesando:
-                return False
-            _procesando = True
+        request_key = (campos.get('request_key') or [''])[0]
+        if not 1 <= len(request_key) <= 200:
+            raise ValueError('request_key is required')
         objetivo = (campos.get("objetivo") or [""])[0]
         if objetivo == "una" and campos.get("file_id"):
             file_ids = [campos["file_id"][0]]
         else:
             todas = _facturas()
-            estado = STORE.all()
+            estado = get_store().all()
             pendientes = [f for f in todas if estado.get(f, {}).get("estado") not in ("hecha",)]
             file_ids = pendientes[:LOTE_TAMANO]
         if not file_ids:
-            with _estado_lock:
-                _procesando = False
             return False
-        threading.Thread(target=_lanzar_en_fondo, args=(file_ids,), daemon=True).start()
+        with _estado_lock:
+            if _procesando:
+                return False
+            _procesando = True
+        threading.Thread(target=_lanzar_en_fondo, args=(file_ids, request_key), daemon=True).start()
         return True
 
     def _factura(self, file_id: str):
-        if not (FACTURAS_DIR / file_id).exists():
+        file_id = unquote(file_id)
+        if Path(file_id).name != file_id or '/' in file_id or '\\' in file_id:
+            self._json(422, {'error': 'invalid_file_id'})
+            return
+        row = get_store().get(file_id)
+        if row is None and not (FACTURAS_DIR / file_id).is_file():
             self._json(404, {"error": "factura_no_encontrada"})
             return
-        row = STORE.get(file_id)
         if row is None:
             self._json(200, {"file_id": file_id, "estado": "pendiente", "decision": None,
                             "checks": [], "campos": {}, "error": None})
@@ -151,10 +174,17 @@ class Handler(BaseHTTPRequestHandler):
             "checks": json.loads(row["checks"]) if row["checks"] else [],
             "campos": json.loads(row["raw_invoice"]) if row["raw_invoice"] else {},
             "error": row.get("error"),
+            'evaluation_record_id': row.get('evaluation_record_id'),
+            'review_record_id': row.get('review_record_id'),
+            'evaluation_result': row.get('evaluation_result'),
+            'contextual_review': row.get('contextual_review'),
+            'review_status': row.get('review_status'),
+            'attention_required': row.get('attention_required'),
         })
 
 
 def main(port: int = 8010) -> int:
+    get_store()
     server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
     print(f"revision API en http://127.0.0.1:{port}")
     server.serve_forever()
