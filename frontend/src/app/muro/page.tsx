@@ -11,7 +11,7 @@ const ETIQUETA: Record<Resultado, [string, string]> = {
   NO_PAGAR: ["Bloqueado", "text-bad"],
 };
 
-export const metadata = { title: "El muro · Albertito" };
+export const metadata = { title: "El muro · tito.ai" };
 
 export default async function MuroPage({
   searchParams,

@@ -3,7 +3,7 @@ import { data } from "@/lib/data";
 import { hora, num } from "@/lib/format";
 import { Card } from "@/components/Card";
 
-export const metadata = { title: "Logs · Albertito" };
+export const metadata = { title: "Logs · tito.ai" };
 export const dynamic = "force-dynamic";
 
 const ETAPAS = ["ingesta", "extrae", "decide"];

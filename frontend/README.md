@@ -1,4 +1,4 @@
-# Albertito · frontend
+# tito.ai · frontend
 
 La web del trabajador digital: el listado crudo de facturas, la traza de cada
 decisión, la bandeja de escalados, los logs del pipeline y el manual de

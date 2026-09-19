@@ -7,7 +7,7 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Albertito · pagos a proveedores",
+  title: "tito.ai · pagos a proveedores",
   description:
     "Trabajador digital para las 500 sombras de Alberto: decide, escala y deja rastro de todo.",
 };
@@ -33,7 +33,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
                 <rect x="6" y="6" width="4" height="4" fill="#b26a00" />
                 <rect x="10" y="10" width="4" height="4" fill="#b0271e" />
               </svg>
-              <span className="text-lg font-bold tracking-tight">Albertito</span>
+              <span className="text-lg font-bold tracking-tight">tito.ai</span>
               <span className="hidden text-xs text-muted sm:inline">
                 · técnico de pagos a proveedores
               </span>

@@ -5,7 +5,7 @@ import { eur, num } from "@/lib/format";
 import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 
-export const metadata = { title: "Facturas · Albertito" };
+export const metadata = { title: "Facturas · tito.ai" };
 export const dynamic = "force-dynamic";
 
 const RESULTADOS: Resultado[] = ["PAGAR", "ESCALAR", "NO_PAGAR"];

@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 import { BotonActivar } from "./ui";
 
-export const metadata = { title: "Lógica · Albertito" };
+export const metadata = { title: "Lógica · tito.ai" };
 export const dynamic = "force-dynamic";
 
 export default async function ManualPage({

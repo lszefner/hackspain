@@ -1,7 +1,7 @@
 import { borradorDesde, getNorma, normaActiva } from "@/lib/normas";
 import { Editor } from "./ui";
 
-export const metadata = { title: "Redactar norma · Albertito" };
+export const metadata = { title: "Redactar norma · tito.ai" };
 export const dynamic = "force-dynamic";
 
 export default async function EditorPage({

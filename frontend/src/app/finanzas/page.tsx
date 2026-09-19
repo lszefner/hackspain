@@ -4,7 +4,7 @@ import { eur, hora, num } from "@/lib/format";
 import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 
-export const metadata = { title: "Finanzas · Albertito" };
+export const metadata = { title: "Finanzas · tito.ai" };
 export const dynamic = "force-dynamic";
 
 const coma = (n: number, dec = 2) => n.toFixed(dec).replace(".", ",");
