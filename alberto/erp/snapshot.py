@@ -16,11 +16,15 @@ def nuevo_id(origen: str) -> str:
 def guardar(con: sqlite3.Connection, asientos: list[Asiento], informe: dict,
             *, origen: str = "bridge") -> str:
     sid = nuevo_id(origen)
+    m = informe.get("metricas") or {}
     con.execute(
         "INSERT INTO snapshots_erp (snapshot_id, origen, n_asientos,"
-        " total_declarado, completo, creado_at) VALUES (?,?,?,?,?,?)",
+        " total_declarado, completo, peticiones, reintentos_ora, esperas_429,"
+        " relogins, segundos, creado_at) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
         (sid, origen, len(asientos), informe.get("total_declarado"),
-         int(bool(informe.get("completo"))), ahora()),
+         int(bool(informe.get("completo"))), m.get("peticiones", 0),
+         m.get("reintentos_ora", 0), m.get("esperas_429", 0),
+         m.get("relogins", 0), str(round(m.get("segundos", 0), 2)), ahora()),
     )
     con.executemany(
         "INSERT OR REPLACE INTO asientos (snapshot_id, asiento_id, pedido, nif,"

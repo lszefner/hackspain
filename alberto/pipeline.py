@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
+from datetime import date
 from dataclasses import asdict, replace
 from decimal import Decimal
 from pathlib import Path
@@ -18,6 +19,8 @@ from alberto.erp import ClienteERP
 from alberto.erp import snapshot as snap
 from alberto.extraccion import extraer_campos, texto_de_pdf
 from alberto.maestros import cargar_excel, cargar_proveedores
+from alberto.procedencia import (Pasada, abrir_pasada, archivar_config,
+                                 guardar_contexto)
 from alberto.maestros import guardar as guardar_maestro
 from alberto.reglas import Motor, cargar_norma, cargar_politica
 
@@ -26,8 +29,11 @@ def sincronizar_erp(con: sqlite3.Connection, url: str, *, origen: str = "bridge"
     with ClienteERP(url) as cli:
         asientos, informe = cli.descargar_todo()
     if not informe["completo"]:
-        log(con, "erp", "snapshot INCOMPLETO", nivel="warn", **{
-            k: v for k, v in informe.items() if k != "metricas"})
+        log(con, "erp", "snapshot INCOMPLETO", nivel="warn",
+            **{k: v for k, v in informe.items() if k != "metricas"})
+    # Las metricas SI se registran: reintentos por ORA-00600, esperas por 429
+    # y relogins son la evidencia de que hablar con un ERP de 2009 cuesta.
+    log(con, "erp", "metricas del bridge", **informe["metricas"])
     return snap.guardar(con, asientos, informe, origen=origen)
 
 
@@ -99,7 +105,6 @@ def _guardar_extraccion(con: sqlite3.Connection, f: FacturaExtraida, intento: in
 
 
 def _factura_de_fila(fila: sqlite3.Row) -> FacturaExtraida:
-    from datetime import date
     c = json.loads(fila["campos_json"])
     def d(k):
         return Decimal(c[k]) if c.get(k) else None
@@ -115,14 +120,29 @@ def _factura_de_fila(fila: sqlite3.Row) -> FacturaExtraida:
 
 
 def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str,
-            norma: str = "v3", lote: str = "lote1") -> dict:
+            norma: str = "v3", lote: str = "lote1",
+            hoy: date | None = None, pasada: Pasada | None = None) -> dict:
     asientos = snap.cargar(con, snapshot_erp)
     proveedores = cargar_proveedores(con, snapshot_maestro)
+    # Filtrado por snapshot_maestro: sin esto la clave de `decisiones`
+    # afirmaba una reproducibilidad que el codigo no entregaba.
     revisar = frozenset(
         r["clave"] for r in con.execute(
-            "SELECT clave FROM notas WHERE ambito='pedido' AND clave IS NOT NULL"))
+            "SELECT clave FROM notas WHERE version_id=? AND ambito='pedido'"
+            " AND clave IS NOT NULL", (snapshot_maestro,)))
+    propia = pasada is None
+    if propia:
+        pasada = abrir_pasada(con, "decide",
+                              {"norma": norma, "lote": lote,
+                               "snapshot_erp": snapshot_erp,
+                               "snapshot_maestro": snapshot_maestro}, hoy=hoy)
+    # El contenido de los dos YAML queda archivado como artefacto: es lo que
+    # permite a `alberto audita` reconstruir el motor exacto mas adelante.
+    shas = archivar_config(con, norma)
+    # `hoy` se resuelve UNA vez por pasada y se pasa explicito. Antes cada
+    # Motor llamaba a date.today() y esa entrada no quedaba en ningun sitio.
     motor = Motor(cargar_norma(norma), cargar_politica(), proveedores, asientos,
-                  revisar=revisar)
+                  revisar=revisar, hoy=pasada.hoy)
 
     # extraccion_vigente, no extracciones: con dos intentos por documento la
     # tabla devolveria dos filas y la decision dependeria del orden del cursor.
@@ -142,11 +162,23 @@ def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str
              dec.result, dec.motivo,
              json.dumps([asdict(v) for v in dec.reglas], ensure_ascii=False, default=str),
              str(dec.coste_eur), dec.latencia_ms, ahora()))
+        guardar_contexto(con, doc_id=dec.doc_id, norma_version=dec.norma_version,
+                         snapshot_erp=snapshot_erp, snapshot_maestro=snapshot_maestro,
+                         pasada=pasada, shas=shas, intento=fila["intento"])
         con.execute("UPDATE documentos SET estado=? WHERE doc_id=?",
                     ("escalado" if dec.result == "ESCALAR" else "decidido", dec.doc_id))
         conteo[dec.result] = conteo.get(dec.result, 0) + 1
-    log(con, "decision", f"{len(filas)} decisiones", norma=norma, **conteo)
-    return conteo
+        if dec.result != "PAGAR":
+            # Senal por documento para lo que NO es la via feliz: es lo que
+            # Alberto necesita mirar, y `eventos` solo tenia una fila por etapa.
+            log(con, "decision", dec.result, doc_id=dec.doc_id,
+                pasada_id=pasada.pasada_id, nivel="warn", motivo=dec.motivo)
+    resumen = dict(conteo, norma=motor.etiqueta)
+    log(con, "decision", f"{len(filas)} decisiones", norma=motor.etiqueta,
+        pasada_id=pasada.pasada_id, **conteo)
+    if propia:
+        pasada.registrar(resumen)
+    return resumen
 
 
 # ---------------------------------------------------------------- fase 2

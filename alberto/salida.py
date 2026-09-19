@@ -6,14 +6,15 @@ import sqlite3
 from pathlib import Path
 
 from alberto.contratos import RESULTADOS_VALIDOS, nfc
+from alberto.resolucion import Ambigua, decisiones_de_lote
 
 
 def escribir_jsonl(con: sqlite3.Connection, destino: Path, *, lote: str = "lote1",
                    norma: str = "v3", con_traza: bool = False) -> dict:
-    filas = con.execute(
-        "SELECT d.file_id, x.result, x.motivo FROM documentos d"
-        " LEFT JOIN decisiones x ON x.doc_id = d.doc_id AND x.norma_version = ?"
-        " WHERE d.lote = ? ORDER BY d.file_id", (norma, lote)).fetchall()
+    # Una fila por documento, garantizado. Antes esto emparejaba solo por
+    # norma_version y con dos snapshots devolvia N filas; ganaba la primera
+    # que sacara SQLite y el JSONL podia llevar una decision caducada.
+    filas = decisiones_de_lote(con, lote=lote, norma=norma)
 
     sin_decision = [f["file_id"] for f in filas if f["result"] is None]
     vistos: set[str] = set()

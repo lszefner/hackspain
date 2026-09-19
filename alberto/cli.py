@@ -53,12 +53,16 @@ def main(argv: list[str] | None = None) -> int:
                    help="segunda pasada del modelo: mas caro, hasta 7 llamadas/pagina")
     v.add_argument("--max-intentos", type=int, default=2)
     v.add_argument("--raw", type=Path, default=Path("raw"))
+    sub.add_parser("coste", help="coste y latencia por via, desde la BD")
+    au = sub.add_parser("audita", help="vuelve a tomar cada decision y comprueba que sale igual")
+    au.add_argument("--norma", default=None, help="v3 o v3@7f3a1c; por defecto, todas")
+    au.add_argument("--limite", type=int)
     w = sub.add_parser("valida", help="¿entrega el extractor los campos que piden las reglas?")
     w.add_argument("--norma", default="v3")
     w.add_argument("--congelar", action="store_true",
                    help="fija la cobertura actual como referencia de no regresion")
     a = args = p.parse_args(argv)
-    if a.cmd not in ("valida", "vision", "explica", "estado") and not a.caja.is_dir():
+    if a.cmd not in ("valida", "vision", "explica", "estado", "audita", "coste") and not a.caja.is_dir():
         p.error(f"no encuentro la Caja en {a.caja}. Clonala y pasa --caja RUTA "
                 f"o exporta ALBERTO_CAJA=RUTA")
     con = conectar(args.db)
@@ -102,6 +106,12 @@ def main(argv: list[str] | None = None) -> int:
             p.error(f"{exc}\n         "
                     f"(`alberto vision --en-seco` no necesita credenciales)")
         return 0
+    if a.cmd == "coste":
+        from alberto import validacion
+        return validacion.informe_coste(con, lote=a.lote)
+    if a.cmd == "audita":
+        from alberto import auditoria
+        return auditoria.informe(con, norma=a.norma, limite=a.limite)
     if a.cmd == "valida":
         from alberto import validacion
         if a.congelar:

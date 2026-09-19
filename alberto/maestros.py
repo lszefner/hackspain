@@ -83,7 +83,7 @@ def cargar_excel(ruta: Path) -> dict:
 
 def guardar(con: sqlite3.Connection, datos: dict, *, origen: str,
             autor: str = "sistema", motivo: str = "carga inicial") -> str:
-    vid = f"maestro-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}"
+    vid = f"maestro-{datetime.now(timezone.utc):%Y%m%dT%H%M%S%f}"
     con.execute(
         "INSERT INTO maestro_versiones (version_id, origen, autor, motivo, creado_at)"
         " VALUES (?,?,?,?,?)", (vid, origen, autor, motivo, ahora()))
@@ -98,9 +98,13 @@ def guardar(con: sqlite3.Connection, datos: dict, *, origen: str,
         [(vid, ped, d["proveedor_id"], d["nif"],
           str(d["importe"]) if d["importe"] is not None else "0",
           d["estado"], d["fecha"]) for ped, d in datos["pedidos"].items()])
+    # INSERT OR REPLACE con version en la clave: recargar el maestro ya no
+    # duplica las notas. Antes era un INSERT plano y cada `alberto maestro`
+    # anadia otras seis.
     con.executemany(
-        "INSERT INTO notas (ambito, clave, texto, origen, creado_at) VALUES (?,?,?,?,?)",
-        [(a, c, t, "excel", ahora()) for a, c, t in datos["notas"]])
+        "INSERT OR REPLACE INTO notas (version_id, ambito, clave, texto,"
+        " origen, creado_at) VALUES (?,?,?,?,?,?)",
+        [(vid, a, c, t, "excel", ahora()) for a, c, t in datos["notas"]])
     log(con, "maestros", f"version {vid}",
         proveedores=len(datos["proveedores"]), pedidos=len(datos["pedidos"]),
         notas=len(datos["notas"]), nifs_duplicados=datos["duplicados"])
@@ -114,3 +118,14 @@ def cargar_proveedores(con: sqlite3.Connection, version_id: str) -> dict[str, Pr
                             condiciones_dias=f["condiciones_dias"])
         for f in con.execute("SELECT * FROM proveedores WHERE version_id=?", (version_id,))
     }
+
+
+def cargar_notas(con: sqlite3.Connection, version_id: str, *,
+                 ambito: str | None = None) -> list[sqlite3.Row]:
+    """Las notas DE ESA VERSION del maestro. Nunca la tabla entera."""
+    sql = "SELECT * FROM notas WHERE version_id=?"
+    args: list = [version_id]
+    if ambito:
+        sql += " AND ambito=?"
+        args.append(ambito)
+    return con.execute(sql + " ORDER BY ambito, clave", args).fetchall()

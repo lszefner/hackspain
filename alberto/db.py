@@ -13,6 +13,24 @@ from pathlib import Path
 
 RUTA_DB = Path("alberto.db")
 
+_DDL_NOTAS = """
+-- Las notas salen del MISMO Excel que `proveedores`, asi que llevan la
+-- misma version. Sin `version_id` la consulta de `decidir()` leia la tabla
+-- entera y `revisar` era la union de todas las cargas que se hubieran hecho
+-- jamas: `snapshot_maestro` en la clave de `decisiones` MENTIA sobre lo que
+-- de verdad entro en la decision.
+CREATE TABLE IF NOT EXISTS notas (
+  version_id TEXT NOT NULL DEFAULT '' REFERENCES maestro_versiones(version_id),
+  ambito TEXT NOT NULL,          -- proveedor | pedido | regla | general
+  clave TEXT,                    -- P002 | PO-2026-0007 | R3_iva
+  texto TEXT NOT NULL,
+  origen TEXT NOT NULL DEFAULT 'excel',
+  creado_at TEXT NOT NULL,
+  PRIMARY KEY (version_id, ambito, clave, texto)
+);
+CREATE INDEX IF NOT EXISTS ix_notas ON notas(version_id, ambito, clave);
+"""
+
 ESQUEMA = """
 PRAGMA journal_mode=WAL;
 PRAGMA foreign_keys=ON;
@@ -88,6 +106,12 @@ CREATE TABLE IF NOT EXISTS snapshots_erp (
   n_asientos INTEGER NOT NULL,
   total_declarado INTEGER,
   completo INTEGER NOT NULL DEFAULT 0,
+  -- Lo que costo hablar con un ERP de 2009. Se calculaba y se tiraba.
+  peticiones INTEGER NOT NULL DEFAULT 0,
+  reintentos_ora INTEGER NOT NULL DEFAULT 0,
+  esperas_429 INTEGER NOT NULL DEFAULT 0,
+  relogins INTEGER NOT NULL DEFAULT 0,
+  segundos TEXT,
   creado_at TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS asientos (
@@ -135,8 +159,43 @@ CREATE TABLE IF NOT EXISTS decisiones (
   PRIMARY KEY (doc_id, norma_version, snapshot_erp, snapshot_maestro)
 );
 
+-- === la ejecucion: quien, cuando, con que ===============================
+-- Sin esta tabla ninguna otra senal se puede fechar ni atribuir: habia
+-- snapshots del ERP y versiones del maestro, pero nada que representara
+-- "esta pasada, con estos argumentos y este commit".
+CREATE TABLE IF NOT EXISTS pasadas (
+  pasada_id TEXT PRIMARY KEY,      -- r-20260919T121000123456
+  verbo TEXT NOT NULL,
+  argumentos_json TEXT NOT NULL,   -- dpi, concurrencia, limite, verificar...
+  codigo TEXT,                     -- commit corto, y -sucio si habia cambios
+  hoy TEXT,                        -- el reloj que se uso, resuelto UNA vez
+  inicio TEXT NOT NULL,
+  fin TEXT,
+  resultado_json TEXT,
+  ok INTEGER
+);
+
+-- El contexto de una decision, con SU MISMA clave pero en tabla aparte.
+-- Aparte a proposito: `decisiones` la esta escribiendo otra persona ahora
+-- mismo y no se le cambia ni la clave ni las columnas.
+CREATE TABLE IF NOT EXISTS decision_contexto (
+  doc_id TEXT NOT NULL,
+  norma_version TEXT NOT NULL,
+  snapshot_erp TEXT NOT NULL,
+  snapshot_maestro TEXT NOT NULL,
+  pasada_id TEXT REFERENCES pasadas(pasada_id),
+  hoy TEXT,                        -- entrada de R4_fecha y de vencimiento
+  norma_sha TEXT,                  -- sha256 del YAML, en `artefactos`
+  politica_sha TEXT,               -- idem
+  codigo TEXT,
+  intento_extraccion INTEGER,      -- QUE extraccion se uso de verdad
+  creado_at TEXT NOT NULL,
+  PRIMARY KEY (doc_id, norma_version, snapshot_erp, snapshot_maestro)
+);
+
 CREATE TABLE IF NOT EXISTS eventos (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  pasada_id TEXT,
   doc_id TEXT, etapa TEXT NOT NULL, nivel TEXT NOT NULL,
   mensaje TEXT NOT NULL, datos_json TEXT, at TEXT NOT NULL
 );
@@ -148,16 +207,7 @@ CREATE TABLE IF NOT EXISTS resoluciones (
   motivo TEXT NOT NULL, resuelto_por TEXT, at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS notas (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ambito TEXT NOT NULL,          -- proveedor | pedido | regla | general
-  clave TEXT,                    -- P002 | PO-2026-0007 | R3_iva
-  texto TEXT NOT NULL,
-  origen TEXT NOT NULL DEFAULT 'excel',
-  creado_at TEXT NOT NULL
-);
-CREATE INDEX IF NOT EXISTS ix_notas ON notas(ambito, clave);
-"""
+""" + _DDL_NOTAS
 
 
 def ahora() -> str:
@@ -173,6 +223,13 @@ COLUMNAS_NUEVAS: tuple[tuple[str, str, str], ...] = (
     ("extracciones", "tokens_entrada", "tokens_entrada INTEGER NOT NULL DEFAULT 0"),
     ("extracciones", "tokens_salida", "tokens_salida INTEGER NOT NULL DEFAULT 0"),
     ("extracciones", "n_llamadas", "n_llamadas INTEGER NOT NULL DEFAULT 0"),
+    ("extracciones", "pasada_id", "pasada_id TEXT"),
+    ("eventos", "pasada_id", "pasada_id TEXT"),
+    ("snapshots_erp", "peticiones", "peticiones INTEGER NOT NULL DEFAULT 0"),
+    ("snapshots_erp", "reintentos_ora", "reintentos_ora INTEGER NOT NULL DEFAULT 0"),
+    ("snapshots_erp", "esperas_429", "esperas_429 INTEGER NOT NULL DEFAULT 0"),
+    ("snapshots_erp", "relogins", "relogins INTEGER NOT NULL DEFAULT 0"),
+    ("snapshots_erp", "segundos", "segundos TEXT"),
 )
 
 # La extraccion VIGENTE de cada documento: el intento mas alto que fue
@@ -199,6 +256,36 @@ def _migrar(con: sqlite3.Connection) -> None:
         existentes = {f["name"] for f in con.execute(f"PRAGMA table_info({tabla})")}
         if existentes and columna not in existentes:
             con.execute(f"ALTER TABLE {tabla} ADD COLUMN {ddl}")
+    _migrar_notas(con)
+
+
+def _migrar_notas(con: sqlite3.Connection) -> None:
+    """`notas` cambio de clave primaria, asi que no basta un ALTER.
+
+    Las notas de una BD anterior no dicen de que carga del Excel salieron.
+    Se les asigna la version de maestro mas reciente, que es la unica
+    respuesta honesta disponible, y se deja constancia en `eventos`: es
+    justo el tipo de suposicion que no debe quedar tacita.
+    """
+    columnas = {f["name"] for f in con.execute("PRAGMA table_info(notas)")}
+    if not columnas or "version_id" in columnas:
+        return
+
+    fila = con.execute("SELECT version_id FROM maestro_versiones"
+                       " ORDER BY creado_at DESC LIMIT 1").fetchone()
+    vid = fila["version_id"] if fila else ""
+    viejas = con.execute("SELECT ambito, clave, texto, origen, creado_at"
+                         " FROM notas").fetchall()
+    con.execute("ALTER TABLE notas RENAME TO notas_sin_version")
+    con.executescript(_DDL_NOTAS)
+    con.executemany(
+        "INSERT OR REPLACE INTO notas (version_id, ambito, clave, texto,"
+        " origen, creado_at) VALUES (?,?,?,?,?,?)",
+        [(vid, f["ambito"], f["clave"], f["texto"], f["origen"], f["creado_at"])
+         for f in viejas])
+    con.execute("DROP TABLE notas_sin_version")
+    log(con, "migracion", f"{len(viejas)} notas asignadas a {vid or 'sin version'}",
+        nivel="warn", asignadas_a=vid, supuesto="la version de maestro mas reciente")
 
 
 def conectar(ruta: Path | str = RUTA_DB) -> sqlite3.Connection:
@@ -221,11 +308,12 @@ def txt(valor: Decimal | None) -> str | None:
 
 
 def log(con: sqlite3.Connection, etapa: str, mensaje: str, *,
-        doc_id: str | None = None, nivel: str = "info", **datos) -> None:
+        doc_id: str | None = None, nivel: str = "info",
+        pasada_id: str | None = None, **datos) -> None:
     con.execute(
-        "INSERT INTO eventos (doc_id, etapa, nivel, mensaje, datos_json, at)"
-        " VALUES (?,?,?,?,?,?)",
-        (doc_id, etapa, nivel, mensaje,
+        "INSERT INTO eventos (pasada_id, doc_id, etapa, nivel, mensaje,"
+        " datos_json, at) VALUES (?,?,?,?,?,?,?)",
+        (pasada_id, doc_id, etapa, nivel, mensaje,
          json.dumps(datos, default=str, ensure_ascii=False) if datos else None,
          ahora()),
     )

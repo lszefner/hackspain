@@ -1,6 +1,8 @@
 """El lector de la fase 2: las dos trampas que romperian todo en silencio."""
 from decimal import Decimal
 
+import pytest
+
 from alberto.extraccion.vision.ajustes import sin_imagenes
 from alberto.extraccion.vision.coste import (cargar_precios, coste_de_llamadas,
                                              tokens_de)
@@ -85,3 +87,42 @@ def test_un_modelo_sin_tarifa_se_sobreestima_y_se_avisa():
     coste, _, _, sin_tarifa = coste_de_llamadas(llamadas, precios)
     assert sin_tarifa == ["modelo-nuevo"]
     assert coste == Decimal("0.500000")
+
+
+def test_un_429_se_reintenta_y_un_error_de_contrato_no():
+    """El portado clasifica: 429 y 5xx son reintentables, un JSON invalido
+    no. Reintentar un error de contrato es pagar dos veces por el mismo
+    fallo."""
+    import asyncio
+
+    from alberto.extraccion.vision.lector import _con_reintentos
+    from alberto.extraccion.vision.portado.deepseek import ProviderError
+
+    intentos = {"n": 0}
+
+    async def falla(doc_id, paginas, cfg, peticion, precios=None):
+        intentos["n"] += 1
+        raise ProviderError("429", code="rate", retryable=True)
+
+    import alberto.extraccion.vision.lector as mod
+    original = mod.leer_documento
+    mod.leer_documento = falla
+    try:
+        with pytest.raises(ProviderError):
+            asyncio.run(_con_reintentos("d", [b""], {}, None, {},
+                                        reintentos=2, espera=0.001))
+        assert intentos["n"] == 3        # el original y dos reintentos
+
+        intentos["n"] = 0
+
+        async def contrato(doc_id, paginas, cfg, peticion, precios=None):
+            intentos["n"] += 1
+            raise ProviderError("json invalido", code="invalid_response")
+
+        mod.leer_documento = contrato
+        with pytest.raises(ProviderError):
+            asyncio.run(_con_reintentos("d", [b""], {}, None, {},
+                                        reintentos=2, espera=0.001))
+        assert intentos["n"] == 1        # no se reintenta
+    finally:
+        mod.leer_documento = original

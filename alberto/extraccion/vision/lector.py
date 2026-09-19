@@ -117,8 +117,34 @@ async def leer_documento(doc_id: str, paginas_png: Sequence[bytes], cfg: dict,
         coste_eur=coste, tokens_entrada=t_ent, tokens_salida=t_sal)
 
 
+async def _con_reintentos(doc_id: str, paginas: list[bytes], cfg: dict,
+                          peticion: Callable, precios: dict, *,
+                          reintentos: int, espera: float) -> Lectura:
+    """Reintenta SOLO lo que el proveedor marca como reintentable.
+
+    El portado ya clasifica: 429 y 5xx llevan `retryable=True`, y un JSON
+    invalido o una salida truncada no. Reintentar un error de contrato es
+    pagar dos veces por el mismo fallo, asi que aqui se distingue.
+
+    Espera exponencial con tope, igual que el cliente del ERP hace con los
+    ORA-00600: es el mismo problema y merece la misma respuesta.
+    """
+    ultimo: Exception | None = None
+    for intento in range(reintentos + 1):
+        try:
+            return await leer_documento(doc_id, paginas, cfg, peticion,
+                                        precios=precios)
+        except ProviderError as exc:
+            ultimo = exc
+            if not getattr(exc, "retryable", False) or intento == reintentos:
+                raise
+            await asyncio.sleep(min(espera * 2 ** intento, 30.0))
+    raise ultimo                                        # pragma: no cover
+
+
 async def leer_lote(trabajos: Sequence[tuple[str, list[bytes]]], cfg: dict,
                     peticion: Callable, *, concurrencia: int = 4,
+                    reintentos: int = 2, espera: float = 2.0,
                     al_terminar: Callable[[str, Any], None]) -> None:
     """Un bucle de eventos, un cliente, un semaforo de N.
 
@@ -134,9 +160,10 @@ async def leer_lote(trabajos: Sequence[tuple[str, list[bytes]]], cfg: dict,
     async def uno(doc_id: str, paginas: list[bytes]) -> None:
         async with semaforo:
             try:
-                al_terminar(doc_id, await leer_documento(
-                    doc_id, paginas, cfg, peticion, precios=precios))
-            except (ProviderError, Exception) as exc:   # noqa: B014
+                al_terminar(doc_id, await _con_reintentos(
+                    doc_id, paginas, cfg, peticion, precios,
+                    reintentos=reintentos, espera=espera))
+            except Exception as exc:                    # noqa: BLE001
                 al_terminar(doc_id, exc)
 
     await asyncio.gather(*(uno(d, p) for d, p in trabajos))

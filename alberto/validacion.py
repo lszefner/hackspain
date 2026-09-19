@@ -86,10 +86,24 @@ def medir(con: sqlite3.Connection, *, lote: str = "lote1",
 
 
 # --- no regresion ---------------------------------------------------------
-def instantanea(con: sqlite3.Connection, *, lote: str = "lote1") -> dict[str, list[str]]:
-    """{file_id: [campos presentes]}. Es el fichero de oro."""
-    return {f["file_id"]: sorted(c for c, ok in _presentes(f).items() if ok)
-            for f in contrato(con, lote=lote)}
+def instantanea(con: sqlite3.Connection, *, lote: str = "lote1") -> dict[str, dict]:
+    """{file_id: {campos, valores}}. Es el fichero de oro.
+
+    `valores` es un sha256 corto del contenido de los campos, no solo de sus
+    nombres. Sin el, un cambio que convirtiera todos los totales en 1,00
+    dejaba el oro en verde: `total` seguia "presente".
+    """
+    import hashlib
+    salida: dict[str, dict] = {}
+    for f in contrato(con, lote=lote):
+        campos = json.loads(f["campos_json"])
+        presentes = sorted(c for c, ok in _presentes(f).items() if ok)
+        crudo = "|".join(f"{c}={campos.get(c)}" for c in presentes)
+        salida[f["file_id"]] = {
+            "campos": presentes,
+            "valores": hashlib.sha256(crudo.encode("utf-8")).hexdigest()[:12],
+        }
+    return salida
 
 
 def congelar(con: sqlite3.Connection, ruta: Path = RUTA_ORO, *,
@@ -111,10 +125,16 @@ def regresiones(con: sqlite3.Connection, ruta: Path = RUTA_ORO, *,
     ahora_ = instantanea(con, lote=lote)
     fallos = []
     for file_id, antes in oro.items():
-        despues = set(ahora_.get(file_id, []))
-        perdidos = sorted(set(antes) - despues)
+        actual = ahora_.get(file_id) or {"campos": [], "valores": ""}
+        # formato antiguo: una lista de campos, sin hash de valores
+        campos_antes = antes["campos"] if isinstance(antes, dict) else antes
+        perdidos = sorted(set(campos_antes) - set(actual["campos"]))
         if perdidos:
             fallos.append(f"{file_id}: perdio {', '.join(perdidos)}")
+        elif isinstance(antes, dict) and antes.get("valores") \
+                and antes["valores"] != actual["valores"] \
+                and set(campos_antes) == set(actual["campos"]):
+            fallos.append(f"{file_id}: mismos campos, VALORES distintos")
     return fallos
 
 
@@ -164,3 +184,50 @@ def informe(con: sqlite3.Connection, *, lote: str = "lote1",
             print(f"     {G}… y {len(m['incompletos']) - 10} mas{F}")
     print()
     return 0 if listo else 1
+
+
+# --- coste: una cifra, sin contarla dos veces ------------------------------
+def coste(con: sqlite3.Connection, *, lote: str = "lote1") -> dict:
+    """Coste y latencia POR VIA, desde la BD.
+
+    Se suma sobre `extracciones`, nunca sumando tambien `decisiones`:
+    decidir no llama a nadie y su coste es cero por construccion. Antes
+    `decisiones.coste_eur` era una copia del de extraccion y cualquier
+    agregacion ingenua facturaba dos veces.
+
+    Se suma sobre TODOS los intentos, incluidos los rechazados: un intento
+    que no sirvio costo dinero igual. Son dos cifras distintas y las dos
+    son ciertas.
+    """
+    filas = con.execute(
+        "SELECT x.via, x.aceptada, count(*) n, sum(CAST(x.coste_eur AS REAL)) eur,"
+        "       sum(x.latencia_ms) ms, sum(x.tokens_entrada) t_ent,"
+        "       sum(x.tokens_salida) t_sal, sum(x.n_llamadas) llamadas"
+        "  FROM extracciones x JOIN documentos d USING(doc_id)"
+        " WHERE d.lote=? GROUP BY x.via, x.aceptada", (lote,)).fetchall()
+    por_via = [dict(f) for f in filas]
+    total_eur = sum(f["eur"] or 0 for f in filas)
+    facturado = sum(f["eur"] or 0 for f in filas if not f["aceptada"])
+    n_docs = con.execute("SELECT count(*) FROM documentos WHERE lote=?",
+                         (lote,)).fetchone()[0] or 1
+    return {"por_via": por_via, "total_eur": total_eur,
+            "tirado_en_rechazos_eur": facturado,
+            "eur_por_documento": total_eur / n_docs,
+            "documentos": n_docs}
+
+
+def informe_coste(con: sqlite3.Connection, *, lote: str = "lote1") -> int:
+    c = coste(con, lote=lote)
+    print(f"\n  COSTE Y CAPACIDAD{G}   ·   lote {lote}{F}\n")
+    print(f"  {'via':<14}{'acept':>6}{'docs':>7}{'EUR':>12}{'ms':>10}{'llamadas':>10}")
+    for f in c["por_via"]:
+        print(f"  {f['via'] or '?':<14}{'si' if f['aceptada'] else 'NO':>6}"
+              f"{f['n']:>7}{(f['eur'] or 0):>12.6f}{int(f['ms'] or 0):>10}"
+              f"{int(f['llamadas'] or 0):>10}")
+    print(f"\n  total                 {c['total_eur']:>12.6f} EUR")
+    print(f"  por documento         {c['eur_por_documento']:>12.6f} EUR")
+    if c["tirado_en_rechazos_eur"]:
+        print(f"  {A}en intentos rechazados{c['tirado_en_rechazos_eur']:>12.6f} EUR{F}"
+              f"  {G}costaron dinero y no se usaron{F}")
+    print(f"\n  {G}tarifas declaradas en alberto/precios.yaml; tokens medidos{F}\n")
+    return 0

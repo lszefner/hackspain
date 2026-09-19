@@ -9,6 +9,8 @@ from __future__ import annotations
 import json
 import sqlite3
 
+from alberto.resolucion import decision_de
+
 VERDE, ROJO, GRIS, AZUL, FIN = "\033[32m", "\033[31m", "\033[90m", "\033[36m", "\033[0m"
 SIMBOLO = {"PASA": f"{VERDE}PASA{FIN}", "FALLA": f"{ROJO}FALLA{FIN}", "NA": f"{GRIS}N/A {FIN}"}
 COLOR_RESULTADO = {"PAGAR": VERDE, "NO_PAGAR": ROJO, "ESCALAR": AZUL}
@@ -36,6 +38,10 @@ def explicar(con: sqlite3.Connection, patron: str, *, norma: str = "v3") -> int:
     print(f"  doc_id     {GRIS}{doc['doc_id'][:32]}…{FIN}")
     print(f"  entrada    {doc['bytes']:,} bytes · "
           f"{'con capa de texto' if doc['tiene_texto'] else ROJO+'IMAGEN (sin texto)'+FIN}")
+    print(f"  ingerido   {GRIS}{doc['creado_at']}{FIN}  estado {doc['estado']}")
+    if doc["intentos"]:
+        print(f"  {ROJO}fallos     {doc['intentos']} intento(s) · "
+              f"ultimo: {doc['ultimo_error']}{FIN}")
 
     print(f"\n{AZUL}1 · EXTRACCION{FIN}  via={doc['via']} "
           f"({doc['ms_extraccion']} ms)")
@@ -57,15 +63,27 @@ def explicar(con: sqlite3.Connection, patron: str, *, norma: str = "v3") -> int:
 
     _vision(con, doc)
 
-    dec = con.execute(
-        "SELECT * FROM decisiones WHERE doc_id=? AND norma_version=?"
-        " ORDER BY creado_at DESC LIMIT 1", (doc["doc_id"], norma)).fetchone()
+    # El MISMO resolvedor que usa `emite`. Antes cada uno rompia el empate a
+    # su manera y podian ensenar decisiones distintas de la misma factura.
+    dec = decision_de(con, doc["doc_id"], norma)
     if dec is None:
         print(f"\n{ROJO}sin decision para la norma {norma}{FIN}")
         return 1
 
+    ctx = con.execute(
+        "SELECT * FROM decision_contexto WHERE doc_id=? AND norma_version=?"
+        " AND snapshot_erp=? AND snapshot_maestro=?",
+        (doc["doc_id"], dec["norma_version"], dec["snapshot_erp"],
+         dec["snapshot_maestro"])).fetchone()
+
     print(f"\n{AZUL}2 · REGLAS{FIN}  norma={dec['norma_version']} "
           f"{GRIS}erp={dec['snapshot_erp']} maestro={dec['snapshot_maestro']}{FIN}")
+    if ctx:
+        print(f"     {GRIS}hoy={ctx['hoy']} · codigo={ctx['codigo']} · "
+              f"extraccion=intento {ctx['intento_extraccion']} · "
+              f"pasada={ctx['pasada_id']}{FIN}")
+        print(f"     {GRIS}norma sha {(ctx['norma_sha'] or '')[:12]}… · "
+              f"politica sha {(ctx['politica_sha'] or '')[:12]}…{FIN}")
     for v in json.loads(dec["reglas_json"]):
         ev = {k: x for k, x in (v.get("evidencia") or {}).items() if k != "motivo"}
         print(f"     {SIMBOLO[v['veredicto']]}  {v['id']:<16} "
@@ -84,9 +102,13 @@ def explicar(con: sqlite3.Connection, patron: str, *, norma: str = "v3") -> int:
         print(f"\n{AZUL}4 · RESUELTO A MANO{FIN}  {res['result']} por "
               f"{res['resuelto_por']}: {res['motivo']}")
 
+    # Solo las notas de la version de maestro que se uso de verdad. Antes
+    # salian todas las generales en todas las facturas, de todas las cargas.
     notas = con.execute(
-        "SELECT texto FROM notas WHERE (ambito='pedido' AND clave=?)"
-        " OR ambito='general'", (json.loads(doc["campos_json"] or "{}").get("pedido"),)
+        "SELECT texto FROM notas WHERE version_id=? AND ambito='pedido'"
+        " AND clave=?",
+        (dec["snapshot_maestro"],
+         json.loads(doc["campos_json"] or "{}").get("pedido"))
     ).fetchall() if doc["campos_json"] else []
     if notas:
         print(f"\n{AZUL}5 · NOTAS DE ALBERTO{FIN}")
