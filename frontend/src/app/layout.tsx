@@ -17,7 +17,7 @@ const NAV = [
   { href: "/bandeja", label: "Bandeja" },
   { href: "/logs", label: "Logs" },
   { href: "/finanzas", label: "Finanzas" },
-  { href: "/manual", label: "Manual" },
+  { href: "/logica", label: "Lógica" },
 ];
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

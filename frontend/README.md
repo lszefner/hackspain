@@ -22,8 +22,8 @@ Candado de acceso: `SITE_ACCESS_CODE` (ver `.env.example`).
 | `/bandeja` | Los 49 escalados; resolver como Alberto y borrador de email al proveedor (nunca toca outcomes.jsonl) | +10 bonus |
 | `/logs` | El registro de eventos: cuándo se ingirió, extrajo y decidió cada factura, filtrable | 20 traza |
 | `/finanzas` | Coste por ruta medido, proyecciones, diff entre normas, salud, parte de trabajo | 25 + 10 |
-| `/manual` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
-| `/manual/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
+| `/logica` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
+| `/logica/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
 | `/muro` | La pared de 500 baldosas coloreada por resultado — la portada de la demo | demo |
 
 ## Arquitectura: la costura

@@ -157,7 +157,7 @@ export default async function ExpedientePage({
 
           <Card titulo="Con qué versiones se decidió">
             <dl className="space-y-1.5 text-sm">
-              <div className="flex justify-between"><dt className="text-muted">norma</dt><dd><Link href={`/manual?version=${e.decision.norma_version}`} className="font-mono text-accent underline underline-offset-2">{e.decision.norma_version}</Link></dd></div>
+              <div className="flex justify-between"><dt className="text-muted">norma</dt><dd><Link href={`/logica?version=${e.decision.norma_version}`} className="font-mono text-accent underline underline-offset-2">{e.decision.norma_version}</Link></dd></div>
               <div className="flex justify-between"><dt className="text-muted">snapshot ERP</dt><dd className="font-mono">{e.decision.snapshot_erp}</dd></div>
               <div className="flex justify-between"><dt className="text-muted">maestro</dt><dd className="font-mono">{e.decision.snapshot_maestro}</dd></div>
             </dl>

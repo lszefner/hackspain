@@ -29,7 +29,7 @@ export function Editor({ inicial, base }: { inicial: string; base: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/manual" className="text-sm text-muted hover:text-ink">← el manual</Link>
+        <Link href="/logica" className="text-sm text-muted hover:text-ink">← el manual</Link>
         <h1 className="mt-1 text-2xl font-bold tracking-tight">Redactar norma nueva</h1>
         <p className="mt-1 max-w-2xl text-sm text-muted">
           Borrador sobre una copia de <b className="font-mono text-ink">{base}</b> (las versiones

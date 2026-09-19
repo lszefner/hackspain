@@ -50,7 +50,7 @@ export default async function MuroPage({
           <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
             <dt className="text-muted">Manual de empleado</dt>
             <dd>
-              <Link href={`/manual?version=${norma}`} className="font-mono text-accent underline underline-offset-2">
+              <Link href={`/logica?version=${norma}`} className="font-mono text-accent underline underline-offset-2">
                 norma_{norma}.yaml
               </Link>
             </dd>

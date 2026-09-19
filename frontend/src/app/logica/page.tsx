@@ -5,7 +5,7 @@ import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 import { BotonActivar } from "./ui";
 
-export const metadata = { title: "Manual de empleado · Albertito" };
+export const metadata = { title: "Lógica · Albertito" };
 export const dynamic = "force-dynamic";
 
 export default async function ManualPage({
@@ -31,7 +31,7 @@ export default async function ManualPage({
           </p>
         </div>
         <Link
-          href="/manual/editor"
+          href="/logica/editor"
           className="ml-auto rounded-md bg-ink px-4 py-2 text-sm font-semibold text-paper hover:bg-ink/85"
         >
           Redactar norma nueva
@@ -51,7 +51,7 @@ export default async function ManualPage({
         {listaNormas().map((n) => (
           <Link
             key={n.version}
-            href={`/manual?version=${n.version}`}
+            href={`/logica?version=${n.version}`}
             className={`rounded-lg border px-4 py-2 text-sm transition-colors ${
               n.version === version ? "border-ink bg-ink text-paper" : "border-line bg-card hover:bg-soft"
             }`}
