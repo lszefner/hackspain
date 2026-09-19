@@ -20,6 +20,7 @@ ALIASES = {
     "line_items": "invoice.line_amounts",
     "master.nif": "supplier.tax_id",
     "master.iban": "supplier.iban",
+    "ciudad": "supplier.city",
 }
 
 FIELD_TYPES = {
@@ -37,6 +38,7 @@ FIELD_TYPES = {
     "supplier.id": "string",
     "supplier.tax_id": "string",
     "supplier.iban": "string",
+    "supplier.city": "string",
     "supplier.active": "boolean",
     "supplier.payment_terms_days": "nonnegative_integer",
     "order.id": "string",
@@ -68,6 +70,7 @@ FIELD_AUTHORITY = {
     "supplier.id": "supplier.identity",
     "supplier.tax_id": "supplier.identity",
     "supplier.iban": "supplier.bank_details",
+    "supplier.city": "supplier.identity",
     "supplier.active": "supplier.active",
     "supplier.payment_terms_days": "supplier.payment_terms",
     "order.id": "order.identity",

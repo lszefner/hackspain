@@ -32,6 +32,8 @@ metrics:
   check_nif_control_digit: true
   enable_authorization: true
   enable_new_rules_default: true
+  # Strict follows the written norm's own parameters; see balanced.yaml.
+  sheet_authored_params: true
 
 rules:
   VENDOR:

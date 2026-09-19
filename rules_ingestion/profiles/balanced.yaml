@@ -31,7 +31,12 @@ metrics:
   enforce_payment_terms: true
   check_nif_control_digit: true
   enable_authorization: false
-  enable_new_rules_default: false
+  enable_new_rules_default: true
+  # The written norm sets the parameters of the rule it activates: a sheet that
+  # states a 5.000 EUR approval threshold moves the threshold (and switches
+  # AUTHORIZATION on), instead of the number living only here. Every value is
+  # recorded with its source cell in the ruleset trace.
+  sheet_authored_params: true
 
 rules:
   VENDOR:

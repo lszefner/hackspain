@@ -78,6 +78,15 @@ METRIC_DEFS: Dict[str, dict] = {
         "label": "Auto-enable NEW rules",
         "description": "Discovered NEW rules start enabled under this policy.",
     },
+    "sheet_authored_params": {
+        "type": "bool",
+        "label": "Sheet sets rule parameters",
+        "description": (
+            "Norm lines may set the parameters of the rule they activate "
+            "(thresholds, tolerances, required fields) instead of the profile "
+            "alone deciding them."
+        ),
+    },
 }
 
 
@@ -112,6 +121,9 @@ def derive_metrics(profile: dict) -> Dict[str, Any]:
         "enable_authorization": bool(auth.get("enabled", False)),
         "enable_new_rules_default": bool(
             (profile.get("metrics") or {}).get("enable_new_rules_default", False)
+        ),
+        "sheet_authored_params": bool(
+            (profile.get("metrics") or {}).get("sheet_authored_params", False)
         ),
     }
     # Optional explicit overrides already on the profile.

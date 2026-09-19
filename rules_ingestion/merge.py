@@ -104,6 +104,12 @@ def _canonical_entry(store_rule: dict) -> dict:
             "maps_to": store_rule["canonical"] if refs else None,
         },
         "enabled": bool(store_rule.get("enabled", True)),
+        # Which norm line set which parameter, kept on the merged rule: the
+        # ruleset is the artifact the evaluator and the reviewer read, so the
+        # provenance of a threshold has to survive the merge.
+        "sheet_params": list(trace.get("params_from_sheet") or []),
+        "param_conflicts": list(trace.get("param_conflicts") or []),
+        "enabled_by_sheet": bool(trace.get("enabled_by_sheet")),
         "on_fail": store_rule.get("on_fail"),
         "soft_verdict": store_rule.get("soft_verdict"),
         "input_fields": list(store_rule.get("input_fields") or []),
@@ -269,7 +275,10 @@ def build_merged(store: dict,
                 entry, demoted=demoted, demote_reason=reason, new_index=new_index,
             ))
 
+    store_stats = store.get("stats") or {}
     stats = {
+        "params_from_sheet": store_stats.get("params_from_sheet", 0),
+        "param_conflicts": store_stats.get("param_conflicts", 0),
         "rules_total": len(rules),
         "canonical": sum(1 for r in rules if r["origin"] == "canonical"),
         "new_agent": sum(1 for r in rules if r["origin"] == "agent"),
@@ -281,14 +290,11 @@ def build_merged(store: dict,
     }
 
     metrics = store.get("metrics") or {}
-    enable_new = bool(metrics.get("enable_new_rules_default", False))
-    if enable_new:
-        for r in rules:
-            if r.get("origin") != "canonical" and r.get("condition"):
-                kind = (r.get("condition") or {}).get("kind")
-                if kind in ("structured", "python_check") and not r.get("demoted"):
-                    r["enabled"] = True
-        stats["enabled"] = sum(1 for r in rules if r["enabled"])
+    # New rules stay disabled here on purpose. Their conditions are compiled
+    # and validated later, by codegen.enrich_new_rules, which is the only
+    # place that can tell an executable rule from one the evaluator would
+    # refuse -- enabling them before that produced rules that looked active
+    # and were UNSUPPORTED at evaluation time.
 
     return {
         "schema_version": MERGED_SCHEMA_VERSION,
