@@ -63,6 +63,11 @@ def main(argv: list[str] | None = None) -> int:
     rg.add_argument("--con-jev", action="store_true",
                     help="usa el clasificador remoto; por defecto, el lexico offline")
     rg.add_argument("--en-seco", action="store_true", help="no escribe los YAML")
+    wb = sub.add_parser("web", help="sirve la API de revision desde la BD")
+    wb.add_argument("--puerto", type=int, default=8010)
+    wb.add_argument("--norma", default="v3")
+    wb.add_argument("--instantanea", type=Path, metavar="FICHERO",
+                    help="exporta el JSON estatico del frontend y sale")
     sub.add_parser("coste", help="coste y latencia por via, desde la BD")
     au = sub.add_parser("audita", help="vuelve a tomar cada decision y comprueba que sale igual")
     au.add_argument("--norma", default=None, help="v3 o v3@7f3a1c; por defecto, todas")
@@ -72,7 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     w.add_argument("--congelar", action="store_true",
                    help="fija la cobertura actual como referencia de no regresion")
     a = args = p.parse_args(argv)
-    if a.cmd not in ("valida", "vision", "explica", "estado", "audita", "coste") and not a.caja.is_dir():
+    if a.cmd not in ("valida", "vision", "explica", "estado", "audita", "coste", "web") and not a.caja.is_dir():
         p.error(f"no encuentro la Caja en {a.caja}. Clonala y pasa --caja RUTA "
                 f"o exporta ALBERTO_CAJA=RUTA")
     con = conectar(args.db)
@@ -134,6 +139,19 @@ def main(argv: list[str] | None = None) -> int:
             informe["siguiente"] = f"alberto decide --norma {a.version}"
         ver(informe)
         return 0
+    if a.cmd == "web":
+        from alberto.web import datos as wdatos
+        from alberto.web.servidor import servir
+        if a.instantanea:
+            snap = wdatos.instantanea(con, lote=a.lote, norma=a.norma)
+            a.instantanea.parent.mkdir(parents=True, exist_ok=True)
+            a.instantanea.write_text(
+                json.dumps(snap, ensure_ascii=False, default=str), encoding="utf-8")
+            ver({"instantanea": str(a.instantanea),
+                 "facturas": len(snap["facturas"]),
+                 "bytes": a.instantanea.stat().st_size})
+            return 0
+        return servir(a.db, puerto=a.puerto, lote=a.lote, norma=a.norma)
     if a.cmd == "coste":
         from alberto import validacion
         return validacion.informe_coste(con, lote=a.lote)

@@ -2,6 +2,50 @@
 
 Decisiones tomadas, no lista de commits. Una entrada por hito.
 
+## 2026-09-19 13:05 CEST · La web lee lo decidido, no vuelve a decidir
+
+Trae el frontend de Next.js desde `main` y le pone debajo un backend que
+sirve los mismos cuatro endpoints desde `alberto.db`.
+
+**Estado:** 108 tests rápidos (antes 101) · el frontend no cambia ni una
+línea.
+
+### El problema que resuelve
+
+El `backend/` de `main` importaba `ingestion.pipeline.Pipeline` y
+`rules_ingestion.checks.run_checks`: **recalculaba las decisiones con otro
+motor** mientras el JSONL salía de este. La misma factura podía aparecer
+con un resultado en pantalla y otro en el fichero entregado, y nadie se
+habría enterado hasta la defensa. Es el mismo fallo que tenían `emite` y
+`explica` esta mañana, pero a escala de repositorio.
+
+Ahora `alberto/web/datos.py` **no decide nada**: lee `extraccion_vigente` y
+`decisiones`, que es exactamente lo que se entrega. Hay un test que compara
+las dos cosas y falla si divergen.
+
+### Lo que no se trajo, y por qué
+
+`backend/` de `main` (8 ficheros) depende de `ingestion/`, `rules_ingestion/`
+y `benchmark/schemas`. Traerlo habría significado arrastrar el codebase
+viejo entero. Reescribir los 4 endpoints contra la BD fue menos trabajo que
+portar su árbol de dependencias.
+
+`POST /api/lanzar` es un **no-op deliberado**: reprocesar es
+`alberto decide`, que abre una pasada y registra su contexto. Un botón que
+dispara un reproceso sin dejar constancia iría contra todo lo demás.
+
+### De regalo
+
+El detalle de cada factura lleva ahora un bloque `procedencia` con la
+huella de la norma, los snapshots, la vía de extracción, el `hoy` y el
+commit. El frontend todavía no lo pinta, pero ya viaja.
+
+`alberto web --instantanea frontend/src/data/snapshot.json` regenera el
+JSON estático que consume el despliegue de Vercel: la foto de la última
+pasada real, no una demo inventada.
+
+---
+
 ## 2026-09-19 12:39 CEST · Autoría de reglas desde CSV y Excel
 
 Trae de `main` el pipeline que convierte reglas en texto libre en una norma

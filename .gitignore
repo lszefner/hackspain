@@ -23,3 +23,7 @@ raw/
 .env
 
 nueva.db
+
+# Frontend
+frontend/node_modules/
+frontend/.next/
