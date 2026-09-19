@@ -2,6 +2,79 @@
 
 Decisiones tomadas, no lista de commits. Una entrada por hito.
 
+## 2026-09-19 12:39 CEST · Autoría de reglas desde CSV y Excel
+
+Trae de `main` el pipeline que convierte reglas en texto libre en una norma
+que este motor entiende. Corre en tiempo de **autoría**: produce un YAML, y
+a partir de ahí la decisión sigue siendo función pura de un fichero
+congelado. **Si el clasificador se cae, no hay ninguna decisión afectada.**
+
+**Estado:** 101 tests rápidos (antes 93) · 1000/1000 decisiones
+reproducibles con dos normas conviviendo.
+
+### Qué se trajo y qué no
+
+~2.230 líneas de las 2.984 de `rules_ingestion`. **Sin dependencias nuevas**:
+usa `yaml`, `openpyxl` y `urllib` de la stdlib.
+
+Se quedaron fuera `codegen.py` —genera código Python con un LLM y lo
+ejecuta; riesgo alto y no hace falta— y `checks.py`/`invoice.py`, que son el
+motor de decisión de `main`: aquí ya hay uno con tests detrás.
+
+### El mapeo, que es donde estaba el trabajo
+
+Los vocabularios no son 1:1:
+
+| `main` | aquí |
+|---|---|
+| `VENDOR` | `R1_nif_iban` |
+| `AMOUNT` | `R2_pedido` **+** `R3_iva` (aquí van separadas) |
+| `DATES` | `R4_fecha` (+ `R6_vencimiento` si el perfil exige plazos) |
+| `DUPLICATES` | `R5_estado_erp` (parcial: no detecta nº de factura repetido) |
+| `MISSING` | no es regla: es `datos_incompletos` en la política |
+| `AUTHORIZATION` | **no existe**. Se avisa, no se inventa |
+
+Un test comprueba que las 6 canónicas están cubiertas o declaradas como no
+soportadas: ninguna puede quedarse olvidada en silencio.
+
+### Decisiones
+
+**El nivel léxico por defecto, no el remoto.** Es determinista y no necesita
+red ni claves. Una norma que depende de que un proveedor responda no es una
+norma. `--con-jev` activa el clasificador remoto si se quiere.
+
+**Las reglas nuevas se registran pero no se activan.** El motor no las sabe
+aplicar todavía; activarlas sería fingir que se comprueba algo que no se
+comprueba. Van a `reglas_nuevas_sin_aplicar`, fuera de `reglas:`, con su
+texto, su procedencia (fichero, hoja, celda) y su confianza.
+
+**Cada norma trae su política.** `politica_vN.yaml` si existe, y si no la de
+siempre: emitir la v4 y seguir decidiendo con la política de la v3 sería
+mezclar dos reglamentos.
+
+### Probado contra el Excel real, sin red
+
+Las 6 canónicas clasificadas desde la hoja `Norma_Pagos_v3`, **cada una con
+la celda de la que salió**. Y con un CSV de notas mezcladas: «el parking
+cierra a las 22h» y «la máquina de café sigue rota» se rechazan por no ser
+reglas de pago; «si el importe supera los 15000 € hace falta autorización»
+se descubre con confianza 0,67 y **queda sin activar**, porque no llega a la
+puerta de 0,80.
+
+Los tres perfiles producen normas distintas de verdad: `strict` deja el
+IBAN que no cuadra en `NO_PAGAR` —como la norma escrita a mano—,
+`conservative` afloja la tolerancia a 1,00 € y quita el vencimiento.
+
+### Un dato para esta tarde
+
+La norma generada con `strict` activa **`R6_vencimiento`**, y eso convierte
+**424 `PAGAR` en `ESCALAR`**: con fecha de hoy, las facturas de enero a
+julio están fuera de los plazos de 30/45/60 días del maestro. La regla
+funciona; si es lo que Alberto quiere es una decisión de producto, no
+técnica. El entregable no se ve afectado porque `emite` sigue usando v3.
+
+---
+
 ## 2026-09-19 12:25 CEST · Trazabilidad: toda decisión reproducible
 
 Una decisión pasa a ser función pura de entradas registradas. Antes la fila

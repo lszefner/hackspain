@@ -141,8 +141,8 @@ def decidir(con: sqlite3.Connection, *, snapshot_erp: str, snapshot_maestro: str
     shas = archivar_config(con, norma)
     # `hoy` se resuelve UNA vez por pasada y se pasa explicito. Antes cada
     # Motor llamaba a date.today() y esa entrada no quedaba en ningun sitio.
-    motor = Motor(cargar_norma(norma), cargar_politica(), proveedores, asientos,
-                  revisar=revisar, hoy=pasada.hoy)
+    motor = Motor(cargar_norma(norma), cargar_politica(version=norma),
+                  proveedores, asientos, revisar=revisar, hoy=pasada.hoy)
 
     # extraccion_vigente, no extracciones: con dos intentos por documento la
     # tabla devolveria dos filas y la decision dependeria del orden del cursor.

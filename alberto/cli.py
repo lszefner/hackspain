@@ -53,6 +53,16 @@ def main(argv: list[str] | None = None) -> int:
                    help="segunda pasada del modelo: mas caro, hasta 7 llamadas/pagina")
     v.add_argument("--max-intentos", type=int, default=2)
     v.add_argument("--raw", type=Path, default=Path("raw"))
+    rg = sub.add_parser("reglas", help="de un CSV o Excel a una norma que el motor entiende")
+    rg.add_argument("--excel", type=Path, help="el libro con la hoja de la norma")
+    rg.add_argument("--descubrir", type=Path, metavar="CARPETA",
+                    help="barre CSV y xlsx buscando reglas escondidas en texto suelto")
+    rg.add_argument("--perfil", default="strict",
+                    choices=["conservative", "balanced", "strict"])
+    rg.add_argument("--version", default="v4")
+    rg.add_argument("--con-jev", action="store_true",
+                    help="usa el clasificador remoto; por defecto, el lexico offline")
+    rg.add_argument("--en-seco", action="store_true", help="no escribe los YAML")
     sub.add_parser("coste", help="coste y latencia por via, desde la BD")
     au = sub.add_parser("audita", help="vuelve a tomar cada decision y comprueba que sale igual")
     au.add_argument("--norma", default=None, help="v3 o v3@7f3a1c; por defecto, todas")
@@ -105,6 +115,24 @@ def main(argv: list[str] | None = None) -> int:
         except ProveedorNoConfigurado as exc:
             p.error(f"{exc}\n         "
                     f"(`alberto vision --en-seco` no necesita credenciales)")
+        return 0
+    if a.cmd == "reglas":
+        from alberto.reglas.autoria import exportar_norma, ingerir
+        from alberto.reglas.autoria.exportador import escribir
+        excel = a.excel or next(a.caja.glob("*.xlsx"), None) if a.caja.is_dir() else a.excel
+        if excel is None:
+            p.error("no encuentro el Excel: pasa --excel RUTA")
+        rs = ingerir(excel=excel, carpeta=a.descubrir, perfil=a.perfil,
+                     version=a.version, usar_jev=a.con_jev, usar_llm=a.con_jev)
+        norma, politica, avisos = exportar_norma(rs, version=a.version)
+        informe = {"perfil": a.perfil, "reglas": [r["id"] for r in norma["reglas"]],
+                   "clasificador": norma["_autoria"]["clasificador"],
+                   "avisos": avisos}
+        if not a.en_seco:
+            informe |= escribir(norma, politica,
+                                destino=Path("alberto/reglas"), version=a.version)
+            informe["siguiente"] = f"alberto decide --norma {a.version}"
+        ver(informe)
         return 0
     if a.cmd == "coste":
         from alberto import validacion

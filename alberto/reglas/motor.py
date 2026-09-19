@@ -38,8 +38,21 @@ def cargar_norma(version: str = "v3") -> dict:
     return datos
 
 
-def cargar_politica(ruta: Path | None = None) -> dict:
-    return yaml.safe_load((ruta or RAIZ / "politica.yaml").read_text("utf-8"))
+def ruta_politica(version: str | None = None) -> Path:
+    """`politica_vN.yaml` si existe para esa norma, si no la de siempre.
+
+    Una norma generada trae su propia politica: emitir la norma v4 y seguir
+    decidiendo con la politica de la v3 seria mezclar dos reglamentos.
+    """
+    if version:
+        propia = RAIZ / f"politica_{version}.yaml"
+        if propia.exists():
+            return propia
+    return RAIZ / "politica.yaml"
+
+
+def cargar_politica(ruta: Path | None = None, *, version: str | None = None) -> dict:
+    return yaml.safe_load((ruta or ruta_politica(version)).read_text("utf-8"))
 
 
 class Motor:
