@@ -21,6 +21,8 @@ import urllib.request
 from decimal import Decimal
 from typing import Optional
 
+from . import condition_authoring, conditions
+
 # The exact field contracts the generated code may read (matches invoice.py).
 _INVOICE_FIELDS = ["invoice_number", "vendor_id", "nif", "iban", "pedido",
                    "base", "iva", "total", "currency", "date", "line_items"]
@@ -181,280 +183,326 @@ def _has_builtin(name: str) -> bool:
 
 
 # --------------------------------------------------------------------------- #
-# Structured condition (schema 2.0) + compile NEW rules
+# Structured conditions (the executable form)                                  #
 # --------------------------------------------------------------------------- #
-_OPS = {">", ">=", "<", "<=", "==", "!=", "in", "not_in", "exists", "missing", "match"}
+# A rule only changes a decision if it compiles to `condition/1`, the schema
+# rules_ingestion.conditions validates and execution_rules runs. Generation
+# here produces a DRAFT -- plain field/op/value -- and condition_authoring
+# turns it into the tagged, typed, validated condition. The draft vocabulary is
+# closed: a field outside decision_registry is refused at authoring time
+# instead of becoming an UNSUPPORTED rule at evaluation time.
+_OPS = set(conditions.OPS)
 
 
 def _structured_prompt(rule_text: str) -> str:
     ops = ", ".join(sorted(_OPS))
     return (
-        "Translate ONE vendor-payment rule into a deterministic condition schema. Respond with ONLY the "
-        "JSON object below — no markdown, no prose.\n\n"
+        "Translate ONE vendor-payment rule into a deterministic condition draft. Respond with ONLY "
+        "the JSON object below - no markdown, no prose.\n\n"
         "OUTPUT SCHEMA (strict JSON):\n"
         "{\n"
         '  "logic": "AND" | "OR",\n'
-        '  "clauses": [{"field": "<string>", "op": "<op>", "value": <literal|null>}],\n'
+        '  "clauses": [{"field": "<field>", "op": "<op>", "value": <literal>}],\n'
         '  "on_fail": "ESCALAR" | "NO_PAGAR",\n'
-        '  "params": {}\n'
+        '  "expressible": true | false,\n'
+        '  "note": "<why not expressible, when expressible is false>"\n'
         "}\n\n"
-        "ALLOWED VALUES (do not use anything outside these):\n"
-        f"  ops:            {ops}\n"
-        f"  invoice fields: {_INVOICE_FIELDS}\n"
-        "  master fields:  erp_estado, pedidos, proveedores, proveedores_by_nif, today\n\n"
+        "THE CLAUSES DESCRIBE THE COMPLIANT CASE: the rule PASSES when they hold. "
+        "Express \"invoices above 5000 need approval\" as total <= 5000, not total > 5000.\n\n"
+        f"ALLOWED OPERATORS: {ops}\n"
+        "  - `exists` / `missing` take NO value.\n"
+        "  - `in` / `not_in` take a list of strings and only apply to text fields.\n\n"
+        "ALLOWED FIELDS (use the exact names; never invent one, never guess a field that merely "
+        "sounds right):\n"
+        f"{condition_authoring.catalogue_text()}\n\n"
+        "To compare two fields, write the value as {\"field\": \"<other field>\"}. Otherwise `value` "
+        "is a plain JSON literal (number, string, boolean, ISO date, or list of strings).\n\n"
         "RULES FOR TRANSLATION:\n"
-        "1. Prefer `clauses` whenever the rule can be expressed as field/operator/value comparisons "
-        "against the allowed fields above. Use only fields from the allowed lists — never invent a "
-        "field name, and never guess a field that \"sounds right\" if it isn't in the list.\n"
-        "2. Use `clauses=[]` ONLY when the rule genuinely cannot be expressed as simple field comparisons "
-        "(e.g. it requires a rate calculation, a lookup against a denylist, a percentage threshold "
-        "combined with a category, or cross-referencing multiple master records in a way no single "
-        "`op` supports). In that case, put every extracted parameter into `params` using descriptive "
-        "keys (e.g. \"rate\", \"threshold\", \"denylist_key\", \"require_erp_pending\") so a human or a "
-        "later step can still act on it. Do not leave information out of `params` just because it "
-        "didn't fit `clauses`.\n"
-        "3. `on_fail` reflects the CONSEQUENCE stated or implied by the rule: use \"NO_PAGAR\" when the "
-        "rule is a hard block on payment, \"ESCALAR\" when it implies human review/judgment is needed "
-        "(ambiguous cases, thresholds requiring approval, anomalies). If the rule doesn't specify, "
-        "default to \"ESCALAR\" — never guess \"NO_PAGAR\" for an ambiguous rule.\n"
-        "4. `value` should be the literal extracted from the rule text (a number, a string, or a field "
-        "reference like \"master.pedidos.importe_total\") — never a placeholder like \"X\" or \"TBD\".\n\n"
+        "1. Use ONLY the fields above. If the rule needs a fact that is not in the list - a country, "
+        "a tax regime, a withholding rate, a contract, a cost centre, an approver - then it is NOT "
+        "expressible: return \"expressible\": false with a short \"note\" naming the missing fact, and "
+        "an empty \"clauses\" list. A wrong field is far worse than an honest refusal.\n"
+        "2. `on_fail` is the consequence the rule states: \"NO_PAGAR\" for a hard block on payment, "
+        "\"ESCALAR\" when a human must judge. When the rule does not say, use \"ESCALAR\".\n"
+        "3. Take the literal from the rule text. Never emit a placeholder like \"X\" or \"TBD\".\n"
+        "4. Amounts are compared in EUR.\n\n"
         "EXAMPLES\n"
-        'Rule: "No pagar dos veces el mismo pedido"\n'
-        '{"logic":"AND","clauses":[],"on_fail":"NO_PAGAR",'
-        '"params":{"forbid_duplicate_pedido":true,"require_erp_estado":"PENDIENTE"}}\n\n'
-        'Rule: "Retención 15% IRPF en autónomos"\n'
-        '{"logic":"AND","clauses":[],"on_fail":"ESCALAR","params":{"rate":0.15,"applies_to":"autonomo"}}\n\n'
-        'Rule: "Facturas superiores a 5.000€ requieren aprobación del director financiero"\n'
-        '{"logic":"AND","clauses":[{"field":"total","op":">","value":5000}],"on_fail":"ESCALAR","params":{}}\n\n'
+        'Rule: "Facturas superiores a 5.000 EUR requieren aprobacion del director financiero"\n'
+        '{"logic":"AND","clauses":[{"field":"invoice.total","op":"<=","value":5000}],'
+        '"on_fail":"ESCALAR","expressible":true}\n\n'
+        'Rule: "El IBAN de la factura debe coincidir con el del maestro de proveedores"\n'
+        '{"logic":"AND","clauses":[{"field":"invoice.iban","op":"==","value":{"field":"supplier.iban"}}],'
+        '"on_fail":"ESCALAR","expressible":true}\n\n'
+        'Rule: "No se paga un pedido que el ERP no marque como PENDIENTE"\n'
+        '{"logic":"AND","clauses":[{"field":"erp.order_payment_status","op":"==","value":"PENDIENTE"}],'
+        '"on_fail":"NO_PAGAR","expressible":true}\n\n'
+        'Rule: "Toda factura debe indicar el numero de pedido"\n'
+        '{"logic":"AND","clauses":[{"field":"invoice.order_reference","op":"exists"}],'
+        '"on_fail":"ESCALAR","expressible":true}\n\n'
+        'Rule: "Queda prohibido pagar a proveedores radicados en paraisos fiscales"\n'
+        '{"logic":"AND","clauses":[],"on_fail":"NO_PAGAR","expressible":false,'
+        '"note":"needs the supplier country, which no available source provides"}\n\n'
         f'Rule: "{rule_text}"\nJSON:'
     )
 
 
-def heuristic_structured(rule_text: str) -> Optional[dict]:
-    """Offline, deterministic extraction of common NEW-rule patterns.
+def compile_draft(draft: dict) -> tuple[dict | None, str | None]:
+    """Turn a draft into a validated `condition/1`, or (None, reason).
 
-    Used when DeepSeek is off/unavailable so NEW/demoted rules still get a
-    real `condition` object instead of pending.
+    The reason is a stable code so an unexecutable rule can be reported at
+    ingestion time instead of silently failing at evaluation time.
+    """
+    if not isinstance(draft, dict):
+        return None, "INVALID_DRAFT"
+    if draft.get("expressible") is False:
+        note = draft.get("note")
+        return None, f"NOT_EXPRESSIBLE: {note}" if note else "NOT_EXPRESSIBLE"
+    raw_clauses = draft.get("clauses")
+    if not isinstance(raw_clauses, list) or not raw_clauses:
+        return None, "EMPTY_CONDITION"
+    on_fail = draft.get("on_fail")
+    if on_fail not in ("ESCALAR", "NO_PAGAR"):
+        on_fail = "ESCALAR"
+    clauses = []
+    try:
+        for entry in raw_clauses:
+            if not isinstance(entry, dict):
+                raise condition_authoring.AuthoringError("INVALID_CLAUSE")
+            field = entry.get("field")
+            op = entry.get("op")
+            if op in ("exists", "missing"):
+                clauses.append(condition_authoring.clause(field, op))
+                continue
+            value = entry.get("value")
+            if isinstance(value, dict) and set(value) == {"field"}:
+                clauses.append(condition_authoring.clause(
+                    field, op, field_ref=value["field"]))
+                continue
+            if isinstance(value, dict):
+                raise condition_authoring.AuthoringError("INVALID_LITERAL")
+            clauses.append(condition_authoring.clause(field, op, value))
+        condition = condition_authoring.build(
+            clauses, logic=draft.get("logic") or "AND", on_fail=on_fail)
+    except condition_authoring.AuthoringError as exc:
+        return None, str(exc)
+    return condition, None
+
+
+# Wording that makes a rule a hard block rather than an escalation.
+_HARD_BLOCK = ("no pagar", "no se paga", "no se pagara", "no abonar",
+               "prohibido", "nunca se paga", "en ningun caso")
+
+
+def heuristic_structured(rule_text: str) -> dict | None:
+    """Offline, deterministic drafts for the shapes a norm sheet repeats.
+
+    Only patterns expressible with registry fields are emitted. A recognised
+    rule whose facts no source provides returns a draft marked not expressible,
+    so the reason survives into the ruleset instead of disappearing.
     """
     from .normalize import _accent_fold
-    t = _accent_fold(rule_text or "")
-    params: dict = {}
-    clauses: list = []
-    on_fail = "ESCALAR"
 
-    # IRPF / retention percentage
-    m = re.search(r"retenci\w*\s+(?:del\s+)?(\d+[.,]?\d*)\s*%", t)
-    if not m:
-        m = re.search(r"(\d+[.,]?\d*)\s*%\s*(?:de\s+)?irpf", t)
-    if m or ("irpf" in t and "retencion" in t):
-        rate = float((m.group(1) if m else "15").replace(",", ".")) / 100.0
-        params = {"irpf_rate": rate, "applies_to": "autonomo"}
-        clauses = [
-            {"field": "vendor_type", "op": "==", "value": "autonomo"},
-            {"field": "withholding_rate", "op": "==", "value": rate},
-        ]
-        return {
-            "kind": "structured",
-            "logic": "AND",
-            "clauses": clauses,
-            "on_fail": on_fail,
-            "params": params,
-            "compiled_by": "heuristic",
-            "then": "PASS",
-            "else": "NEEDS_REVIEW",
-        }
+    text = _accent_fold(rule_text or "")
 
-    # Tax-haven / AEAT denylist
-    if "paraiso" in t or "aeat" in t and "lista" in t:
-        params = {"denylist": "aeat_tax_havens"}
-        clauses = [
-            {"field": "vendor.country", "op": "not_in", "value": "params.denylist"},
-        ]
-        return {
-            "kind": "structured",
-            "logic": "AND",
-            "clauses": clauses,
-            "on_fail": "NO_PAGAR",
-            "params": params,
-            "compiled_by": "heuristic",
-            "then": "PASS",
-            "else": "FAIL",
-        }
+    def draft(clauses, on_fail="ESCALAR", logic="AND"):
+        return {"logic": logic, "clauses": clauses, "on_fail": on_fail,
+                "expressible": True, "compiled_by": "heuristic"}
 
-    # Seguridad Social current
-    if "seguridad social" in t or "tgss" in t:
-        clauses = [
-            {"field": "vendor.ss_current", "op": "==", "value": True},
-        ]
-        return {
-            "kind": "structured",
-            "logic": "AND",
-            "clauses": clauses,
-            "on_fail": "NO_PAGAR",
-            "params": {},
-            "compiled_by": "heuristic",
-            "then": "PASS",
-            "else": "FAIL",
-        }
+    def refuse(note):
+        return {"logic": "AND", "clauses": [], "on_fail": "ESCALAR",
+                "expressible": False, "note": note, "compiled_by": "heuristic"}
 
-    # Amount threshold with approval
-    m = re.search(r"(?:supere|mayor|mas de|above|>)\s*(?:los\s+)?(\d+[.\s]?\d*)\s*(?:euros|eur|€)?", t)
-    if m and any(k in t for k in ("aprobacion", "autoriz", "responsable", "firma")):
-        raw = m.group(1).replace(".", "").replace(" ", "").replace(",", ".")
-        try:
-            thr = float(raw)
-        except ValueError:
-            thr = 5000.0
-        params = {"escalate_above_eur": thr}
-        clauses = [
-            {"field": "total", "op": "<=", "value": thr},
-        ]
-        return {
-            "kind": "structured",
-            "logic": "AND",
-            "clauses": clauses,
-            "on_fail": "ESCALAR",
-            "params": params,
-            "compiled_by": "heuristic",
-            "then": "PASS",
-            "else": "NEEDS_REVIEW",
-        }
+    # Facts the field registry cannot supply. Named explicitly so the ruleset
+    # records WHY the rule is not executable.
+    for probe, note in (
+        ("paraiso", "supplier country / tax-haven list is not an available field"),
+        ("seguridad social", "social-security standing is not an available field"),
+        ("tgss", "social-security standing is not an available field"),
+        ("irpf", "withholding rate is not an available field"),
+        ("retencion", "withholding rate is not an available field"),
+    ):
+        if probe in text:
+            return refuse(note)
+
+    # Amount threshold that requires approval or a block.
+    match = re.search(
+        r"(?:supere[n]?|superior(?:es)?\s+a|mayor(?:es)?\s+(?:que|a)|mas\s+de|above|>)\s*"
+        r"(?:los\s+)?([\d][\d.,\s]*)\s*(?:euros|eur|€)?", text)
+    if match:
+        threshold = match.group(1).strip()
+        hard = any(word in text for word in _HARD_BLOCK)
+        on_fail = "NO_PAGAR" if hard else "ESCALAR"
+        if hard or any(word in text for word in
+                       ("aprobacion", "autoriz", "responsable", "firma", "escalar", "revision")):
+            return draft([{"field": "invoice.total", "op": "<=", "value": threshold}],
+                         on_fail=on_fail)
+
+    # Payment terms expressed as a maximum number of days.
+    match = re.search(r"(\d{1,3})\s*dias", text)
+    if match and any(word in text for word in ("plazo", "vencimiento", "pago", "condiciones")):
+        return draft([{"field": "supplier.payment_terms_days", "op": "<=",
+                       "value": int(match.group(1))}])
+
+    # The ERP owns the paid/pending state.
+    if "pendiente" in text and any(word in text for word in ("erp", "pedido", "asiento")):
+        hard = any(word in text for word in _HARD_BLOCK + ("dos veces", "duplicad"))
+        return draft([{"field": "erp.order_payment_status", "op": "==", "value": "PENDIENTE"}],
+                     on_fail="NO_PAGAR" if hard else "ESCALAR")
+
+    # Bank account must match the master.
+    if "iban" in text and any(word in text for word in ("coincid", "maestro", "mismo", "igual")):
+        return draft([{"field": "invoice.iban", "op": "==",
+                       "value": {"field": "supplier.iban"}}])
+
+    # Tax id must match the master.
+    if "nif" in text and any(word in text for word in ("coincid", "maestro", "mismo", "igual")):
+        return draft([{"field": "invoice.supplier_tax_id", "op": "==",
+                       "value": {"field": "supplier.tax_id"}}])
+
+    # Only a given currency may be paid.
+    if "euro" in text and any(word in text for word in ("solo", "unicamente", "exclusivamente")):
+        return draft([{"field": "invoice.currency", "op": "==", "value": "EUR"}])
+
+    # The supplier must be active in the master.
+    if "activo" in text and "proveedor" in text:
+        return draft([{"field": "supplier.active", "op": "==", "value": True}])
+
+    # Required fields on the document.
+    required = [(("numero de pedido", "pedido"), "invoice.order_reference"),
+                (("nif",), "invoice.supplier_tax_id"),
+                (("iban",), "invoice.iban"),
+                (("fecha",), "invoice.issue_date")]
+    if any(word in text for word in ("debe indicar", "debe llevar", "debe incluir",
+                                     "es obligatorio", "obligatoriamente")):
+        clauses = [{"field": field, "op": "exists"}
+                   for probes, field in required if any(p in text for p in probes)]
+        if clauses:
+            return draft(clauses)
 
     return None
 
 
-def generate_structured(rule_text: str) -> Optional[dict]:
-    """Ask DeepSeek for a structured condition; None if unavailable/invalid."""
+def generate_structured(rule_text: str) -> dict | None:
+    """Ask DeepSeek for a condition draft; None when unavailable/unparseable."""
     raw = _deepseek_chat(_structured_prompt(rule_text), max_tokens=400)
     if raw is None:
         return None
     try:
-        m = re.search(r"\{.*\}", raw, re.DOTALL)
-        d = json.loads(m.group() if m else raw)
-    except Exception:
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        parsed = json.loads(match.group() if match else raw)
+    except (ValueError, TypeError):
         return None
-    logic = d.get("logic", "AND")
-    if logic not in ("AND", "OR"):
-        logic = "AND"
-    clauses = []
-    for c in d.get("clauses") or []:
-        if not isinstance(c, dict):
-            continue
-        op = str(c.get("op", "=="))
-        if op not in _OPS:
-            continue
-        field = str(c.get("field") or "").strip()
-        if not field:
-            continue
-        clauses.append({"field": field, "op": op, "value": c.get("value")})
-    on_fail = d.get("on_fail", "ESCALAR")
-    if on_fail not in ("ESCALAR", "NO_PAGAR"):
-        on_fail = "ESCALAR"
-    params = d.get("params") if isinstance(d.get("params"), dict) else {}
-    return {
-        "kind": "structured",
-        "logic": logic,
-        "clauses": clauses,
-        "on_fail": on_fail,
-        "params": params,
-        "compiled_by": "deepseek",
-        "then": "PASS",
-        "else": "NEEDS_REVIEW" if on_fail == "ESCALAR" else "FAIL",
-    }
+    if not isinstance(parsed, dict):
+        return None
+    parsed["compiled_by"] = "deepseek"
+    return parsed
 
 
 def compile_new_rule(rule_text: str, use_llm: bool = True,
                      gen_python: bool = True) -> dict:
-    """Compile a NEW/demoted rule text into condition (+ optional python check).
+    """Compile a NEW/demoted rule text into an executable condition.
 
-    Always tries heuristic first (deterministic). Then LLM structured, then
-    optional python `check` source. Never returns a bare pending if heuristic hits.
+    Heuristic first (deterministic), then the model. Whatever comes back is
+    compiled and validated against the field registry; anything that does not
+    validate becomes `pending` carrying the reason, never a condition the
+    evaluator would reject later.
     """
-    condition = heuristic_structured(rule_text)
-    if condition is None and use_llm:
-        condition = generate_structured(rule_text)
-    if condition is None:
-        condition = {
-            "kind": "pending",
-            "note": "could not compile to a structured condition",
-            "compiled_by": None,
-        }
+    reasons = []
+    condition = None
+    compiled_by = None
+    for draft in (heuristic_structured(rule_text),
+                  generate_structured(rule_text) if use_llm else None):
+        if draft is None:
+            continue
+        candidate, reason = compile_draft(draft)
+        if candidate is not None:
+            condition = candidate
+            compiled_by = draft.get("compiled_by")
+            break
+        reasons.append(f"{draft.get('compiled_by') or 'draft'}: {reason}")
 
-    logic = None
-    if gen_python and use_llm:
-        logic = generate_check(rule_text)
-        if logic.get("valid") and condition.get("kind") == "pending":
-            # Promote: at least we have executable python
-            condition = {
-                "kind": "python_check",
-                "function": logic.get("function", "check"),
-                "source": logic.get("source"),
-                "valid": True,
-                "compiled_by": logic.get("generated_by"),
-            }
-        elif logic.get("valid") and condition.get("kind") == "structured":
-            condition = {
-                **condition,
-                "python": {
-                    "function": logic.get("function", "check"),
-                    "source": logic.get("source"),
-                    "valid": True,
-                    "generated_by": logic.get("generated_by"),
-                    "smoke": logic.get("smoke"),
-                },
-            }
+    on_fail = "ESCALAR"
+    if condition is not None:
+        on_fail = "NO_PAGAR" if condition["else"] == "FAIL" else "ESCALAR"
+    else:
+        condition = {"kind": "pending",
+                     "note": "; ".join(reasons) or "no draft could be compiled",
+                     "compiled_by": None}
 
-    runnable = (
-        condition.get("kind") == "structured"
-        or (condition.get("kind") == "python_check" and condition.get("valid"))
-        or bool((condition.get("python") or {}).get("valid"))
-    )
+    # Python generation stays available for human review, but the evaluator
+    # only runs a python_check for a canonical rule, so it never makes a NEW
+    # rule runnable. Reporting otherwise is how these rules looked executable.
+    logic = generate_check(rule_text) if gen_python and use_llm else None
+    if logic and logic.get("valid"):
+        condition = {**condition, "python": {
+            "function": logic.get("function", "check"),
+            "source": logic.get("source"),
+            "valid": True,
+            "generated_by": logic.get("generated_by"),
+            "smoke": logic.get("smoke"),
+        }}
+
     return {
         "condition": condition,
         "logic": logic,
-        "runnable": runnable,
-        "params": condition.get("params") or {},
-        "on_fail": condition.get("on_fail", "ESCALAR"),
+        "runnable": condition.get("kind") == "structured",
+        "compiled_by": compiled_by,
+        "params": {},
+        "on_fail": on_fail,
     }
 
 
 def enrich_new_rules(merged: dict, use_llm: bool = True,
                      gen_python: bool = False) -> dict:
-    """Fill condition for every non-canonical rule that is still pending/empty.
+    """Give every non-canonical rule an executable condition, or a reason.
 
-    Mutates and returns `merged`. Deterministic when use_llm=False (heuristic only).
+    Every condition is validated against the field registry here -- including
+    one compiled earlier during discovery -- so a rule that the evaluator would
+    refuse is visible in the ruleset at build time. Mutates and returns
+    `merged`. Deterministic when use_llm=False.
     """
     compiled = 0
+    unexecutable = []
+    # A policy that accepts sheet-authored rules still only gets the ones that
+    # validate, and never a rule demoted for weak classifier grounding.
+    enable_new = bool((merged.get("metrics") or {}).get("enable_new_rules_default", False))
     for rule in merged.get("rules") or []:
         if rule.get("origin") == "canonical":
             continue
-        cond = rule.get("condition") or {}
-        needs = (
-            not cond
-            or cond.get("kind") in (None, "pending")
-            or (cond.get("kind") == "python_check" and not cond.get("source")
-                and not cond.get("valid"))
-        )
-        if not needs:
-            continue
-        result = compile_new_rule(
-            rule.get("text") or "",
-            use_llm=use_llm,
-            gen_python=gen_python and use_llm,
-        )
-        rule["condition"] = result["condition"]
-        if result["params"]:
-            rule["params"] = {**(rule.get("params") or {}), **result["params"]}
-        if result.get("on_fail"):
-            rule["on_fail"] = result["on_fail"]
-        # NEW rules with a real condition stay disabled until a human flips
-        # enabled — but they are no longer pending stubs.
-        if result["runnable"]:
-            rule["condition"]["runnable"] = True
+        condition = rule.get("condition") or {}
+        reason = condition_authoring.validate(condition) \
+            if condition.get("kind") == "structured" else "NOT_STRUCTURED"
+        if reason is not None:
+            result = compile_new_rule(rule.get("text") or "", use_llm=use_llm,
+                                      gen_python=gen_python and use_llm)
+            rule["condition"] = result["condition"]
+            rule["on_fail"] = result["on_fail"] or rule.get("on_fail") or "ESCALAR"
+            condition = rule["condition"]
+            reason = condition_authoring.validate(condition) \
+                if condition.get("kind") == "structured" else condition.get("note")
+
+        runnable = condition.get("kind") == "structured" and reason is None
+        # `runnable` belongs to the rule: a condition carrying an extra key is
+        # rejected by the executor as UNKNOWN_CONDITION_PROPERTY.
+        rule["runnable"] = runnable
+        if runnable:
+            # A structured condition inlines its literals; params on top of one
+            # are refused by the planner as UNSUPPORTED_STRUCTURED_PARAMETERS.
+            rule["params"] = {}
             compiled += 1
+            if enable_new and not rule.get("demoted"):
+                rule["enabled"] = True
+        else:
+            rule["compile_error"] = reason or "not compiled"
+            unexecutable.append({"id": rule.get("id"), "reason": rule["compile_error"],
+                                 "text": rule.get("text")})
+
     stats = merged.setdefault("stats", {})
     stats["new_compiled"] = compiled
+    stats["new_unexecutable"] = len(unexecutable)
+    stats["unexecutable_rules"] = unexecutable
+    stats["enabled"] = sum(1 for rule in merged.get("rules") or []
+                           if rule.get("enabled"))
     return merged
 
 

@@ -242,6 +242,30 @@ def _scan(args, say, version: str, policy: str) -> int:
     return 0
 
 
+def declared_new_rules(loaded: loader.LoadResult, classified) -> dict:
+    """Norm lines that are not one of the six canonical families.
+
+    A line the classifier routes to ACTIVATE becomes evidence for an existing
+    rule. Everything else used to land in `flags` and stop there, so a rule
+    written on the sheet -- "solo se pagan facturas en euros" -- never became a
+    rule at all. Feeding those lines through the same NEW-rule path as
+    discovery gets them compiled, validated and recorded.
+    """
+    sheet = (loaded.schema.get("norma") or {}).get("sheet", "")
+    rows = []
+    for line, result in classified:
+        if result.route == "ACTIVATE":
+            continue
+        rows.append({
+            "file": "", "sheet": line.get("source_sheet") or sheet,
+            "cell": line.get("cell"), "text": result.text,
+            "route": result.route, "maps_to": result.maps_to,
+            "maps_to_conf": result.maps_to_conf, "is_rule": result.is_rule,
+            "method": result.method, "reason": result.reason,
+        })
+    return {"scanned_folder": None, "candidates": len(rows), "all": rows}
+
+
 def build_frozen_rules(loaded: loader.LoadResult, profile_bytes: bytes, *, generated_at: str) -> tuple[bytes, dict]:
     import yaml
 
@@ -253,7 +277,7 @@ def build_frozen_rules(loaded: loader.LoadResult, profile_bytes: bytes, *, gener
     classified = classify_lines(loaded.norma_lines, prefer_jev=True, use_llm=True)
     profile = yaml.safe_load(profile_bytes)
     document = store.build_ruleset(loaded, classified, profile, generated_at=generated_at)
-    merged = build_merged(document, None)
+    merged = build_merged(document, declared_new_rules(loaded, classified))
     enrich_new_rules(merged, use_llm=True, gen_python=False)
     audit = {'generated_at': generated_at,
              'classifications': [{'source': line, 'result': result.to_dict()} for line, result in classified],

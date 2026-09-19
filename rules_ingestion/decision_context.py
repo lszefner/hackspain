@@ -37,7 +37,8 @@ HISTORY_SCOPES = {
     "paid": "history.paid",
 }
 SUPPLIER_FIELDS = ("supplier.id", "supplier.tax_id", "supplier.iban",
-                   "supplier.active", "supplier.payment_terms_days")
+                   "supplier.city", "supplier.active",
+                   "supplier.payment_terms_days")
 ORDER_FIELDS = ("order.id", "order.supplier_id", "order.total", "order.currency")
 DECIMAL_PATTERN = re.compile(r"^-?\d+(?:\.\d+)?$")
 CURRENCY_PATTERN = re.compile(r"^[A-Z]{3}$")
@@ -482,6 +483,12 @@ def _resolve_supplier(fields: dict, snapshots: dict, snapshot_json: dict,
     fields["supplier.iban"] = master_field(
         "supplier.iban", "supplier.bank_details", row.get("iban"),
         "iban", "iban_whitespace_uppercase/1", norm_iban)
+    # Declared in sources.yaml and carried in the supplier snapshot already;
+    # exposing it lets a norm line about where a supplier sits be executed
+    # instead of recorded as unexecutable.
+    fields["supplier.city"] = master_field(
+        "supplier.city", "supplier.identity", row.get("ciudad"),
+        "ciudad", "text_normalized/1", norm_text)
     active = row.get("active")
     active_pointer = f"/records/{row_index}/active" if "active" in row \
         else f"/records/{row_index}"

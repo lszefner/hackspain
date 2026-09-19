@@ -42,10 +42,10 @@
     },
     "fields": {
       "type": "object",
-      "required": ["invoice.document_type", "invoice.number", "invoice.supplier_tax_id", "invoice.iban", "invoice.order_reference", "invoice.issue_date", "invoice.currency", "invoice.taxable_base", "invoice.total", "invoice.vat_amount", "invoice.line_amounts", "supplier.id", "supplier.tax_id", "supplier.iban", "supplier.active", "supplier.payment_terms_days", "order.id", "order.supplier_id", "order.total", "order.currency", "erp.order_payment_status", "history.processed_matches", "history.approved_matches", "history.paid_matches"],
+      "required": ["invoice.document_type", "invoice.number", "invoice.supplier_tax_id", "invoice.iban", "invoice.order_reference", "invoice.issue_date", "invoice.currency", "invoice.taxable_base", "invoice.total", "invoice.vat_amount", "invoice.line_amounts", "supplier.id", "supplier.tax_id", "supplier.iban", "supplier.city", "supplier.active", "supplier.payment_terms_days", "order.id", "order.supplier_id", "order.total", "order.currency", "erp.order_payment_status", "history.processed_matches", "history.approved_matches", "history.paid_matches"],
       "additionalProperties": false,
       "patternProperties": {
-        "^(invoice\\.(number|supplier_tax_id|iban|order_reference)|supplier\\.(id|tax_id|iban)|order\\.(id|supplier_id))$": {"$ref": "#/$defs/stringFact"},
+        "^(invoice\\.(number|supplier_tax_id|iban|order_reference)|supplier\\.(id|tax_id|iban|city)|order\\.(id|supplier_id))$": {"$ref": "#/$defs/stringFact"},
         "^invoice\\.document_type$": {
           "allOf": [{"$ref": "#/$defs/fact"}, {"properties": {"value": {"enum": ["invoice", "credit_note", "other", "unknown", null]}}}]
         },

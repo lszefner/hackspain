@@ -82,14 +82,36 @@ def build_ruleset(load: LoadResult,
                 "reason": res.reason,
             })
 
+    from .policy_metrics import fingerprint
+    from .rule_params import from_sheet
+
+    metrics = fingerprint(profile)
+    # When the policy allows it, a norm line sets the parameters of the rule it
+    # activates. Without this the sheet only ever supplied provenance: the
+    # thresholds stayed at whatever the profile said, whatever the norm said.
+    sheet_authors_params = bool(metrics.get("sheet_authored_params", False))
+
     rules: List[dict] = []
+    sheet_param_count = 0
+    sheet_conflict_count = 0
     for key, canon in CATALOG.items():
         prof = profile_rules.get(key, {})
         enabled = prof.get("enabled", canon.default_enabled)
-        params = prof.get("params", {})
+        params = dict(prof.get("params", {}))
         matched = activations.get(key, [])
         source = "master+predefined" if matched else "predefined"
         on_fail = prof.get("on_fail", canon.on_fail)
+        settings, conflicts = (from_sheet(key, matched)
+                               if sheet_authors_params else ([], []))
+        params.update({setting["param"]: setting["value"] for setting in settings})
+        sheet_param_count += len(settings)
+        sheet_conflict_count += len(conflicts)
+        # A rule the profile leaves off but the sheet states -- the written
+        # authorization threshold being the case that matters -- is switched on
+        # by the sheet, and the trace records that it was.
+        enabled_by_sheet = bool(settings) and not enabled
+        if enabled_by_sheet:
+            enabled = True
         rules.append({
             "rule_id": canon.rule_id,
             "canonical": key,
@@ -105,6 +127,9 @@ def build_ruleset(load: LoadResult,
             "logic": _rule_logic(key),   # <-- the Python if-code for this rule
             "trace": {
                 "matched_from": matched,
+                "params_from_sheet": settings,
+                "param_conflicts": conflicts,
+                "enabled_by_sheet": enabled_by_sheet,
                 "backed_by_master": bool(matched),
                 "is_rule_conf": (round(sum(m["is_rule_conf"] for m in matched) / len(matched), 4)
                                  if matched else None),
@@ -115,13 +140,12 @@ def build_ruleset(load: LoadResult,
             },
         })
 
-    from .policy_metrics import fingerprint
     return {
         "store_schema_version": STORE_SCHEMA_VERSION,
         "ruleset_version": version,
         "policy_id": profile.get("policy_id") or profile.get("policy_class") or "balanced",
         "policy_class": profile.get("policy_class") or profile.get("policy_id") or "balanced",
-        "metrics": fingerprint(profile),
+        "metrics": metrics,
         "generated_at": generated_at,
         "generated_with": {"rules_ingestion": __version__},
         "precedence": profile.get("precedence", ["NO_PAGAR", "ESCALAR", "PAGAR"]),
@@ -137,6 +161,8 @@ def build_ruleset(load: LoadResult,
         "stats": {
             "rules_total": len(rules),
             "rules_enabled": sum(1 for r in rules if r["enabled"]),
+            "params_from_sheet": sheet_param_count,
+            "param_conflicts": sheet_conflict_count,
             "rules_backed_by_master": sum(1 for r in rules if r["trace"]["backed_by_master"]),
             "norma_lines": len(classified),
             "activations": sum(len(v) for v in activations.values()),
