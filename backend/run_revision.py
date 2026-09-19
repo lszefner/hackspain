@@ -15,6 +15,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
+# La Caja ya no esta en la raiz: se resuelve (caja/ viva, o la instantanea
+# mas reciente de caja_de_alberto/). Ver alberto/caja.py.
+from alberto import caja as _caja  # noqa: E402
 from backend.master_data import (  # noqa: E402
     ErpClient,
     capture_erp_snapshot,
@@ -33,10 +36,6 @@ from rules_ingestion.decision_context import (  # noqa: E402
 )
 from rules_ingestion.decision_storage import DecisionStore  # noqa: E402
 from rules_ingestion.engine import InvoiceDecisionEngine, RuleSource  # noqa: E402
-
-# La Caja ya no esta en la raiz: se resuelve (caja/ viva, o la instantanea
-# mas reciente de caja_de_alberto/). Ver alberto/caja.py.
-from alberto import caja as _caja  # noqa: E402
 
 FACTURAS_DIR = Path(os.environ.get('REVISION_INPUT_DIR') or _caja.facturas())
 DATA_DIR = Path(__file__).resolve().parent / "data"

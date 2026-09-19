@@ -279,3 +279,77 @@ def test_cli_evaluation_uses_durable_engine(seeded, tmp_path, monkeypatch, capsy
                             '--captured-at', CAPTURED]) == 0
     packet = json.loads(capsys.readouterr().out)
     assert engine.load(packet['record_id']) == packet
+
+
+@pytest.mark.asyncio
+async def test_projected_review_roundtrip_keeps_full_sources_and_cannot_clear(seeded):
+    from dataclasses import replace
+
+    from rules_ingestion.contextual_review import PROJECTION_LIMITATION
+
+    engine, kwargs = seeded
+    orders = kwargs['snapshots']['orders']
+    kwargs['snapshots']['orders'] = replace(orders, payload=orders.payload | {'padding': 'x' * 300000})
+    packet = engine.evaluate(**kwargs)
+    source_bytes = engine.archive.get(packet['sources']['orders'])
+    evaluation_bytes = engine.archive.get(packet['evaluation'])
+    assert engine._json(packet['evaluation'])['preliminary_decision'] == 'PAGAR'
+
+    class Supported(ScriptedProvider):
+        async def review(self, request):
+            self.calls += 1
+            assert all(rule['status'] == 'PASS' for rule in request['evaluation']['rule_results'])
+            evidence = [{'source': 'invoice', 'pointer': '/supplier/tax_id',
+                         'quote': request['sources']['invoice']['supplier']['tax_id']}]
+            return ProviderReply({'rule_reviews': [{'rule_id': rule['rule_id'], 'assessment': 'SUPPORTED',
+                                                    'explanation': 'Identity evidence', 'evidence': evidence}
+                                                   for rule in request['evaluation']['rule_results']],
+                                  'findings': [], 'reviewed_sources': list(request['sources']), 'limitations': []}, self.model)
+
+    provider = Supported()
+    reviewed = await engine.review(packet['record_id'], provider=provider, request_key='projected', reviewed_at=REVIEWED)
+    assert engine.load(reviewed['record_id']) == reviewed
+    assert engine._json(reviewed['provider_request'])['source_projections']['orders']['complete'] is False
+    result = engine._json(reviewed['review'])
+    assert result['status'] == 'INCOMPLETE'
+    assert result['attention_required'] is True
+    assert result['payment_authorized'] is False
+    assert PROJECTION_LIMITATION in result['limitations']
+    assert await engine.review(packet['record_id'], provider=provider, request_key='projected', reviewed_at=REVIEWED) == reviewed
+    assert provider.calls == 1
+    assert engine.archive.get(packet['sources']['orders']) == source_bytes
+    assert engine.archive.get(packet['evaluation']) == evaluation_bytes
+
+
+@pytest.mark.parametrize('oversized', [False, True])
+@pytest.mark.asyncio
+async def test_legacy_full_request_reviews_still_load(seeded, monkeypatch, oversized):
+    from dataclasses import replace
+
+    from rules_ingestion import contextual_review
+    from rules_ingestion import engine as engine_module
+    from rules_ingestion.contextual_contracts import RESPONSE_SCHEMA
+
+    engine, kwargs = seeded
+    if oversized:
+        orders = kwargs['snapshots']['orders']
+        kwargs['snapshots']['orders'] = replace(orders, payload=orders.payload | {'padding': 'x' * 300000})
+    packet = engine.evaluate(**kwargs)
+    legacy_prompt = contextual_review.SYSTEM_PROMPT.split('\n\nSome requests include source_projections.')[0] + '\n'
+
+    def legacy_request(evaluation, context, view, documents, unavailable, binary, limits):
+        return {'system_prompt': legacy_prompt, 'response_schema': RESPONSE_SCHEMA,
+                'evaluation': evaluation, 'context': context, 'sources': documents,
+                'unavailable_sources': unavailable, 'unreviewable_sources': binary}, False
+
+    with monkeypatch.context() as patched:
+        for module in (contextual_review, engine_module):
+            patched.setattr(module, 'SYSTEM_PROMPT', legacy_prompt)
+            patched.setattr(module, 'PROMPT_VERSION', 'contextual-review/1')
+        patched.setattr(contextual_review, 'build_review_request', legacy_request)
+        reviewed = await engine.review(packet['record_id'], provider=ScriptedProvider(),
+                                       request_key='historical-v1', reviewed_at=REVIEWED)
+    assert engine._json(reviewed['review'])['reviewer']['prompt_version'] == 'contextual-review/1'
+    assert engine.load(reviewed['record_id']) == reviewed
+    if oversized:
+        assert engine._json(reviewed['review'])['error']['code'] == 'input_too_large'

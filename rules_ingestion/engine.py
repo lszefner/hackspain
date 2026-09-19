@@ -13,12 +13,14 @@ from ingestion.storage import SupabaseStorage
 from . import evaluator, execution_context
 from .contextual_contracts import RESPONSE_SCHEMA, REVIEW_SCHEMA, validate
 from .contextual_review import (
+    PROJECTION_LIMITATION,
     DecisionContextV2Adapter,
     ProviderReply,
     ReviewLimits,
     ReviewProvider,
     _source_documents,
     _validate_response,
+    build_review_request,
     review_evaluation,
 )
 from .decision_context import ContextBundle, ContextError, SourceSnapshot, build_context
@@ -250,11 +252,20 @@ class InvoiceDecisionEngine:
                 or config['prompt_sha256'] != review['reviewer']['prompt_sha256']
                 or digest(config['system_prompt'].encode()) != config['prompt_sha256']):
             raise ContextError('review request configuration mismatch')
-        documents, unavailable, binary, _partial = _source_documents(
-            DecisionContextV2Adapter().inspect(bundle.context, bundle.artifacts), bundle.artifacts)
-        expected_request = {'system_prompt': config['system_prompt'], 'response_schema': config['response_schema'],
-                            'evaluation': evaluation, 'context': bundle.context, 'sources': documents,
-                            'unavailable_sources': unavailable, 'unreviewable_sources': binary}
+        view = DecisionContextV2Adapter().inspect(bundle.context, bundle.artifacts)
+        documents, unavailable, binary, _partial = _source_documents(view, bundle.artifacts)
+        projected = False
+        if config['prompt_version'] == 'contextual-review/1':
+            expected_request = {'system_prompt': config['system_prompt'], 'response_schema': config['response_schema'],
+                                'evaluation': evaluation, 'context': bundle.context, 'sources': documents,
+                                'unavailable_sources': unavailable, 'unreviewable_sources': binary}
+        else:
+            expected_request, projected = build_review_request(
+                evaluation, bundle.context, view, documents, unavailable, binary, ReviewLimits(**config['limits']),
+                system_prompt=config['system_prompt'], response_schema=config['response_schema'])
+        if projected and (review['status'] == 'COMPLETED' or not review['attention_required']
+                          or PROJECTION_LIMITATION not in review['limitations']):
+            raise ContextError('projected review overstates source coverage')
         if digest(canonical_bytes(expected_request)) != review['reviewer']['request_sha256']:
             raise ContextError('review request identity mismatch')
         if review['status'] != 'FAILED' and (packet['provider_request'] is None or packet['provider_response'] is None):
@@ -270,6 +281,9 @@ class InvoiceDecisionEngine:
             response = self._json(packet['provider_response'])
             if review['status'] != 'FAILED':
                 _validate_response(response['payload'], evaluation, documents)
+                if projected:
+                    _validate_response(response['payload'], evaluation, expected_request['sources'],
+                                       source_projections=expected_request['source_projections'])
                 if (response['payload']['rule_reviews'] != review['rule_reviews']
                         or response['payload']['findings'] != review['findings']
                         or response['model'] != review['reviewer']['resolved_model']

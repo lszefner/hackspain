@@ -294,6 +294,14 @@ async def test_backend_read_api_uses_database_records(runtime, monkeypatch):
     assert responses[0][1]['evaluation_result']['context_schema_version'] == 'decision-context/2'
 
 
+def test_backend_uses_latest_caja_resolver():
+    import os
+
+    from alberto import caja
+
+    assert rr.FACTURAS_DIR == Path(os.environ.get('REVISION_INPUT_DIR') or caja.facturas())
+
+
 def test_rule_builder_reuses_existing_ai_stages(monkeypatch):
     from rules_ingestion import build_rules, codegen, merge, store
     from rules_ingestion.loader import LoadResult

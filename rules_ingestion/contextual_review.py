@@ -22,6 +22,7 @@ from .contextual_contracts import (
 )
 
 logger = logging.getLogger(__name__)
+PROJECTION_LIMITATION = "Contextual review used bounded evidence excerpts; unselected source content was not reviewed."
 UNRESOLVED = {"BLOCKED", "UNSUPPORTED", "ERROR", "NEEDS_REVIEW"}
 USAGE_KEYS = {"prompt_tokens", "completion_tokens", "total_tokens", "input_tokens", "output_tokens"}
 SAFE_PROVIDER_ERRORS = {"authentication_error", "rate_limited", "http_error", "transport_error",
@@ -143,6 +144,74 @@ def _source_documents(view: ContextView, artifacts: dict) -> tuple[dict, list, l
     return documents, unavailable, binary, partial
 
 
+def _retain_pointer(projected, document, pointer):
+    if pointer == "":
+        return deepcopy(document)
+    parts = [part.replace("~1", "/").replace("~0", "~") for part in pointer[1:].split("/")]
+    result = deepcopy(projected)
+    target, original = result, document
+    for index, part in enumerate(parts):
+        key = int(part) if isinstance(original, list) else part
+        child = original[key]
+        if isinstance(target, list):
+            target.extend([None] * max(0, key + 1 - len(target)))
+        if index == len(parts) - 1:
+            target[key] = deepcopy(child)
+        else:
+            current = target[key] if isinstance(target, list) else target.get(key)
+            if current is None:
+                current = [] if isinstance(child, list) else {}
+                target[key] = current
+            target = current
+        original = child
+    return result
+
+
+def build_review_request(evaluation, context, view, documents, unavailable, binary, limits,
+                         *, system_prompt=SYSTEM_PROMPT, response_schema=RESPONSE_SCHEMA):
+    request = {"system_prompt": system_prompt, "response_schema": deepcopy(response_schema),
+               "evaluation": evaluation, "context": context, "sources": documents,
+               "unavailable_sources": unavailable, "unreviewable_sources": binary}
+    if len(_canonical(request)) <= limits.max_input_bytes:
+        return request, False
+    pointers = {sid: set() for sid in documents}
+
+    def collect(value):
+        if isinstance(value, dict):
+            if (isinstance(value.get("source"), str) and value["source"] in pointers
+                    and isinstance(value.get("pointer"), str)):
+                pointers[value["source"]].add(value["pointer"])
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+
+    collect(evaluation)
+    collect(context["fields"])
+    source_budget = limits.max_input_bytes // max(2, 2 * len(documents))
+    projected, coverage = {}, {}
+    for sid, document in documents.items():
+        if len(_canonical(document)) <= source_budget:
+            projected[sid] = document
+            coverage[sid] = {"complete": True, "included_pointers": [""],
+                             "original_sha256": view.sources[sid]["sha256"]}
+            continue
+        kept = []
+        partial = [] if isinstance(document, list) else {} if isinstance(document, dict) else None
+        for pointer in sorted(pointers[sid], key=lambda path: (-path.count("/"), path)):
+            pointer_get(document, pointer)
+            candidate = _retain_pointer(partial, document, pointer)
+            if len(_canonical(candidate)) <= source_budget:
+                partial = candidate
+                kept.append(pointer)
+        projected[sid] = partial
+        coverage[sid] = {"complete": False, "included_pointers": kept,
+                         "original_sha256": view.sources[sid]["sha256"]}
+    request = {**request, "sources": projected, "source_projections": coverage}
+    return request, any(not item["complete"] for item in coverage.values())
+
+
 def _validate_evaluation(evaluation: dict, context: dict, view: ContextView, documents: dict):
     if (evaluation["context_id"] != view.context_id
             or evaluation["context_schema_version"] != view.schema_version
@@ -222,7 +291,7 @@ def _validate_evaluation(evaluation: dict, context: dict, view: ContextView, doc
         raise ReviewInputError("invalid_approval_eligibility")
 
 
-def _validate_response(payload: dict, evaluation: dict, documents: dict):
+def _validate_response(payload: dict, evaluation: dict, documents: dict, *, source_projections: dict | None = None):
     validate(RESPONSE_SCHEMA, payload, "invalid_response")
     ids = [rule["rule_id"] for rule in evaluation["rule_results"]]
     if [r["rule_id"] for r in payload["rule_reviews"]] != ids:
@@ -234,6 +303,11 @@ def _validate_response(payload: dict, evaluation: dict, documents: dict):
         for citation in items:
             sid = citation["source"]
             if sid not in payload["reviewed_sources"]:
+                raise ReviewInputError("invalid_response")
+            projection = (source_projections or {}).get(sid)
+            if projection and not projection["complete"] and not any(
+                    kept == "" or citation["pointer"] == kept or citation["pointer"].startswith(kept + "/")
+                    for kept in projection["included_pointers"]):
                 raise ReviewInputError("invalid_response")
             value = pointer_get(documents[sid], citation["pointer"])
             quote = citation["quote"]
@@ -300,9 +374,7 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
     documents, unavailable, binary, partial = _source_documents(view, artifacts)
     _validate_evaluation(evaluation, context, view, documents)
     ids = [rule["rule_id"] for rule in evaluation["rule_results"]]
-    request = {"system_prompt": SYSTEM_PROMPT, "response_schema": deepcopy(RESPONSE_SCHEMA),
-               "evaluation": evaluation, "context": context, "sources": documents,
-               "unavailable_sources": unavailable, "unreviewable_sources": binary}
+    request, projected = build_review_request(evaluation, context, view, documents, unavailable, binary, limits)
     request_bytes = _canonical(request)
     result = {
         "schema_version": "contextual-review/1", "evaluation_id": evaluation["evaluation_id"],
@@ -310,7 +382,7 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
         "context_schema_version": evaluation["context_schema_version"], "reviewed_at": reviewed_at,
         "original_preliminary_decision": evaluation["preliminary_decision"], "payment_authorized": False,
         "status": "FAILED", "attention_required": True, "rule_reviews": [], "findings": [],
-        "limitations": [],
+        "limitations": [PROJECTION_LIMITATION] if projected else [],
         "coverage": {"reviewed_rule_ids": [], "unreviewed_rule_ids": ids,
                      "reviewed_sources": [], "unreviewed_sources": list(documents),
                      "unavailable_sources": unavailable, "unreviewable_sources": binary},
@@ -322,7 +394,7 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
     }
     if len(request_bytes) > limits.max_input_bytes:
         result["error"] = {"code": "input_too_large"}
-        result["limitations"] = ["The complete input exceeds the configured budget; no provider call was made."]
+        result["limitations"].append("The complete input exceeds the configured budget; no provider call was made.")
         return _finish(result)
     try:
         reply = await asyncio.wait_for(provider.review(deepcopy(request)), timeout=limits.timeout_seconds)
@@ -331,6 +403,9 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
         if len(_canonical(reply.payload)) > limits.max_output_bytes:
             raise ReviewProviderError("output_too_large")
         _validate_response(reply.payload, evaluation, documents)
+        if projected:
+            _validate_response(reply.payload, evaluation, request["sources"],
+                               source_projections=request["source_projections"])
         validate({"type": "string", "minLength": 1}, reply.model, "invalid_response")
         if reply.request_id is not None:
             validate({"type": "string", "minLength": 1}, reply.request_id, "invalid_response")
@@ -346,10 +421,11 @@ async def review_evaluation(evaluation: dict, context: dict, artifacts: dict[str
     except (RuntimeError, ValueError, TypeError, KeyError, IndexError, OSError, AttributeError):
         result["error"] = {"code": "provider_error"}
     if result["error"]:
-        result["limitations"] = ["No validated contextual review is available; the original result is unchanged."]
+        result["limitations"].append("No validated contextual review is available; the original result is unchanged.")
         return _finish(result)
     result["rule_reviews"], result["findings"] = payload["rule_reviews"], payload["findings"]
     result["limitations"] = list(dict.fromkeys([
+        *result["limitations"],
         *payload["limitations"],
         *(finding["explanation"] for finding in payload["findings"] if finding["kind"] == "REVIEW_LIMITATION"),
     ]))
