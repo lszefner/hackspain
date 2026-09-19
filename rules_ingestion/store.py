@@ -15,15 +15,38 @@ Merge model:
 """
 from __future__ import annotations
 
+import inspect
 import json
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from . import __version__
 from .catalog import CATALOG
 from .classify import ClassifyResult
 from .loader import LoadResult
 
-STORE_SCHEMA_VERSION = "1.0"
+STORE_SCHEMA_VERSION = "1.1"   # 1.1: each rule now carries its executable code
+
+
+def _rule_logic(canonical: str) -> Optional[dict]:
+    """The executable Python condition that implements this rule, as source.
+
+    Embeds the actual `if`-code from rules_ingestion.checks so rules.store.json is
+    self-describing: the text of the rule AND the code that evaluates it.
+    """
+    try:
+        from .checks import CHECKS
+        fn = CHECKS.get(canonical)
+        if fn is None:
+            return None
+        return {
+            "language": "python",
+            "function": fn.__name__,
+            "module": "rules_ingestion.checks",
+            "signature": "check(inv, master, params) -> (verdict, reason)",
+            "source": inspect.getsource(fn),
+        }
+    except Exception:
+        return None   # code not available -> text-only rule (still valid)
 
 
 def build_ruleset(load: LoadResult,
@@ -66,6 +89,7 @@ def build_ruleset(load: LoadResult,
         params = prof.get("params", {})
         matched = activations.get(key, [])
         source = "master+predefined" if matched else "predefined"
+        on_fail = prof.get("on_fail", canon.on_fail)
         rules.append({
             "rule_id": canon.rule_id,
             "canonical": key,
@@ -74,10 +98,11 @@ def build_ruleset(load: LoadResult,
             "source": source,
             "ruleset_version": version,
             "enabled": enabled,
-            "on_fail": canon.on_fail,
+            "on_fail": on_fail,
             "soft_verdict": canon.soft_verdict,
             "input_fields": list(canon.input_fields),
             "params": params,
+            "logic": _rule_logic(key),   # <-- the Python if-code for this rule
             "trace": {
                 "matched_from": matched,
                 "backed_by_master": bool(matched),
@@ -90,9 +115,13 @@ def build_ruleset(load: LoadResult,
             },
         })
 
+    from .policy_metrics import fingerprint
     return {
         "store_schema_version": STORE_SCHEMA_VERSION,
         "ruleset_version": version,
+        "policy_id": profile.get("policy_id") or profile.get("policy_class") or "balanced",
+        "policy_class": profile.get("policy_class") or profile.get("policy_id") or "balanced",
+        "metrics": fingerprint(profile),
         "generated_at": generated_at,
         "generated_with": {"rules_ingestion": __version__},
         "precedence": profile.get("precedence", ["NO_PAGAR", "ESCALAR", "PAGAR"]),

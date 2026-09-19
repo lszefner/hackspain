@@ -43,11 +43,11 @@ CATALOG: Dict[str, CanonicalRule] = {
     "VENDOR": CanonicalRule(
         key="VENDOR",
         rule_id="R1",
-        title="Proveedor válido y cuenta que coincide",
+        title="Valid vendor and matching account",
         description=(
-            "El proveedor existe en el maestro y está activo; el NIF está en el "
-            "maestro; el IBAN de la factura coincide con el del maestro. "
-            "IBAN distinto -> señal de fraude -> ESCALAR."
+            "The vendor exists in the master and is active; the NIF is in the "
+            "master; the invoice IBAN matches the master's. "
+            "Different IBAN -> fraud signal -> ESCALAR."
         ),
         on_fail="ESCALAR",
         default_enabled=True,
@@ -61,19 +61,19 @@ CATALOG: Dict[str, CanonicalRule] = {
     "DUPLICATES": CanonicalRule(
         key="DUPLICATES",
         rule_id="R2",
-        title="Sin pagos duplicados",
+        title="No duplicate payments",
         description=(
-            "Misma factura + mismo proveedor -> NO_PAGAR (ya pagado / doble "
-            "envío). Mismo importe + misma fecha -> NEEDS_REVIEW. El estado ERP "
-            "del pedido debe ser PENDIENTE; PAGADA -> ya pagado -> NO_PAGAR."
+            "Same invoice + same vendor -> NO_PAGAR (already paid / double "
+            "submit). Same amount + same date -> NEEDS_REVIEW. The ERP state "
+            "of the order must be PENDIENTE; PAGADA -> already paid -> NO_PAGAR."
         ),
         on_fail="NO_PAGAR",
         default_enabled=True,
         input_fields=("invoice_number", "vendor_id", "amount", "date", "pedido"),
         lexicon=(
             "duplicado", "duplicada", "dos", "veces", "doble", "mismo", "misma",
-            "pagar", "pagada", "pagado", "pendiente", "estado", "repetir",
-            "reintegro", "factura", "ya",
+            "pagada", "pagado", "pendiente", "estado", "repetir",
+            "reintegro", "ya",
         ),
         soft_verdict="NEEDS_REVIEW",
         notes="Hard key (invoice+vendor) NO_PAGAR; soft key (amount+date) review.",
@@ -81,11 +81,11 @@ CATALOG: Dict[str, CanonicalRule] = {
     "AMOUNT": CanonicalRule(
         key="AMOUNT",
         rule_id="R3",
-        title="Importes e IVA cuadran",
+        title="Amounts and VAT add up",
         description=(
-            "Las líneas suman la base; el IVA está bien calculado; el total = "
-            "base + IVA (±0,01); moneda EUR; y el importe de la factura coincide "
-            "con el del pedido (±0,01)."
+            "Line items sum to the base; VAT is correctly computed; total = "
+            "base + VAT (±0.01); currency EUR; and the invoice amount matches "
+            "the purchase-order amount (±0.01)."
         ),
         on_fail="ESCALAR",
         default_enabled=True,
@@ -100,10 +100,10 @@ CATALOG: Dict[str, CanonicalRule] = {
     "AUTHORIZATION": CanonicalRule(
         key="AUTHORIZATION",
         rule_id="R4",
-        title="Autorización por importe (umbral)",
+        title="Amount-based authorization (threshold)",
         description=(
-            "Importe por encima de un umbral -> requiere aprobación humana "
-            "(ESCALAR). Adición nuestra; OFF en el perfil de la norma v3."
+            "Amount above a threshold -> requires human approval "
+            "(ESCALAR). Our addition; OFF in the v3 norm profile."
         ),
         on_fail="ESCALAR",
         default_enabled=False,      # OFF in the norm profile
@@ -117,10 +117,10 @@ CATALOG: Dict[str, CanonicalRule] = {
     "DATES": CanonicalRule(
         key="DATES",
         rule_id="R5",
-        title="Fechas válidas y en plazo",
+        title="Valid dates within payment terms",
         description=(
-            "La fecha es válida y no futura; y está dentro del plazo de pago del "
-            "proveedor (Condiciones, p.ej. '60 dias')."
+            "The date is valid and not in the future; and it falls within the "
+            "vendor's payment terms (Condiciones, e.g. '60 dias')."
         ),
         on_fail="ESCALAR",
         default_enabled=True,
@@ -134,10 +134,10 @@ CATALOG: Dict[str, CanonicalRule] = {
     "MISSING": CanonicalRule(
         key="MISSING",
         rule_id="R6",
-        title="Campos obligatorios presentes",
+        title="Required fields present",
         description=(
-            "Faltan datos obligatorios (NIF / IBAN / PEDIDO / IMPORTE / IVA / "
-            "FECHA) -> ESCALAR para que un humano los complete."
+            "Missing required data (NIF / IBAN / PEDIDO / IMPORTE / IVA / "
+            "FECHA) -> ESCALAR so a human can complete them."
         ),
         on_fail="ESCALAR",
         default_enabled=True,
@@ -162,3 +162,26 @@ def rule_by_id(rule_id: str) -> Optional[CanonicalRule]:
 def all_lexicons() -> Dict[str, Tuple[str, ...]]:
     """key -> lexicon, for the classifier. Excludes NONE (it has no lexicon)."""
     return {k: v.lexicon for k, v in CATALOG.items()}
+
+
+def lexicon_grounded(text: str, canonical: str) -> bool:
+    """True iff at least one catalog lexicon token appears in the source text.
+
+    Used to reject DeepSeek (and merge) activations that claim a canonical
+    without any overlapping vocabulary — the IRPF→AMOUNT failure mode.
+    """
+    from .normalize import _accent_fold
+    canon = CATALOG.get(canonical)
+    if canon is None or not text:
+        return False
+    folded = _accent_fold(text)
+    return any(tok in folded for tok in canon.lexicon)
+
+
+def catalog_brief() -> str:
+    """Short label+description block for LLM prompts (grounding)."""
+    lines = []
+    for key, r in CATALOG.items():
+        lines.append(f"- {key}: {r.title}. {r.description}")
+    lines.append("- NONE: the line is a payment rule but matches no canonical.")
+    return "\n".join(lines)

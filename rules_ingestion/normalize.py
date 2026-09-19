@@ -13,7 +13,7 @@ Verified gotchas from La Caja:
   * IBANs stored space-formatted:            'ES21 0049 1500 ...'
   * Vendor names with trailing whitespace:   'Ofimática Cieza S.L.  '
   * ES-format money with thousands + comma:   12.874,40
-  * ERP dates are DD/MM/AAAA;  Excel dates are ISO or datetime objects
+  * ERP dates are DD/MM/YYYY;  Excel dates are ISO or datetime objects
   * Synthetic CIFs mostly FAIL the real control digit -> it is advisory only,
     master membership + IBAN match are the hard gates.
 """
@@ -189,7 +189,7 @@ def amounts_equal(a: Optional[Number], b: Optional[Number],
 # Dates
 # --------------------------------------------------------------------------- #
 def norm_fecha(value: Optional[object]) -> Optional[str]:
-    """Normalize to ISO 'AAAA-MM-DD'. Accepts DD/MM/AAAA, ISO, datetime/date."""
+    """Normalize to ISO 'YYYY-MM-DD'. Accepts DD/MM/YYYY, ISO, datetime/date."""
     if value is None:
         return None
     if isinstance(value, datetime):

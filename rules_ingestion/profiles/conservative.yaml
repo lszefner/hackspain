@@ -1,12 +1,16 @@
-# Prefer profiles/balanced.yaml; this file remains as a legacy alias for older
-# scripts that still pass --profile rules_v3.yaml.
+# conservative.yaml · high-escalation / cautious posture
+#
+# Prefer ESCALAR over auto PAGAR or hard NO_PAGAR. Wider amount tolerance,
+# softer IBAN handling, high authorization threshold, payment terms advisory
+# only. Lowest risk_appetite for auto-pay; highest escalation_bias.
+
+policy_id: conservative
+policy_class: conservative
 ruleset_version: "v3"
-policy_id: balanced
-policy_class: balanced
 source_sheet: "Norma_Pagos_v3"
 description: >
-  Legacy alias of profiles/balanced.yaml (Vendor Payments Norm v3).
-  Prefer: make rules POLICY=balanced
+  Conservative posture. When in doubt, escalate. Soften hard fails into
+  human review; keep authorization on but at a high threshold.
 
 precedence: ["NO_PAGAR", "ESCALAR", "PAGAR"]
 
@@ -16,17 +20,17 @@ verdict_semantics:
   FAIL: "on_fail"
 
 metrics:
-  policy_class: balanced
-  risk_appetite: 0.50
-  escalation_bias: 0.55
-  authorization_threshold_eur: null
+  policy_class: conservative
+  risk_appetite: 0.25
+  escalation_bias: 0.85
+  authorization_threshold_eur: 25000.0
   iban_mismatch_on_fail: ESCALAR
   soft_duplicate_verdict: NEEDS_REVIEW
-  amount_tolerance_eur: 0.01
+  amount_tolerance_eur: 1.00
   require_erp_pending: true
-  enforce_payment_terms: true
-  check_nif_control_digit: true
-  enable_authorization: false
+  enforce_payment_terms: false
+  check_nif_control_digit: false
+  enable_authorization: true
   enable_new_rules_default: false
 
 rules:
@@ -36,7 +40,7 @@ rules:
       require_active: true
       require_nif_in_master: true
       require_iban_match: true
-      check_nif_control_digit: true
+      check_nif_control_digit: false
     on_fail: ESCALAR
 
   DUPLICATES:
@@ -50,7 +54,7 @@ rules:
   AMOUNT:
     enabled: true
     params:
-      tolerance_eur: 0.01
+      tolerance_eur: 1.00
       check_line_items_sum: true
       check_iva: true
       check_total_is_base_plus_iva: true
@@ -61,14 +65,14 @@ rules:
     enabled: true
     params:
       allow_future: false
-      enforce_payment_terms: true
+      enforce_payment_terms: false
 
   MISSING:
     enabled: true
     params:
-      required_fields: ["nif", "iban", "pedido", "importe", "iva", "fecha"]
+      required_fields: ["nif", "iban", "pedido", "importe", "fecha"]
 
   AUTHORIZATION:
-    enabled: false
+    enabled: true
     params:
-      escalate_above_eur: 10000.0
+      escalate_above_eur: 25000.0

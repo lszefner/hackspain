@@ -1,0 +1,104 @@
+{
+  "seed": 42,
+  "files": {
+    "baseline": "01_baseline.csv",
+    "traps": "02_traps.csv",
+    "structural": "03_structural.xlsx"
+  },
+  "counts": {
+    "baseline": 12,
+    "traps": 17,
+    "structural_embedded_rules": 8
+  },
+  "structural_ground_truth": {
+    "embedded_rules": [
+      {
+        "id": "S01",
+        "sheet": "Reglas",
+        "must_contain": "NIF esta en el maestro",
+        "expected_maps_to": "VENDOR",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S02",
+        "sheet": "Reglas",
+        "must_contain": "dos veces el mismo pedido",
+        "expected_maps_to": "DUPLICATES",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S03",
+        "sheet": "Reglas",
+        "must_contain": "fecha de la factura no puede ser futura",
+        "expected_maps_to": "DATES",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S04",
+        "sheet": "notas_libres",
+        "must_contain": "IBAN de la factura",
+        "expected_maps_to": "VENDOR",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S05",
+        "sheet": "notas_libres",
+        "must_contain": "base + IVA = total",
+        "expected_maps_to": "AMOUNT",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S06",
+        "sheet": "politica_tabla",
+        "must_contain": "importe supere 5000",
+        "expected_maps_to": "AUTHORIZATION",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S07",
+        "sheet": "politica_tabla",
+        "must_contain": "faltan NIF, IBAN o pedido",
+        "expected_maps_to": "MISSING",
+        "expected_is_rule": 1
+      },
+      {
+        "id": "S08",
+        "sheet": "umbrales",
+        "must_contain": "umbral de autorizacion",
+        "expected_maps_to": "AUTHORIZATION",
+        "expected_is_rule": 1
+      }
+    ],
+    "must_not_activate_substrings": [
+      "solicitudes de vacaciones",
+      "People Ops",
+      "cafe de la 3a planta"
+    ],
+    "rng_probe": 0.5892656838759087
+  },
+  "pass_criteria": {
+    "baseline": {
+      "min_is_rule_accuracy": 0.9,
+      "min_maps_to_accuracy": 0.9,
+      "description": "Easy canonical/noise cases must clear ~90%+"
+    },
+    "traps": {
+      "min_is_rule_accuracy": 0.75,
+      "min_maps_to_accuracy": 0.7,
+      "min_trap_type_pass_rate": 0.5,
+      "description": "Per trap_type: no systematic 0% collapse; overall floors"
+    },
+    "structural": {
+      "min_recall": 0.75,
+      "min_precision_on_recalled": 0.7,
+      "max_false_activations_offline": 2,
+      "max_false_activations_live": 0,
+      "description": "Extraction must find most embedded rules; maps_to when found"
+    },
+    "e2e_merge": {
+      "require_no_duplicate_canonical_ids": true,
+      "require_metrics_present": true,
+      "description": "Merged ruleset JSON invariants"
+    }
+  }
+}

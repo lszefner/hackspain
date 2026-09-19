@@ -24,7 +24,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
-from .catalog import CATALOG, CHOICE_LABELS, all_lexicons
+from .catalog import CATALOG, CHOICE_LABELS, all_lexicons, catalog_brief, lexicon_grounded
 from .normalize import _accent_fold
 
 # --- live debug (set by build_rules --verbose) ---
@@ -42,6 +42,10 @@ def _dbg(msg: str) -> None:
 
 
 # --- routing thresholds ---
+# Rubric-calibrated bands (lexical Noul + JEV noul):
+#   >= IS_RULE_HI  -> treat as a payment rule (ACTIVATE / NEW_RULE)
+#   IS_RULE_LO..HI -> uncertain -> LLM_FALLBACK
+#   <  IS_RULE_LO  -> NOT_A_RULE
 IS_RULE_HI = 0.60
 IS_RULE_LO = 0.40
 # Product rule: a canonical mapping must be >= 0.8 confident to activate WITHOUT
@@ -126,29 +130,59 @@ def route_declared(label: str, conf: float, tier: str,
 # JEV question builders (from the canonical catalog)
 # --------------------------------------------------------------------------- #
 # Richer, discriminative descriptions for JEV Choice (better than bare titles).
+# Example phrases stay in Spanish: they mirror Alberto's Spanish source docs.
 _CHOICE_CRITERIA = {
-    "VENDOR": "El proveedor/NIF debe existir en el maestro y el IBAN de la factura debe coincidir con el del maestro.",
-    "DUPLICATES": "No pagar dos veces: misma factura/proveedor, mismo importe+fecha, o pedido ya PAGADO/estado no PENDIENTE.",
-    "AMOUNT": "Importes, IVA y total (base+IVA) correctos, en tolerancia, y coincidentes con el importe del pedido.",
-    "AUTHORIZATION": "Requiere aprobación humana cuando el importe supera un umbral establecido.",
-    "DATES": "La fecha de la factura debe ser válida, no futura y dentro del plazo de pago del proveedor.",
-    "MISSING": "Faltan campos obligatorios (NIF/IBAN/pedido/importe/IVA/fecha), o hay una anomalía/duda que debe escalarse a un humano.",
-    "NONE": "No corresponde a ninguna regla canónica anterior (posible regla nueva).",
+    "VENDOR": "The vendor/NIF must exist in the master and the invoice IBAN must match the master's.",
+    "DUPLICATES": "Do not pay twice: same invoice/vendor, same amount+date, or order already PAGADA / state not PENDIENTE.",
+    "AMOUNT": "Amounts, VAT and total (base+VAT) correct, within tolerance, and matching the purchase-order amount.",
+    "AUTHORIZATION": "Requires human approval when the amount exceeds a set threshold.",
+    "DATES": "The invoice date must be valid, not in the future, and within the vendor's payment terms.",
+    "MISSING": "Required fields are missing (NIF/IBAN/pedido/importe/IVA/fecha), or there is an anomaly/doubt that must be escalated to a human.",
+    "NONE": "Does not match any prior canonical rule (possible new rule).",
 }
 
 
 def noul_question() -> dict:
-    # Invoice-domain-specific: this gates DISCOVERY (declared sources bypass Noul).
-    # Broad enough to include VALIDATION rules (importes/IVA/fechas/campos), narrow
-    # enough to reject workplace noise (horarios, logística, recados).
+    # Discovery gate (declared sources bypass Noul). Additive rubric is encoded
+    # in instructions; JEV returns a single calibrated float — not custom JSON.
+    # Spanish examples stay: they mirror Alberto's Spanish source documents.
     return {
         "type": "noul",
-        "instructions": ("¿Es esta línea una regla o condición para procesar o pagar facturas de "
-                         "proveedores (validar proveedor, importes, IVA, fechas, duplicados, "
-                         "campos obligatorios o autorizaciones)?"),
+        "instructions": (
+            "Score whether THIS line is an accounts-payable / vendor-invoice RULE "
+            "(validation, payment, withholding, matching, authorization, or rejection). "
+            "Compute mechanically from signals — do not holistically guess.\n"
+            "Additive rubric (internal; your Noul score should reflect it):\n"
+            "  DEONTIC (up to ~half of belief):\n"
+            "    strong: debe / no se puede / solo si / en caso de / se rechaza / requiere / "
+            "obligatorio / prohibido / if-then / threshold (\"si el importe supera…\")\n"
+            "    weak: standing policy without modal (\"retención 15% IRPF en autónomos\")\n"
+            "  DOMAIN (up to ~half):\n"
+            "    strong: IBAN, NIF/CIF, IVA, IRPF/retención, importe, duplicado de pago, "
+            "fecha/vencimiento, pedido/PO, ERP, campo obligatorio, autorización/"
+            "denegación de pago, proveedor/maestro matching\n"
+            "    weak: adjacent finance/admin that only loosely relates to paying an invoice\n"
+            "  NOISE (push toward false even if a finance word appears):\n"
+            "    schedules, meetings, office logistics, phone numbers, logos, greetings, "
+            "personal notes, errands (\"comprar café\"), parking/facilities; "
+            "\"reunión para hablar de facturas\" = meeting, NOT a rule.\n"
+            "Anchors (sanity-check only):\n"
+            "  TRUE high  — \"IBAN debe coincidir con el maestro\"\n"
+            "  TRUE high  — \"no pagar dos veces el mismo pedido\"\n"
+            "  TRUE mid   — \"retención 15% IRPF en autónomos\" (implicit policy + tax term)\n"
+            "  FALSE      — \"parking cierra a las 22h\" / \"comprar café\" / \"reunión el martes\""
+        ),
         "criteria": {
-            "true": "Es una norma/condición sobre facturas de proveedores o su pago (incluida su validación)",
-            "false": "No trata sobre facturas de proveedores ni su pago (p.ej. horarios, logística, recados, actas)",
+            "true": (
+                "The line states a norm/condition that gates processing or paying a vendor "
+                "invoice: vendor/NIF/IBAN checks, amounts/VAT/withholding, dates, duplicates, "
+                "ERP status, required fields, payment authorization, or payment denial."
+            ),
+            "false": (
+                "Not a payment rule: workplace noise (hours, meetings, logistics, errands, "
+                "phones, logos, greetings, personal notes) or narrative without normative "
+                "force over invoice payment — even if the word \"factura\" appears incidentally."
+            ),
         },
     }
 
@@ -156,7 +190,7 @@ def noul_question() -> dict:
 def choice_question() -> dict:
     return {
         "type": "choice",
-        "instructions": "¿A qué regla canónica de pago a proveedores corresponde esta línea?",
+        "instructions": "Which canonical vendor-payment rule does this line map to?",
         "criteria": dict(_CHOICE_CRITERIA),
     }
 
@@ -217,18 +251,31 @@ class JEVClient:
 # --------------------------------------------------------------------------- #
 # TIER 3 · Lexical classifier (offline degrade)  — Noul + Choice, deterministic
 # --------------------------------------------------------------------------- #
+# Rubric checklist (not a single opaque score). Each hit adds/subtracts logit
+# weight; sigmoid maps to [0,1]. Calibrated so real payment rules clear
+# IS_RULE_HI (~0.60+) and workplace noise stays < IS_RULE_LO (~0.40).
 _DEONTIC = {
-    "debe", "deben", "debera", "pagar", "escalar", "nunca", "solo", "requiere",
-    "coincida", "coincide", "prohibido", "obligatorio", "valida", "valido",
-    "permitido", "existir", "pertenecer",
+    "debe", "deben", "debera", "deberan", "pagar", "pago", "pagarse", "pagado",
+    "escalar", "nunca", "solo", "requiere", "requieren", "requerir",
+    "coincida", "coincide", "coincidir", "prohibido", "prohibida", "prohibir",
+    "obligatorio", "obligatoria", "valida", "valido", "verificar", "comprobar",
+    "aplicar", "aplicara", "admiten", "admitir", "rechazar", "rechazarse",
+    "tramitar", "detener", "existir", "pertenecer", "confirmar", "exigir",
 }
 _DOMAIN = {
-    "nif", "iban", "pedido", "importe", "iva", "fecha", "proveedor", "estado",
-    "maestro", "total", "base", "factura", "moneda", "tolerancia", "pendiente",
+    "nif", "iban", "pedido", "importe", "iva", "fecha", "proveedor", "proveedores",
+    "estado", "maestro", "total", "base", "factura", "facturas", "moneda",
+    "tolerancia", "pendiente", "pagada", "irpf", "retencion", "retenciones",
+    "autonomo", "autonomos", "aeat", "paraiso", "paraisos", "aprobacion",
+    "autorizacion", "umbral", "erp", "duplicado", "duplicada", "ss", "tgss",
+    "imponible", "withholding",
 }
 _NOTE_NEG = {
     "acordarse", "preguntar", "roto", "llaman", "cafe", "planta", "sonia",
     "viernes", "mirar", "hueco", "aplica", "recordar", "avisar", "ojo",
+    "parking", "telefono", "centralita", "reunion", "logo", "bombilla",
+    "pasillo", "finde", "hola", "gracias", "asunto", "catalogo", "word",
+    "plantillas", "xxxxxx", "xxxxx",
 }
 _TOKEN_RE = re.compile(r"[a-z0-9]+")
 _LEADING_NUM_RE = re.compile(r"^\s*\d+\s*[.)\-]")
@@ -242,28 +289,85 @@ def tokenize(text: str) -> List[str]:
     return [t for t in _TOKEN_RE.findall(_accent_fold(text)) if len(t) >= 2]
 
 
+def _stem_hit(toks: set, vocab: set) -> set:
+    """Match exact tokens OR shared stem (factura/facturas, pagar/pagarse)."""
+    hits = set(toks & vocab)
+    for t in toks:
+        for v in vocab:
+            if t == v:
+                continue
+            # cheap Spanish plural / conjugation overlap (len>=4)
+            if len(v) >= 4 and len(t) >= 4 and (t.startswith(v) or v.startswith(t)):
+                hits.add(v)
+    return hits
+
+
 class Noul:
-    """Lexical binary proposition: P(text is a rule)."""
+    """Lexical binary proposition: P(text is a payment rule).
+
+    Rubric (logit sum → sigmoid):
+      + numbered norm line          (+2.0)
+      + deontic / imperative verb   (+1.4 if any)
+      + payment-domain tokens       (+1.0 + 0.45 per extra, capped)
+      + long enough to be a clause  (+0.3 if >= 8 tokens)
+      - workplace-noise tokens      (-2.2 if any)
+      - short + no domain           (-1.0)
+      - domain-only without deontic (-0.8)  # "facturas en el armario"
+    """
+
+    @staticmethod
+    def rubric(text: str) -> Dict[str, float]:
+        """Return named rubric contributions (for debug / tests)."""
+        toks = set(tokenize(text))
+        words = tokenize(text)
+        deontic = _stem_hit(toks, _DEONTIC)
+        domain = _stem_hit(toks, _DOMAIN)
+        noise = _stem_hit(toks, _NOTE_NEG)
+        parts: Dict[str, float] = {
+            "base": -1.2,
+            "numbered": 0.0,
+            "deontic": 0.0,
+            "domain": 0.0,
+            "length": 0.0,
+            "noise": 0.0,
+            "short": 0.0,
+            "domain_only": 0.0,
+        }
+        if _LEADING_NUM_RE.match(text or ""):
+            parts["numbered"] = 2.0
+        if deontic:
+            parts["deontic"] = 1.4
+        if domain:
+            parts["domain"] = 1.0 + 0.45 * min(len(domain) - 1, 3)
+        if len(words) >= 8:
+            parts["length"] = 0.3
+        if noise:
+            parts["noise"] = -2.2
+        if len(words) < 5 and not domain:
+            parts["short"] = -1.0
+        # archival / logistics mentioning facturas but no obligation to pay
+        if domain and not deontic and not _LEADING_NUM_RE.match(text or ""):
+            parts["domain_only"] = -0.8
+        return parts
 
     @staticmethod
     def is_rule(text: str) -> float:
-        toks = set(tokenize(text))
-        words = tokenize(text)
-        score = -1.0
-        if _LEADING_NUM_RE.match(text):
-            score += 2.2
-        if toks & _DEONTIC:
-            score += 1.3
-        domain_hits = len(toks & _DOMAIN)
-        if domain_hits:
-            score += 1.1 + 0.5 * min(domain_hits - 1, 2)
-        if len(words) >= 6:
-            score += 0.4
-        if toks & _NOTE_NEG:
-            score -= 2.0
-        if len(words) < 4 and not domain_hits:
-            score -= 0.8
+        parts = Noul.rubric(text)
+        score = sum(parts.values())
         return round(_sigmoid(score), 4)
+
+
+# When two lexicons both fire, prefer the more specific domain over a generic
+# catch-all. Order is highest-precedence first (named object / obligation >
+# threshold framing > arithmetic > catch-all MISSING).
+_MAPS_TO_PRECEDENCE: Tuple[str, ...] = (
+    "VENDOR", "DUPLICATES", "AUTHORIZATION", "DATES", "AMOUNT", "MISSING",
+)
+# VENDOR may only override MISSING when match/fraud evidence is present —
+# listing NIF/IBAN as *missing required fields* must stay MISSING.
+_VENDOR_OVER_MISSING: frozenset = frozenset({
+    "coincide", "coincida", "maestro", "fraude", "titular", "banco", "activo",
+})
 
 
 class Choice:
@@ -286,10 +390,31 @@ class Choice:
                 scores[key] = round(s, 4)
         if not scores:
             return "NONE", 0.0, {}
-        ordered = sorted(scores.values(), reverse=True)
-        top1, top2 = ordered[0], (ordered[1] if len(ordered) > 1 else 0.0)
+
+        # Raw winner by score …
+        raw = max(scores, key=scores.get)
+        # … then precedence overrides for known multi-category overlaps:
+        # AUTHORIZATION beats AMOUNT on threshold+approval lines; VENDOR beats
+        # MISSING only when IBAN/NIF *match* evidence is present (not field lists).
+        label = raw
+        if "AUTHORIZATION" in scores and "AMOUNT" in scores:
+            label = "AUTHORIZATION"
+        elif ("VENDOR" in scores and "MISSING" in scores
+              and (toks & _VENDOR_OVER_MISSING)):
+            label = "VENDOR"
+        elif len(scores) > 1:
+            # Near-ties (within 10%): prefer higher-precedence label.
+            top = scores[raw]
+            contenders = [k for k, v in scores.items() if v >= top * 0.9]
+            if len(contenders) > 1:
+                rank = {k: i for i, k in enumerate(_MAPS_TO_PRECEDENCE)}
+                label = min(contenders, key=lambda k: rank.get(k, 99))
+
+        top1 = scores[label]
+        rivals = [v for k, v in scores.items() if k != label]
+        top2 = max(rivals) if rivals else 0.0
         conf = round(top1 / (top1 + top2), 4) if (top1 + top2) else 0.0
-        return max(scores, key=scores.get), conf, scores
+        return label, conf, scores
 
 
 class LexicalJEV:
@@ -337,17 +462,43 @@ class DeepSeekFallback:
             return None
         labels = ", ".join(CHOICE_LABELS)
         prompt = (
-            "Clasificador de reglas de pago a proveedores.\n"
-            "Responde SOLO JSON con las claves: is_rule (0..1), "
-            "maps_to (uno de: %s), confidence (0..1).\n"
-            "maps_to=NONE si no encaja en ninguna regla canónica.\n\n"
-            'Línea: "%s"\nJSON:' % (labels, text.replace('"', "'"))
-        )
+            "You are a fallback classifier for vendor-payment rules. You are called only when a primary "
+            "extraction pipeline could not confidently classify a line. Respond with ONLY the JSON object "
+            "below — no markdown, no prose, no explanation outside the JSON.\n\n"
+            "STRICT GROUNDING (read before scoring):\n"
+            "- You may use ONLY the canonical labels listed below. Never invent a label, never rename one, "
+            "never combine two labels.\n"
+            "- A label match requires SEMANTIC alignment with that label's description below — not just a "
+            "shared keyword. Mentioning \"importe\" does not make something AMOUNT; mentioning \"proveedor\" "
+            "does not make something VENDOR. If the line's actual mechanism doesn't match the description, "
+            "do not force it.\n"
+            "- If the line IS a payment rule but its mechanism doesn't match any canonical description below, "
+            "you MUST return maps_to=NONE. This is the expected, correct output for a genuinely new rule — "
+            "do not stretch a canonical label to avoid returning NONE.\n"
+            "- `evidence` must be a LITERAL, VERBATIM substring copied from the input line — not a paraphrase, "
+            "not a summary. If maps_to=NONE, evidence must be \"\".\n\n"
+            "CANONICAL RULES (the only labels you may use — labels are: %s):\n%s\n\n"
+            "OUTPUT SCHEMA (strict JSON):\n"
+            "{\n"
+            '  "is_rule": <float 0.0-1.0>,\n'
+            '  "maps_to": "<one of the canonical labels above, or NONE>",\n'
+            '  "confidence": <float 0.0-1.0>,\n'
+            '  "evidence": "<verbatim substring of the line, or \\"\\" if maps_to=NONE>"\n'
+            "}\n\n"
+            "SELF-CHECK before answering (do this silently, output only the final JSON):\n"
+            "1. Does the line express an obligation/condition/consequence about invoices or vendor payment? "
+            "If no → is_rule should be low and maps_to=NONE.\n"
+            "2. For each canonical label, does the line's MECHANISM (not just vocabulary) match its "
+            "description? Pick the best match only if genuinely one exists.\n"
+            "3. Is your `evidence` string copy-pasteable from the input with no edits? If you had to "
+            "reword it to make it fit, you likely picked the wrong label — reconsider or use NONE.\n\n"
+            'Line: "%s"\nJSON:'
+        ) % (labels, catalog_brief(), text.replace('"', "'"))
         body = {
             "model": self.model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0,
-            "max_tokens": 200,
+            "max_tokens": 300,
         }
         req = urllib.request.Request(
             self.base_url, data=json.dumps(body).encode("utf-8"),
@@ -368,8 +519,21 @@ class DeepSeekFallback:
             label = str(d.get("maps_to", "NONE")).upper()
             if label not in CHOICE_LABELS:
                 label = "NONE"
+            evidence = str(d.get("evidence") or "")
+            # Grounding: evidence must be a substring of the source line (if given)
+            # and the label must share lexicon tokens with the text.
+            if label != "NONE":
+                folded_text = _accent_fold(text)
+                folded_ev = _accent_fold(evidence) if evidence else ""
+                if evidence and folded_ev not in folded_text:
+                    _dbg(f"    ← DeepSeek evidence not in text -> force NONE")
+                    label = "NONE"
+                elif not lexicon_grounded(text, label):
+                    _dbg(f"    ← DeepSeek {label} not lexicon-grounded -> force NONE")
+                    label = "NONE"
             return {"is_rule": float(d.get("is_rule", 0.0)), "maps_to": label,
-                    "confidence": float(d.get("confidence", 0.0))}
+                    "confidence": float(d.get("confidence", 0.0)),
+                    "evidence": evidence}
         except Exception as exc:
             _dbg(f"    ← DeepSeek FAILED ({type(exc).__name__}: {exc}) -> degrade")
             return None

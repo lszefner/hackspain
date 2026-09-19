@@ -1,12 +1,15 @@
-# Prefer profiles/balanced.yaml; this file remains as a legacy alias for older
-# scripts that still pass --profile rules_v3.yaml.
-ruleset_version: "v3"
+# balanced.yaml · default v3 posture (matches Norma_Pagos_v3)
+#
+# Middle ground: follow the written norm, escalate on doubt, do not invent
+# hard blocks beyond what the norm implies. AUTHORIZATION stays OFF.
+
 policy_id: balanced
 policy_class: balanced
+ruleset_version: "v3"
 source_sheet: "Norma_Pagos_v3"
 description: >
-  Legacy alias of profiles/balanced.yaml (Vendor Payments Norm v3).
-  Prefer: make rules POLICY=balanced
+  Balanced v3 posture. Mirrors the written vendor-payment norm: pay when
+  checks pass, escalate on doubt, never invent extra hard blocks.
 
 precedence: ["NO_PAGAR", "ESCALAR", "PAGAR"]
 
@@ -15,6 +18,7 @@ verdict_semantics:
   NEEDS_REVIEW: "ESCALAR"
   FAIL: "on_fail"
 
+# Fingerprint for future UI / dashboards (also recomputed by policy_metrics.py).
 metrics:
   policy_class: balanced
   risk_appetite: 0.50

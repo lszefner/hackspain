@@ -7,13 +7,17 @@ that a 100%-deterministic decision layer can later apply to payments.
 ```
 loader ──▶ classify (JEV: Noul is_rule + Choice maps_to) ──▶ store
   │              │  primary: JEV · fallback: DeepSeek · degrade: lexical
-sources.yaml   catalog.py + normalize.py                  rules.store.json
+sources.yaml   catalog.py + normalize.py                  outcome/<ver>/rules.json
 ```
 
 > **Key idea:** the classifier runs here, at *authoring* time. A payment
-> decision is a pure function of the frozen `rules.store.json`. Same input →
+> decision is a pure function of the frozen `outcome/<ver>/rules.json`. Same input →
 > same output. A provider outage can never change a decision — only which tier
 > authored a rule (recorded in the trace).
+
+Generated JSON always lands in **`outcome/<ruleset_version>/rules.json`** (e.g. `outcome/v3/rules.json`).
+Hand-authored config stays here (`catalog.py`, `rules_v3.yaml`, `sources.yaml`).
+Saturday v4 = new profile + `outcome/v4/rules.json`; impact analysis is a file diff.
 
 ## Classifier tiers (in order)
 
@@ -42,8 +46,9 @@ unavailable the line is flagged for human review (never silently activated).
 ```bash
 make rules            # build from the norm via JEV (+ DeepSeek fallback)
 make rules-offline    # build fully offline (lexical tier, no network, no keys)
-make scan             # discovery over test_input/  (SCAN_INPUT=... to override)
-make test             # 37 offline unit + integration tests (no keys/network)
+make scan             # discovery over rules_ingestion/eval/fixtures/
+make test             # = make eval-score (offline full-pipeline eval)
+make eval-score-live  # same with live JEV + DeepSeek
 ```
 
 Secrets live in a **gitignored `.env`**: `JEV_API_KEY` (required for JEV),
@@ -61,11 +66,8 @@ Secrets live in a **gitignored `.env`**: `JEV_API_KEY` (required for JEV),
 | A6 | ACTIVATE | DUPLICATES | 1.00 |
 | A7 | ACTIVATE | MISSING | 1.00 |
 
-**Discovery (`make scan`) — rules hidden across a CSV + a 3-sheet XLSX:**
-5 canonical rules recovered from prose (incl. AUTHORIZATION from a "> 5.000 €
-approval" line and DUPLICATES from an email body), 3 genuinely NEW payment rules
-flagged (IRPF retention, Seguridad Social, paraísos fiscales), workplace noise
-rejected. Output: `rules.discovered.json`.
+**Discovery (`make scan`) — rules in `rules_ingestion/eval/fixtures/`:**
+scored end-to-end via `make test` / `make eval-score-live` (see `eval/README.md`).
 
 ## Files
 
@@ -77,8 +79,11 @@ rejected. Output: `rules.discovered.json`.
 | `normalize.py` | Decimal / IBAN / NIF(+control) / date / whitespace. |
 | `loader.py` | reads the workbook, dedups (P007), discovers schema, extracts norm lines; `scan_candidates()` for discovery. |
 | `classify.py` | JEVClient + DeepSeekFallback + LexicalJEV + routing. |
-| `store.py` | merges predefined + classified-master into `rules.store.json` with full trace. |
-| `build_rules.py` | orchestrates build and `--scan` discovery. |
+| `store.py` | internal catalog+norm assembly (fed into merge). |
+| `merge.py` | schema 2.0 merge → single public outcome. |
+| `build_rules.py` | orchestrates build / scan into `outcome/<ver>/rules.json`. |
+| `eval/` | fixtures (baseline + traps + structural) + full-pipeline scorer. |
+| `outcome/<ver>/rules.json` | **THE outcome** (canonical + discovered NEW, versioned). |
 
 ## Trace (per rule)
 

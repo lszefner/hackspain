@@ -94,4 +94,4 @@ erp:
   authoritative_for: ["estado_pedido"]   # PENDIENTE / PAGADA
   encoding: "ISO-8859-1"
   date_format: "%d/%m/%Y"
-  amount_format: "es"                     # 12.874,40
+  amount_format: "es"                     # Spanish format: 12.874,40

@@ -1,12 +1,16 @@
-# Prefer profiles/balanced.yaml; this file remains as a legacy alias for older
-# scripts that still pass --profile rules_v3.yaml.
+# strict.yaml · aggressive / low-tolerance posture
+#
+# Prefer hard stops (NO_PAGAR) over escalation. Lower authorization threshold,
+# IBAN mismatch is fraud-certain, soft duplicates become FAIL, NEW rules can
+# start enabled. Higher risk_appetite for auto-rejection, lower escalation_bias.
+
+policy_id: strict
+policy_class: strict
 ruleset_version: "v3"
-policy_id: balanced
-policy_class: balanced
 source_sheet: "Norma_Pagos_v3"
 description: >
-  Legacy alias of profiles/balanced.yaml (Vendor Payments Norm v3).
-  Prefer: make rules POLICY=balanced
+  Strict / aggressive posture. Hard-fail on fraud signals and duplicates;
+  require human approval above a low amount threshold; prefer NO_PAGAR to ESCALAR.
 
 precedence: ["NO_PAGAR", "ESCALAR", "PAGAR"]
 
@@ -16,18 +20,18 @@ verdict_semantics:
   FAIL: "on_fail"
 
 metrics:
-  policy_class: balanced
-  risk_appetite: 0.50
-  escalation_bias: 0.55
-  authorization_threshold_eur: null
-  iban_mismatch_on_fail: ESCALAR
-  soft_duplicate_verdict: NEEDS_REVIEW
+  policy_class: strict
+  risk_appetite: 0.85
+  escalation_bias: 0.25
+  authorization_threshold_eur: 5000.0
+  iban_mismatch_on_fail: NO_PAGAR
+  soft_duplicate_verdict: FAIL
   amount_tolerance_eur: 0.01
   require_erp_pending: true
   enforce_payment_terms: true
   check_nif_control_digit: true
-  enable_authorization: false
-  enable_new_rules_default: false
+  enable_authorization: true
+  enable_new_rules_default: true
 
 rules:
   VENDOR:
@@ -37,7 +41,7 @@ rules:
       require_nif_in_master: true
       require_iban_match: true
       check_nif_control_digit: true
-    on_fail: ESCALAR
+    on_fail: NO_PAGAR
 
   DUPLICATES:
     enabled: true
@@ -45,7 +49,7 @@ rules:
       hard_key: ["invoice_number", "vendor_id"]
       soft_key: ["amount", "date"]
       require_erp_pending: true
-      soft_duplicate_verdict: NEEDS_REVIEW
+      soft_duplicate_verdict: FAIL
 
   AMOUNT:
     enabled: true
@@ -69,6 +73,6 @@ rules:
       required_fields: ["nif", "iban", "pedido", "importe", "iva", "fecha"]
 
   AUTHORIZATION:
-    enabled: false
+    enabled: true
     params:
-      escalate_above_eur: 10000.0
+      escalate_above_eur: 5000.0
