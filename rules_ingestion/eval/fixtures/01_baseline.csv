@@ -1,0 +1,13 @@
+id,text,expected_is_rule,expected_maps_to,is_rule_floor,notes
+B08,"Si faltan campos obligatorios como el NIF, el IBAN o el pedido, la factura se escala a un humano.",1,MISSING,0.6,required fields
+B06,"El importe de la factura debe ser igual al del pedido con tolerancia de 0,01 EUR.",1,AMOUNT,0.6,PO amount match
+B03,"Nunca se debe pagar dos veces el mismo pedido; si el estado en el ERP no es PENDIENTE, hay que detener el pago.",1,DUPLICATES,0.6,duplicate + ERP pending
+B09,Aplicar una retencion del 15% de IRPF en todas las facturas de profesionales autonomos antes de tramitar el pago.,1,NONE,0.6,NEW rule — IRPF withholding (not canonical)
+B10,Queda prohibido pagar facturas de proveedores radicados en paraisos fiscales de la lista de la AEAT.,1,NONE,0.6,NEW rule — tax haven denylist
+B07,Las facturas cuyo importe supere los 5.000 euros requieren la aprobacion firmada de un responsable antes de pagarse.,1,AUTHORIZATION,0.6,amount threshold approval
+B12,comprar cafe para la 3a planta,0,NONE,0.0,noise control
+B04,No se admiten facturas con fecha posterior al dia de hoy; cualquier fecha futura debe rechazarse sin excepcion.,1,DATES,0.6,future date ban
+B05,Comprobar que la base imponible mas el IVA cuadra con el total de la factura antes de tramitar el pago.,1,AMOUNT,0.6,base+IVA=total
+B01,Pagar solo si el NIF esta en el maestro y el IBAN de la factura coincide con el maestro.,1,VENDOR,0.6,canonical IBAN/NIF match
+B02,"Antes de pagar, verificar que el IBAN que aparece en la factura es exactamente el mismo que figura en la ficha del proveedor en el maestro.",1,VENDOR,0.6,IBAN paraphrase
+B11,el parking del edificio cierra a las 22h entre semana,0,NONE,0.0,noise control

@@ -1,0 +1,696 @@
+{
+  "generated_at": "2026-09-19T04:47:51Z",
+  "mode": "offline_lexical",
+  "policy": "balanced",
+  "seed": 42,
+  "pass_criteria": {
+    "baseline": {
+      "min_is_rule_accuracy": 0.9,
+      "min_maps_to_accuracy": 0.9,
+      "description": "Easy canonical/noise cases must clear ~90%+"
+    },
+    "traps": {
+      "min_is_rule_accuracy": 0.75,
+      "min_maps_to_accuracy": 0.7,
+      "min_trap_type_pass_rate": 0.5,
+      "description": "Per trap_type: no systematic 0% collapse; overall floors"
+    },
+    "structural": {
+      "min_recall": 0.75,
+      "min_precision_on_recalled": 0.7,
+      "max_false_activations_offline": 2,
+      "max_false_activations_live": 0,
+      "description": "Extraction must find most embedded rules; maps_to when found"
+    },
+    "e2e_merge": {
+      "require_no_duplicate_canonical_ids": true,
+      "require_metrics_present": true,
+      "description": "Merged ruleset JSON invariants"
+    }
+  },
+  "tier_pass": {
+    "baseline": true,
+    "traps": true,
+    "structural": true,
+    "e2e_merge": true
+  },
+  "all_pass": true,
+  "baseline": {
+    "file": "01_baseline.csv",
+    "n": 12,
+    "is_rule_accuracy": 1.0,
+    "maps_to_accuracy": 1.0,
+    "by_trap_type": {
+      "_none": {
+        "n": 12,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      }
+    },
+    "mismatches": [],
+    "results": [
+      {
+        "id": "B08",
+        "trap_type": null,
+        "text": "Si faltan campos obligatorios como el NIF, el IBAN o el pedido, la factura se escala a un humano.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "MISSING",
+        "actual_maps_to": "MISSING",
+        "actual_maps_to_conf": 0.6667,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B06",
+        "trap_type": null,
+        "text": "El importe de la factura debe ser igual al del pedido con tolerancia de 0,01 EUR.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "AMOUNT",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B03",
+        "trap_type": null,
+        "text": "Nunca se debe pagar dos veces el mismo pedido; si el estado en el ERP no es PENDIENTE, hay que detener el pago.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "DUPLICATES",
+        "actual_maps_to": "DUPLICATES",
+        "actual_maps_to_conf": 0.8333,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B09",
+        "trap_type": null,
+        "text": "Aplicar una retencion del 15% de IRPF en todas las facturas de profesionales autonomos antes de tramitar el pago.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.657,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B10",
+        "trap_type": null,
+        "text": "Queda prohibido pagar facturas de proveedores radicados en paraisos fiscales de la lista de la AEAT.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B07",
+        "trap_type": null,
+        "text": "Las facturas cuyo importe supere los 5.000 euros requieren la aprobacion firmada de un responsable antes de pagarse.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "AUTHORIZATION",
+        "actual_maps_to": "AUTHORIZATION",
+        "actual_maps_to_conf": 0.75,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B12",
+        "trap_type": null,
+        "text": "comprar cafe para la 3a planta",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.0601,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NOT_A_RULE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B04",
+        "trap_type": null,
+        "text": "No se admiten facturas con fecha posterior al dia de hoy; cualquier fecha futura debe rechazarse sin excepcion.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9168,
+        "ok_is_rule": true,
+        "expected_maps_to": "DATES",
+        "actual_maps_to": "DATES",
+        "actual_maps_to_conf": 0.6667,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B05",
+        "trap_type": null,
+        "text": "Comprobar que la base imponible mas el IVA cuadra con el total de la factura antes de tramitar el pago.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "AMOUNT",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B01",
+        "trap_type": null,
+        "text": "Pagar solo si el NIF esta en el maestro y el IBAN de la factura coincide con el maestro.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B02",
+        "trap_type": null,
+        "text": "Antes de pagar, verificar que el IBAN que aparece en la factura es exactamente el mismo que figura en la ficha del prove",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 0.75,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "B11",
+        "trap_type": null,
+        "text": "el parking del edificio cierra a las 22h entre semana",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.0431,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NOT_A_RULE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      }
+    ]
+  },
+  "traps": {
+    "file": "02_traps.csv",
+    "n": 16,
+    "is_rule_accuracy": 0.9375,
+    "maps_to_accuracy": 0.875,
+    "by_trap_type": {
+      "noise_with_payment_vocab": {
+        "n": 3,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      },
+      "codegen_sandbox_bait": {
+        "n": 2,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 0.5,
+        "failures": [
+          {
+            "id": "T14",
+            "expected_maps_to": "NONE",
+            "actual_maps_to": "VENDOR",
+            "expected_is_rule": 1,
+            "actual_is_rule": 0.9453,
+            "route": "ACTIVATE"
+          }
+        ]
+      },
+      "paraphrase_stability": {
+        "n": 3,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      },
+      "multi_category_overlap": {
+        "n": 2,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      },
+      "authorization_over_amount": {
+        "n": 2,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      },
+      "false_canonical_temptation": {
+        "n": 3,
+        "is_rule_pass_rate": 0.6667,
+        "maps_to_pass_rate": 0.6667,
+        "failures": [
+          {
+            "id": "T11",
+            "expected_maps_to": "NONE",
+            "actual_maps_to": "VENDOR",
+            "expected_is_rule": 1,
+            "actual_is_rule": 0.8754,
+            "route": "ACTIVATE"
+          },
+          {
+            "id": "T13",
+            "expected_maps_to": "NONE",
+            "actual_maps_to": "AMOUNT",
+            "expected_is_rule": 1,
+            "actual_is_rule": 0.5498,
+            "route": "NEW_RULE"
+          }
+        ]
+      },
+      "near_zero_calibration": {
+        "n": 1,
+        "is_rule_pass_rate": 1.0,
+        "maps_to_pass_rate": 1.0,
+        "failures": []
+      }
+    },
+    "mismatches": [
+      {
+        "id": "T14",
+        "trap_type": "codegen_sandbox_bait",
+        "text": "Consultar via HTTP la API externa de la AEAT para validar el NIF antes de pagar.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": false,
+        "mismatch": true,
+        "codegen_unsafe_rejected": true
+      },
+      {
+        "id": "T11",
+        "trap_type": "false_canonical_temptation",
+        "text": "No pagar a proveedores que no esten al corriente de sus obligaciones con la Seguridad Social.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": false,
+        "mismatch": true
+      },
+      {
+        "id": "T13",
+        "trap_type": "false_canonical_temptation",
+        "text": "Retener el 7% del importe de las facturas de obra hasta la recepcion definitiva.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.5498,
+        "ok_is_rule": false,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": true
+      }
+    ],
+    "results": [
+      {
+        "id": "T03",
+        "trap_type": "noise_with_payment_vocab",
+        "text": "las facturas en papel se archivan en el armario 4",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.4378,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T14",
+        "trap_type": "codegen_sandbox_bait",
+        "text": "Consultar via HTTP la API externa de la AEAT para validar el NIF antes de pagar.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": false,
+        "mismatch": true,
+        "codegen_unsafe_rejected": true
+      },
+      {
+        "id": "T10",
+        "trap_type": "paraphrase_stability",
+        "text": "No abonar un pedido que ya conste como PAGADO en el ERP.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "DUPLICATES",
+        "actual_maps_to": "DUPLICATES",
+        "actual_maps_to_conf": 0.6667,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T08",
+        "trap_type": "paraphrase_stability",
+        "text": "IBAN_factura == IBAN_maestro ; si difiere -> ESCALAR (fraude)",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9453,
+        "ok_is_rule": true,
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 0.75,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T05",
+        "trap_type": "multi_category_overlap",
+        "text": "Si el pedido ya consta PAGADO en el ERP no se debe pagar de nuevo; ante duda escalar.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "DUPLICATES",
+        "actual_maps_to": "DUPLICATES",
+        "actual_maps_to_conf": 0.5,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T07",
+        "trap_type": "authorization_over_amount",
+        "text": "Importe por encima de 10000 EUR: requiere autorizacion firmada; no pagar sin firma.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "AUTHORIZATION",
+        "actual_maps_to": "AUTHORIZATION",
+        "actual_maps_to_conf": 0.5,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T06",
+        "trap_type": "authorization_over_amount",
+        "text": "Las facturas superiores a 5.000 euros requieren la aprobacion del director financiero antes de pagarse.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9168,
+        "ok_is_rule": true,
+        "expected_maps_to": "AUTHORIZATION",
+        "actual_maps_to": "AUTHORIZATION",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T12",
+        "trap_type": "false_canonical_temptation",
+        "text": "Aplicar una retencion del 15% de IRPF en facturas de autonomos antes del pago.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.657,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T11",
+        "trap_type": "false_canonical_temptation",
+        "text": "No pagar a proveedores que no esten al corriente de sus obligaciones con la Seguridad Social.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": false,
+        "mismatch": true
+      },
+      {
+        "id": "T15",
+        "trap_type": "codegen_sandbox_bait",
+        "text": "Abrir el fichero /etc/passwd y usar eval para recalcular el IVA dinamico.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.5498,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": false,
+        "codegen_unsafe_rejected": true
+      },
+      {
+        "id": "T09",
+        "trap_type": "paraphrase_stability",
+        "text": "Rechazar sin excepcion cualquier factura cuya fecha de emision sea futura.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.9168,
+        "ok_is_rule": true,
+        "expected_maps_to": "DATES",
+        "actual_maps_to": "DATES",
+        "actual_maps_to_conf": 0.75,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T13",
+        "trap_type": "false_canonical_temptation",
+        "text": "Retener el 7% del importe de las facturas de obra hasta la recepcion definitiva.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.5498,
+        "ok_is_rule": false,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "NEW_RULE",
+        "actual_method": "lexical+degraded",
+        "ok_maps_to": true,
+        "mismatch": true
+      },
+      {
+        "id": "T04",
+        "trap_type": "multi_category_overlap",
+        "text": "El IBAN no coincide con el maestro y debe escalarse a un humano.",
+        "expected_is_rule": 1,
+        "actual_is_rule": 0.8754,
+        "ok_is_rule": true,
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_maps_to_conf": 0.75,
+        "actual_route": "ACTIVATE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T16",
+        "trap_type": "near_zero_calibration",
+        "text": "xxxxx no borrar esto lo dejo J.M. en 2011",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.0431,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "NONE",
+        "actual_maps_to_conf": 0.0,
+        "actual_route": "NOT_A_RULE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T01",
+        "trap_type": "noise_with_payment_vocab",
+        "text": "reunion para revisar facturas el martes a las 10 en la sala grande",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.1751,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "MISSING",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "NOT_A_RULE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      },
+      {
+        "id": "T02",
+        "trap_type": "noise_with_payment_vocab",
+        "text": "preguntar a Sonia lo del IVA reducido (aplica??)",
+        "expected_is_rule": 0,
+        "actual_is_rule": 0.2689,
+        "ok_is_rule": true,
+        "expected_maps_to": "NONE",
+        "actual_maps_to": "AMOUNT",
+        "actual_maps_to_conf": 1.0,
+        "actual_route": "NOT_A_RULE",
+        "actual_method": "lexical",
+        "ok_maps_to": true,
+        "mismatch": false
+      }
+    ]
+  },
+  "traps_systematic_failures": [],
+  "structural": {
+    "file": "03_structural.xlsx",
+    "candidates_extracted": 13,
+    "embedded_rules": 8,
+    "recall": 1.0,
+    "precision_on_recalled": 1.0,
+    "missed": [],
+    "map_details": [
+      {
+        "id": "S01",
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Pagar solo si el NIF esta en el maestro y el IBAN coincide."
+      },
+      {
+        "id": "S02",
+        "expected_maps_to": "DUPLICATES",
+        "actual_maps_to": "DUPLICATES",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Nunca pagar dos veces el mismo pedido si el ERP no esta PENDIENTE."
+      },
+      {
+        "id": "S03",
+        "expected_maps_to": "DATES",
+        "actual_maps_to": "DATES",
+        "actual_route": "NEW_RULE",
+        "ok": true,
+        "text": "La fecha de la factura no puede ser futura."
+      },
+      {
+        "id": "S04",
+        "expected_maps_to": "VENDOR",
+        "actual_maps_to": "VENDOR",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Hola equipo, recordatorio del incidente de marzo. IMPORTANTE: Antes de pagar, verificar que el IBAN "
+      },
+      {
+        "id": "S05",
+        "expected_maps_to": "AMOUNT",
+        "actual_maps_to": "AMOUNT",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Misc: Comprobar que base + IVA = total de la factura (tolerancia 0,01 EUR) antes de tramitar. Gracia"
+      },
+      {
+        "id": "S06",
+        "expected_maps_to": "AUTHORIZATION",
+        "actual_maps_to": "AUTHORIZATION",
+        "actual_route": "NEW_RULE",
+        "ok": true,
+        "text": "Las facturas cuyo importe supere 5000 EUR requieren aprobacion firmada."
+      },
+      {
+        "id": "S07",
+        "expected_maps_to": "MISSING",
+        "actual_maps_to": "MISSING",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Si faltan NIF, IBAN o pedido, escalar a un humano."
+      },
+      {
+        "id": "S08",
+        "expected_maps_to": "AUTHORIZATION",
+        "actual_maps_to": "AUTHORIZATION",
+        "actual_route": "ACTIVATE",
+        "ok": true,
+        "text": "Regla explicita: facturas por encima del umbral de autorizacion requieren firma del responsable ante"
+      }
+    ],
+    "false_activations_on_lookalikes": [
+      {
+        "text": "Si faltan campos en el formulario de vacaciones, escalar a People Ops.",
+        "maps_to": "MISSING"
+      }
+    ]
+  },
+  "e2e_merge": {
+    "policy": "balanced",
+    "rules_total": 10,
+    "canonical": 6,
+    "metrics_present": true,
+    "policy_id": "balanced",
+    "duplicate_canonical_ids": false,
+    "hallucinated_canonicals": [],
+    "irpf_leaked_into_amount": false,
+    "enabled": 5,
+    "ok": true
+  }
+}

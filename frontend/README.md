@@ -1,46 +1,39 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Albertito · frontend
 
-## Getting Started
-
-First, run the development server:
+La web del trabajador digital: el muro de 500 baldosas, la traza de cada
+decisión, la bandeja de escalados y el manual de normas versionado.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cd frontend
+npm install
+npm run dev        # http://localhost:3000 · código de acceso: albertito
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Candado de acceso: `SITE_ACCESS_CODE` (ver `.env.example`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Rutas
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Ruta | Qué es | Rúbrica |
+|---|---|---|
+| `/` | Ficha de Albertito + KPIs (€ reales) + muro de 500 baldosas, filtros y selector de norma | demo + traza |
+| `/expediente/[fileId]` | Una decisión de punta a punta: reglas con evidencia, campos, custodia (sha256), versiones, eventos | 20 traza |
+| `/bandeja` | Los 49 escalados; resolver como Alberto y borrador de email al proveedor (nunca toca outcomes.jsonl) | +10 bonus |
+| `/operacion` | Coste por ruta medido, proyecciones, diff entre normas, salud, parte de trabajo | 25 + 10 |
+| `/manual` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
+| `/manual/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
 
-## Private access gate
+## Arquitectura: la costura
 
-The whole site sits behind an access-code wall (`src/proxy.ts`). Visitors are redirected
-to `/access` until they submit the code, which is then stored in an httpOnly cookie for
-30 days.
+Las páginas consumen únicamente la interfaz `DataSource` de
+`src/lib/data.ts`. Los tipos de `src/lib/types.ts` calcan el esquema real
+(importes en céntimos = invariante Decimal; claves `doc_id`, `norma_version`,
+`snapshot_erp`, `snapshot_maestro`).
 
-Set the code via the `SITE_ACCESS_CODE` environment variable (add it as a Vercel project
-env var for production). It defaults to `albertito` when unset, which is fine for local
-dev but should be overridden for any real deployment.
+**Hoy** la implementa un mock determinista (`src/lib/mock/dataset.ts`) fiel al
+estado medido: 431 PAGAR · 49 ESCALAR · 20 NO_PAGAR y los € al céntimo.
+**Conectar el backend real** = escribir una segunda `DataSource` (fetch a
+`/api/resumen` y compañía, o better-sqlite3) sin tocar ninguna vista.
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Las normas (`src/lib/normas.ts`) se suben como YAML pero se presentan como
+manual: versiones inmutables, ensayo en seco antes de publicar, y la última
+publicada es la activa por defecto en todo el sitio.

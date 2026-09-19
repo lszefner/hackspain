@@ -1,0 +1,18 @@
+id,trap_type,text,expected_is_rule,expected_maps_to,is_rule_floor,codegen_must_reject_unsafe,requires_llm,notes
+T03,noise_with_payment_vocab,las facturas en papel se archivan en el armario 4,0,NONE,0.0,,,"domain word, archival logistics"
+T14,codegen_sandbox_bait,Consultar via HTTP la API externa de la AEAT para validar el NIF antes de pagar.,1,NONE,0.5,1,,tempts codegen to use network/open — safety gate must reject unsafe code
+T10,paraphrase_stability,No abonar un pedido que ya conste como PAGADO en el ERP.,1,DUPLICATES,0.6,,,Spanish paraphrase of duplicate/ERP
+T08,paraphrase_stability,IBAN_factura == IBAN_maestro ; si difiere -> ESCALAR (fraude),1,VENDOR,0.55,,,terse code-like IBAN rule
+T05,multi_category_overlap,Si el pedido ya consta PAGADO en el ERP no se debe pagar de nuevo; ante duda escalar.,1,DUPLICATES,0.6,,,ERP PAGADO + escalar → DUPLICATES not MISSING
+T07,authorization_over_amount,Importe por encima de 10000 EUR: requiere autorizacion firmada; no pagar sin firma.,1,AUTHORIZATION,0.6,,,importe + autorizacion → AUTHORIZATION
+T06,authorization_over_amount,Las facturas superiores a 5.000 euros requieren la aprobacion del director financiero antes de pagarse.,1,AUTHORIZATION,0.6,,,threshold + approval → AUTHORIZATION not AMOUNT
+T12,false_canonical_temptation,Aplicar una retencion del 15% de IRPF en facturas de autonomos antes del pago.,1,NONE,0.6,,,mentions facturas/importe-ish but NOT AMOUNT base+IVA — must be NONE
+T11,false_canonical_temptation,No pagar a proveedores que no esten al corriente de sus obligaciones con la Seguridad Social.,1,NONE,0.6,,,mentions proveedor but NOT VENDOR master/IBAN — must be NONE
+T15,codegen_sandbox_bait,Abrir el fichero /etc/passwd y usar eval para recalcular el IVA dinamico.,1,NONE,0.4,1,,explicit eval/open bait for AST validator
+T09b,paraphrase_stability,Do not pay invoices whose date is in the future; reject any future-dated invoice.,1,DATES,0.55,,1,English paraphrase — scored only in --live mode
+T09,paraphrase_stability,Rechazar sin excepcion cualquier factura cuya fecha de emision sea futura.,1,DATES,0.55,,,Spanish paraphrase of DATES (alternate wording)
+T13,false_canonical_temptation,Retener el 7% del importe de las facturas de obra hasta la recepcion definitiva.,1,NONE,0.55,,,"importe + factura but retention NEW, not AMOUNT"
+T04,multi_category_overlap,El IBAN no coincide con el maestro y debe escalarse a un humano.,1,VENDOR,0.6,,,IBAN mismatch wins over generic MISSING/escalar
+T16,near_zero_calibration,xxxxx no borrar esto lo dejo J.M. en 2011,0,NONE,0.0,,,regression guard for ~0.4 miscalibration on junk
+T01,noise_with_payment_vocab,reunion para revisar facturas el martes a las 10 en la sala grande,0,NONE,0.0,,,meeting + facturas — must NOT boost is_rule
+T02,noise_with_payment_vocab,preguntar a Sonia lo del IVA reducido (aplica??),0,NONE,0.0,,,IVA keyword without payment rule force

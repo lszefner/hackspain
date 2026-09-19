@@ -6,12 +6,10 @@ export default async function AccessPage({ searchParams }: AccessPageProps) {
   const { next = "/", error } = await searchParams;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-50 px-6">
-      <div className="w-full max-w-sm rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
-        <h1 className="text-lg font-semibold tracking-tight text-zinc-900">
-          Acceso privado
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500">
+    <main className="flex min-h-screen items-center justify-center bg-paper px-6">
+      <div className="w-full max-w-sm rounded-xl border border-line bg-card p-8 shadow-sm">
+        <h1 className="text-lg font-bold tracking-tight text-ink">Acceso privado</h1>
+        <p className="mt-1 text-sm text-muted">
           Este demo es privado. Introduce el código de acceso para continuar.
         </p>
 
@@ -23,16 +21,16 @@ export default async function AccessPage({ searchParams }: AccessPageProps) {
             placeholder="Código de acceso"
             autoFocus
             required
-            className="rounded-md border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-900 outline-none focus:border-zinc-400"
+            className="rounded-md border border-line bg-paper px-3 py-2 text-sm text-ink outline-none focus:border-accent"
           />
           <button
             type="submit"
-            className="rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800"
+            className="rounded-md bg-accent px-3 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
           >
             Entrar
           </button>
           {error && (
-            <p className="text-sm text-red-600">Código incorrecto. Inténtalo de nuevo.</p>
+            <p className="text-sm text-bad">Código incorrecto. Inténtalo de nuevo.</p>
           )}
         </form>
       </div>

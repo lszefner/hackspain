@@ -1,262 +1,137 @@
-"use client";
-
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Badge } from "@/components/Badge";
-import {
-  getResumen,
-  lanzarLote,
-  lanzarUna,
-  type Resumen,
-} from "@/lib/api";
+import { data } from "@/lib/data";
+import type { Resultado } from "@/lib/types";
+import { eur, num } from "@/lib/format";
+import { Card } from "@/components/Card";
+import { Muro } from "@/components/Muro";
 
-function Stat({
-  label,
-  value,
-  dot,
+const ETIQUETA: Record<Resultado, [string, string]> = {
+  PAGAR: ["Aprobado", "text-ok"],
+  ESCALAR: ["En espera de un humano", "text-warn"],
+  NO_PAGAR: ["Bloqueado", "text-bad"],
+};
+
+export default async function Home({
+  searchParams,
 }: {
-  label: string;
-  value: number;
-  dot?: string;
+  searchParams: Promise<{ norma?: string; result?: string; q?: string }>;
 }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      {dot && <span className={`size-2 rounded-full ${dot}`} />}
-      <span className="text-lg font-semibold tabular-nums">{value}</span>
-      <span className="text-xs text-zinc-500">{label}</span>
-    </div>
-  );
-}
+  const sp = await searchParams;
+  const norma = sp.norma && data.normas().includes(sp.norma) ? sp.norma : data.normaActiva();
+  const result = (["PAGAR", "NO_PAGAR", "ESCALAR"].includes(sp.result ?? "") ? sp.result : undefined) as Resultado | undefined;
+  const q = sp.q || undefined;
 
-export default function Home() {
-  const [resumen, setResumen] = useState<Resumen | null>(null);
-  const [offline, setOffline] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [query, setQuery] = useState("");
-  const [filtro, setFiltro] = useState<string>("todas");
+  const [kpis, baldosas, motivos] = await Promise.all([
+    data.kpis(norma),
+    data.baldosas({ norma, result, q }),
+    data.motivos(norma),
+  ]);
 
-  const cargar = useCallback(async () => {
-    try {
-      setResumen(await getResumen());
-      setOffline(false);
-    } catch {
-      setOffline(true);
-    }
-  }, []);
-
-  useEffect(() => {
-    const t0 = setTimeout(cargar, 0);
-    const ms = resumen?.procesando ? 1500 : 5000;
-    const t = setInterval(cargar, ms);
-    return () => {
-      clearTimeout(t0);
-      clearInterval(t);
-    };
-  }, [cargar, resumen?.procesando]);
-
-  const facturas = useMemo(() => {
-    const all = resumen?.facturas ?? [];
-    const q = query.trim().toLowerCase();
-    return all.filter((f) => {
-      if (q && !f.file_id.toLowerCase().includes(q)) return false;
-      if (filtro === "aptas") return f.decision === "PAGAR";
-      if (filtro === "escalar") return f.decision === "ESCALAR";
-      if (filtro === "no_aptas") return f.decision === "NO_PAGAR";
-      if (filtro === "pendientes") return f.estado === "pendiente";
-      if (filtro === "errores") return f.estado === "error";
-      return true;
-    });
-  }, [resumen, query, filtro]);
-
-  const pendientes = resumen?.conteo.pendiente ?? 0;
-  const disabled = !resumen || resumen.procesando || busy;
-
-  const procesarLote = async () => {
-    setBusy(true);
-    try {
-      await lanzarLote();
-    } finally {
-      await cargar();
-      setBusy(false);
-    }
-  };
-
-  const procesarUna = async (fileId: string) => {
-    setBusy(true);
-    try {
-      await lanzarUna(fileId);
-    } finally {
-      await cargar();
-      setBusy(false);
-    }
-  };
+  const urlCon = (r?: Resultado) =>
+    `/?norma=${norma}${r ? `&result=${r}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`;
 
   return (
-    <div className="min-h-full flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-5 py-3">
-          <div>
-            <h1 className="text-sm font-semibold tracking-tight">
-              Revisión de facturas
+    <div className="space-y-6">
+      {/* ── ficha de empleado ── */}
+      <Card>
+        <div className="flex flex-wrap items-start gap-x-10 gap-y-3">
+          <div className="max-w-xl">
+            <h1 className="text-2xl font-bold tracking-tight">
+              Albertito <span className="font-normal text-muted">· técnico de pagos a proveedores</span>
             </h1>
-            <p className="text-xs text-zinc-500">
-              extracción + reglas · {resumen ? `${resumen.total} documentos` : "…"}
+            <p className="mt-1 text-sm text-muted">
+              Decide <b className="text-ink">PAGAR / NO_PAGAR / ESCALAR</b> sobre cada factura,
+              con la evidencia al lado. <b className="text-ink">No paga dos veces, no inventa
+              cifras y no opina sobre lo que no puede leer</b>: eso lo escala a Alberto.
             </p>
           </div>
-          <div className="ml-auto flex items-center gap-3">
-            <span
-              className={`inline-flex items-center gap-1.5 text-xs ${offline ? "text-red-600" : resumen?.procesando ? "text-amber-600" : "text-zinc-500"}`}
-            >
-              <span
-                className={`size-1.5 rounded-full ${offline ? "bg-red-500" : resumen?.procesando ? "bg-amber-500 pulse-dot" : "bg-emerald-500"}`}
-              />
-              {offline
-                ? "backend desconectado"
-                : resumen?.procesando
-                  ? "procesando…"
-                  : "en línea"}
-            </span>
-            <button
-              onClick={procesarLote}
-              disabled={disabled || pendientes === 0}
-              className="rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              {resumen?.procesando
-                ? "Procesando…"
-                : pendientes > 0
-                  ? `Procesar ${Math.min(resumen?.lote_tamano ?? 0, pendientes)} pendientes`
-                  : "Todo revisado"}
-            </button>
-          </div>
+          <dl className="grid grid-cols-2 gap-x-8 gap-y-1 text-sm">
+            <dt className="text-muted">Manual de empleado</dt>
+            <dd>
+              <Link href={`/manual?version=${norma}`} className="font-mono text-accent underline underline-offset-2">
+                norma_{norma}.yaml
+              </Link>
+            </dd>
+            <dt className="text-muted">Escala a</dt>
+            <dd>Alberto (bandeja de escalados)</dd>
+            <dt className="text-muted">Última pasada</dt>
+            <dd className="font-mono">{num(kpis.nDocs)} docs · {kpis.duracionPasada_s.toString().replace(".", ",")} s · {kpis.costeTotal_eur.toFixed(2).replace(".", ",")} €</dd>
+          </dl>
         </div>
-        {resumen?.procesando && (
-          <div className="h-0.5 w-full overflow-hidden bg-amber-100">
-            <div className="h-full w-1/3 animate-[pulse-dot_1.1s_ease-in-out_infinite] bg-amber-500" />
-          </div>
-        )}
-      </header>
+      </Card>
 
-      <main className="mx-auto w-full max-w-6xl flex-1 px-5 py-5">
-        {offline && (
-          <div className="mb-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            <span>
-              No se puede contactar con el backend en{" "}
-              <code className="font-mono">127.0.0.1:8010</code>.
-            </span>
-            <button
-              onClick={cargar}
-              className="rounded-md border border-red-300 bg-white px-3 py-1 text-xs font-medium hover:bg-red-100"
-            >
-              Reintentar
-            </button>
-          </div>
-        )}
+      {/* ── KPIs ── */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {kpis.porResultado.map((k) => {
+          const [etiqueta, color] = ETIQUETA[k.result];
+          const activo = result === k.result;
+          return (
+            <Link key={k.result} href={urlCon(activo ? undefined : k.result)}>
+              <Card className={`transition-shadow hover:shadow-md ${activo ? "ring-2 ring-ink/60" : ""}`}>
+                <div className="flex items-baseline justify-between">
+                  <span className={`font-mono text-3xl font-bold ${color}`}>{k.n}</span>
+                  <span className="font-mono text-xs text-muted">{k.result.replace("_", " ")}</span>
+                </div>
+                <div className="mt-1 text-sm text-muted">{etiqueta}</div>
+                <div className="mt-2 font-mono text-lg">
+                  {k.total_cent !== null ? eur(k.total_cent) : "importe desconocido"}
+                  {k.sin_importe > 0 && k.total_cent !== null && (
+                    <span className="ml-1 text-xs text-muted">+ {k.sin_importe} sin importe</span>
+                  )}
+                </div>
+              </Card>
+            </Link>
+          );
+        })}
+      </div>
 
-        {resumen?.error && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {resumen.error}
-          </div>
-        )}
-
-        {resumen && (
-          <div className="mb-5 flex flex-wrap items-center gap-x-6 gap-y-2 rounded-xl border border-zinc-200 bg-white px-4 py-3">
-            <Stat label="pendientes" value={resumen.conteo.pendiente} dot="bg-zinc-300" />
-            <Stat label="procesando" value={resumen.conteo.procesando} dot="bg-amber-400" />
-            <Stat label="revisadas" value={resumen.conteo.hecha} dot="bg-zinc-500" />
-            <Stat label="errores" value={resumen.conteo.error} dot="bg-red-400" />
-            <span className="mx-1 hidden h-5 w-px bg-zinc-200 sm:block" />
-            <Stat label="a pagar" value={resumen.decisiones.PAGAR} dot="bg-emerald-500" />
-            <Stat label="a escalar" value={resumen.decisiones.ESCALAR} dot="bg-amber-500" />
-            <Stat label="no pagar" value={resumen.decisiones.NO_PAGAR} dot="bg-red-500" />
-          </div>
-        )}
-
-        <div className="mb-3 flex items-center gap-3">
+      {/* ── filtros ── */}
+      <div className="flex flex-wrap items-center gap-3">
+        <form className="flex items-center gap-2" action="/">
+          <input type="hidden" name="norma" value={norma} />
+          {result && <input type="hidden" name="result" value={result} />}
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar factura…"
-            className="w-64 rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm outline-none placeholder:text-zinc-400 focus:border-zinc-400"
+            name="q"
+            defaultValue={q ?? ""}
+            placeholder="buscar file_id…"
+            className="w-56 rounded-md border border-line bg-card px-3 py-1.5 font-mono text-sm outline-none focus:border-accent"
           />
-          <div className="flex gap-1 text-xs">
-            {[
-              ["todas", "todas"],
-              ["aptas", "a pagar"],
-              ["escalar", "a escalar"],
-              ["no_aptas", "no pagar"],
-              ["pendientes", "pendientes"],
-              ["errores", "errores"],
-            ].map(([k, label]) => (
-              <button
-                key={k}
-                onClick={() => setFiltro(k)}
-                className={`rounded-full border px-2.5 py-1 transition ${
-                  filtro === k
-                    ? "border-zinc-900 bg-zinc-900 text-white"
-                    : "border-zinc-200 bg-white text-zinc-500 hover:border-zinc-400"
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <span className="ml-auto text-xs tabular-nums text-zinc-400">
-            {facturas.length} / {resumen?.total ?? 0}
-          </span>
+        </form>
+        <div className="ml-auto flex items-center gap-2 text-sm">
+          <span className="text-muted">norma</span>
+          {data.normas().map((n) => (
+            <Link
+              key={n}
+              href={`/?norma=${n}${result ? `&result=${result}` : ""}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
+              className={`rounded-md border px-3 py-1 font-mono ${
+                n === norma ? "border-ink bg-ink text-paper" : "border-line bg-card text-muted hover:text-ink"
+              }`}
+              title={n === data.normaActiva() ? "versión activa (la última publicada)" : undefined}
+            >
+              {n}
+              {n === data.normaActiva() && <span className="ml-1 text-[10px]">●</span>}
+            </Link>
+          ))}
         </div>
+      </div>
 
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-zinc-200 bg-zinc-50 text-left text-xs text-zinc-500">
-                <th className="px-4 py-2 font-medium">factura</th>
-                <th className="px-4 py-2 font-medium">estado</th>
-                <th className="px-4 py-2 font-medium">decisión</th>
-                <th className="px-4 py-2 text-right font-medium">acción</th>
-              </tr>
-            </thead>
-            <tbody>
-              {facturas.map((f) => (
-                <tr
-                  key={f.file_id}
-                  className="border-b border-zinc-100 last:border-0 hover:bg-zinc-50/60"
-                >
-                  <td className="px-4 py-2">
-                    <Link
-                      href={`/factura/${encodeURIComponent(f.file_id)}`}
-                      className="font-mono text-[13px] text-zinc-800 hover:underline"
-                    >
-                      {f.file_id}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">
-                    <Badge value={f.estado} />
-                  </td>
-                  <td className="px-4 py-2">
-                    <Badge value={f.decision} />
-                  </td>
-                  <td className="px-4 py-2 text-right">
-                    <button
-                      onClick={() => procesarUna(f.file_id)}
-                      disabled={disabled || f.estado === "procesando"}
-                      className="rounded-md border border-zinc-200 px-2.5 py-1 text-xs font-medium text-zinc-600 transition hover:border-zinc-400 hover:text-zinc-900 disabled:cursor-not-allowed disabled:opacity-40"
-                    >
-                      {f.estado === "pendiente" ? "Revisar" : "Revisar de nuevo"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {facturas.length === 0 && (
-                <tr>
-                  <td colSpan={4} className="px-4 py-10 text-center text-sm text-zinc-400">
-                    {resumen ? "Sin resultados para este filtro." : "Cargando…"}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </main>
+      {/* ── el muro ── */}
+      <Card titulo={`${baldosas.length} de ${kpis.nDocs} documentos · clic para seguir su decisión de punta a punta`}>
+        <Muro baldosas={baldosas} norma={norma} />
+      </Card>
+
+      {/* ── motivos ── */}
+      <Card titulo="Por qué no se paga todo · motivos medidos sobre la base de datos">
+        <ul className="divide-y divide-line text-sm">
+          {motivos.map((m) => (
+            <li key={m.motivo} className="flex items-center gap-3 py-2">
+              <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${m.result === "NO_PAGAR" ? "bg-bad" : "bg-warn"}`} />
+              <span>{m.motivo}</span>
+              <span className="ml-auto font-mono text-muted">{m.n}</span>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }

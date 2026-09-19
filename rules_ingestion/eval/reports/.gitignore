@@ -1,0 +1,3 @@
+# Generated score dumps; keep the directory.
+report_*.json
+!latest.json
