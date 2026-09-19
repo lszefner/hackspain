@@ -15,7 +15,11 @@ def settings(
         raise ValueError("Unsupported OCR reader")
     if dpi not in (200, 300) or not 1 <= concurrency <= 16:
         raise ValueError("dpi must be 200 or 300; concurrency must be 1..16")
+    cascade = os.getenv("INGESTION_CASCADE", "deterministic-first")
+    if cascade not in {"deterministic-first", "vision-only"}:
+        raise ValueError("INGESTION_CASCADE must be deterministic-first or vision-only")
     return {
+        "extraction_cascade": cascade,
         "version": VERSION,
         "ocr": ocr,
         "vision_model": os.getenv("HELMCODE_VISION_MODEL", "gemma4"),

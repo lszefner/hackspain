@@ -876,7 +876,7 @@ class TestIngest:
             "payment": {"iban": "ES2100491500051234567890"},
             "purchase_order_reference": "PO-2026-0164",
             "totals": {"taxable_base": "2918.31", "total": "3531.16"},
-            "taxes": [{"amount": "612.85"}],
+            "taxes": [{"label": "IVA", "amount": "612.85"}],
             "issue_date": "07/09/2026", "currency": "EUR"}}
         snap = {"entries": [{"id": "AS1", "pedido": "PO-2026-0164",
                              "estado": "PENDIENTE"}], "retries": [], "pages": 1, "ms": 0}

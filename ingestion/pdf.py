@@ -28,6 +28,34 @@ def render_pdf(pdf_bytes: bytes, dpi: int = 200) -> list[dict[str, Any]]:
         return _render_pdfium(bytes(pdf_bytes), dpi, pdfium)
 
 
+def extract_text(pdf_bytes: bytes) -> list[str]:
+    """Return the embedded text of each page without rasterizing.
+
+    A page with no text layer yields ``""``; pdfium errors propagate so the
+    caller decides whether that means "no text" or "broken input".
+    """
+
+    if not isinstance(pdf_bytes, (bytes, bytearray, memoryview)):
+        raise TypeError("pdf_bytes must be bytes")
+    with _PDFIUM_LOCK:
+        try:
+            import pypdfium2 as pdfium
+        except ImportError as exc:
+            raise ImportError("extract_text requires pypdfium2") from exc
+        document = pdfium.PdfDocument(bytes(pdf_bytes))
+        try:
+            texts = []
+            for index in range(len(document)):
+                page = document[index]
+                text_page = page.get_textpage()
+                texts.append(text_page.get_text_bounded() or "")
+                text_page.close()
+                page.close()
+            return texts
+        finally:
+            document.close()
+
+
 def _render_pdfium(pdf_bytes: bytes, dpi: int, pdfium: Any) -> list[dict[str, Any]]:
     document = pdfium.PdfDocument(pdf_bytes)
     pages: list[dict[str, Any]] = []

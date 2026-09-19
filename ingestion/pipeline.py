@@ -15,11 +15,13 @@ import httpx
 
 from .config import credentials, settings
 from .contracts import Contracts, canonical_bytes, digest
+from .deterministic import VERSION as DETERMINISTIC_VERSION
+from .deterministic import accept, extract, native_reading, strip_invisible
 from .events import emit
 from .export import export_bundle
 from .manifest import discover
 from .normalization import normalize_invoice
-from .pdf import render_pdf
+from .pdf import extract_text, render_pdf
 from .preflight import model_catalogue
 from .storage import PostgresRepository, SupabaseStorage
 from .validation import complete_annotation_kind_evidence, validate_interpretation
@@ -265,26 +267,33 @@ class Pipeline:
             "error": None,
             "cost_usd": None,
         }
+        first = None
         try:
             if item.get("error"):
                 raise StageError(item["error"])
             if reading_override is not None:
                 reading_result = reading_override
             else:
-                reading_result = await self.read(batch, entry, item)
+                first = await self.deterministic(batch, entry, item)
+                reading_result = (
+                    first
+                    if first is not None and first.get("invoice")
+                    else await self.read(batch, entry, item)
+                )
             outcome.update(reading_result)
-            reading = reading_result["reading"]
-            self.contracts.validate("reading", reading)
-            if not any(
-                block["text"].strip() or block["rows"]
-                for p in reading["pages"]
-                for block in p["blocks"]
-            ):
-                raise StageError("empty_reading")
-            interpreted = await self.interpret(batch, entry, reading)
-            interpretation_raw = interpreted.pop("raw", None)
-            outcome.update(interpreted)
-            outcome.setdefault("raw", {})["interpretation"] = interpretation_raw
+            if not reading_result.get("invoice"):
+                reading = reading_result["reading"]
+                self.contracts.validate("reading", reading)
+                if not any(
+                    block["text"].strip() or block["rows"]
+                    for p in reading["pages"]
+                    for block in p["blocks"]
+                ):
+                    raise StageError("empty_reading")
+                interpreted = await self.interpret(batch, entry, reading)
+                interpretation_raw = interpreted.pop("raw", None)
+                outcome.update(interpreted)
+                outcome.setdefault("raw", {})["interpretation"] = interpretation_raw
             outcome["file_id"] = item["file_id"]
         except Exception as exc:
             code = getattr(exc, "code", type(exc).__name__)
@@ -301,6 +310,18 @@ class Pipeline:
                     "unknown_outcome": bool(getattr(exc, "unknown", False)),
                 },
             )
+        outcome.setdefault(
+            "extraction",
+            (first or {}).get("extraction")
+            or {
+                "route": "vision",
+                "deterministic": {
+                    "attempted": False,
+                    "accepted": False,
+                    "gaps": ["no_text_layer_or_cascade_off"],
+                },
+            },
+        )
         if (outcome.get("error") or {}).get("code") in (
             "running",
             "pending",
@@ -316,6 +337,167 @@ class Pipeline:
             error=outcome.get("error"),
         )
         return outcome
+
+    async def deterministic(self, batch, entry, item):
+        """First cascade phase: embedded text plus label-anchored fields.
+
+        Returns the merged reading+interpretation outcome when the gate
+        accepts, a {"extraction": ...} marker when the gate rejects, and None
+        when there is no usable text layer or the cascade is vision-only.
+        """
+        if self.config.get("extraction_cascade") == "vision-only":
+            return None
+        if entry.get("object_key"):
+            original = self.storage.get(entry["object_key"])
+        else:
+            original = Path(item["local_path"]).read_bytes()
+        if digest(original) != item["source_sha256"]:
+            raise StageError("source_hash_mismatch")
+        original_artifact = self.bytes_artifact(original, "original", "application/pdf")
+        entry = self.repo.register_input(
+            batch["id"],
+            item["relative_path"],
+            file_name=item["file_id"],
+            content_hash=item["source_sha256"],
+            object_key=original_artifact["object_key"],
+            size_bytes=len(original),
+        )
+        try:
+            page_texts = extract_text(original)
+        except Exception:  # noqa: BLE001 - any parse failure means "no usable text layer"
+            return None
+        reading = native_reading(item["file_id"], page_texts)
+        if reading is None:
+            return None
+        invisible = sum(strip_invisible(text)[1] for text in page_texts)
+        layout = {
+            "version": "alpha-1",
+            "source_sha256": item["source_sha256"],
+            "pages": [
+                {"page": number, "additional_rotation": 0}
+                for number in range(1, len(page_texts) + 1)
+            ],
+            "blocks": {
+                f"p{number}-b1": {
+                    "page": number,
+                    "source": "pdfium_text",
+                    "bbox": None,
+                    "confidence": None,
+                }
+                for number in range(1, len(page_texts) + 1)
+            },
+        }
+
+        async def reading_op(attempt):
+            return {
+                "reading": reading,
+                "layout": layout,
+                "raw": {
+                    "embedded_text": page_texts,
+                    "invisible_chars": invisible,
+                },
+            }
+
+        try:
+            reading_result = await self.job(
+                batch,
+                entry,
+                "reading",
+                item["source_sha256"],
+                "native-text",
+                "pdfium-text/1",
+                reading_op,
+                {"route": "deterministic"},
+            )
+        except StageError as exc:
+            return {
+                "extraction": {
+                    "route": "vision",
+                    "deterministic": {
+                        "attempted": True,
+                        "accepted": False,
+                        "gaps": [f"deterministic_error:{exc.code}"],
+                    },
+                }
+            }
+
+        async def interpretation_op(attempt):
+            extracted_gaps = []
+            try:
+                extracted = extract(reading)
+                extracted_gaps = extracted["gaps"]
+                invoice = normalize_invoice(extracted["invoice"])
+                invoice["file_id"] = item["file_id"]
+                invoice["schema_version"] = "0.1"
+                self.contracts.validate("invoice", invoice)
+                checks = validate_interpretation(
+                    invoice, extracted["evidence"], reading, self.contracts
+                )
+                accepted, reasons = accept(invoice, checks)
+            except (KeyError, TypeError, ValueError, IndexError) as exc:
+                return {
+                    "invoice": None,
+                    "evidence": None,
+                    "status": "needs_review",
+                    "accepted": False,
+                    "gaps": extracted_gaps
+                    + [f"deterministic_error:{type(exc).__name__}"],
+                    "error": None,
+                }
+            return {
+                "invoice": invoice,
+                "evidence": extracted["evidence"],
+                **checks,
+                "gaps": extracted["gaps"] + reasons,
+                "accepted": accepted,
+                "status": checks["status"] if accepted else "needs_review",
+                "error": None,
+            }
+
+        try:
+            interpretation = await self.job(
+                batch,
+                entry,
+                "interpretation",
+                digest(canonical_bytes(reading)),
+                "deterministic",
+                DETERMINISTIC_VERSION,
+                interpretation_op,
+            )
+        except StageError as exc:
+            return {
+                "extraction": {
+                    "route": "vision",
+                    "deterministic": {
+                        "attempted": True,
+                        "accepted": False,
+                        "gaps": [f"deterministic_error:{exc.code}"],
+                    },
+                }
+            }
+        if interpretation.get("accepted"):
+            return {
+                **reading_result,
+                **interpretation,
+                "extraction": {
+                    "route": "deterministic",
+                    "deterministic": {
+                        "attempted": True,
+                        "accepted": True,
+                        "gaps": [],
+                    },
+                },
+            }
+        return {
+            "extraction": {
+                "route": "vision",
+                "deterministic": {
+                    "attempted": True,
+                    "accepted": False,
+                    "gaps": interpretation.get("gaps", []),
+                },
+            }
+        }
 
     async def read(self, batch, entry, item):
         if entry.get("object_key"):
