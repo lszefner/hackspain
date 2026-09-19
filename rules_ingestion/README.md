@@ -51,8 +51,11 @@ make test             # = make eval-score (offline full-pipeline eval)
 make eval-score-live  # same with live JEV + DeepSeek
 ```
 
-Secrets live in a **gitignored `.env`**: `JEV_API_KEY` (required for JEV),
-`DEEPSEEK_API_KEY` (optional, enables the fallback).
+Secrets come from the process environment: `JEV_API_KEY` (required for JEV) and
+the Helmcode credentials the extractor already uses -- `HELMCODE_API_KEY`,
+`HELMCODE_BASE_URL` and `HELMCODE_DEEPSEEK_MODEL` -- which enable the DeepSeek
+fallback. `DEEPSEEK_MODEL` optionally points rule authoring at a cheaper model
+on the same account.
 
 ## Results
 

@@ -15,13 +15,12 @@ from __future__ import annotations
 
 import ast
 import json
-import os
 import re
 import urllib.request
 from decimal import Decimal
 from typing import Optional
 
-from . import condition_authoring, conditions
+from . import condition_authoring, conditions, helmcode
 
 # The exact field contracts the generated code may read (matches invoice.py).
 _INVOICE_FIELDS = ["invoice_number", "vendor_id", "nif", "iban", "pedido",
@@ -37,11 +36,10 @@ _FORBIDDEN_CALLS = {"eval", "exec", "open", "compile", "__import__", "input",
 # DeepSeek call (OpenAI-compatible, via HelmCode, stdlib HTTP)
 # --------------------------------------------------------------------------- #
 def _deepseek_chat(prompt: str, max_tokens: int = 700) -> Optional[str]:
-    key = os.environ.get("DEEPSEEK_API_KEY")
-    if not key:
+    key, base, model = (helmcode.api_key(), helmcode.chat_endpoint(),
+                        helmcode.authoring_model())
+    if not (key and base and model):
         return None
-    base = os.environ.get("DEEPSEEK_BASE_URL", "https://api.helmcode.com/v1/chat/completions")
-    model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
     body = {"model": model, "messages": [{"role": "user", "content": prompt}],
             "temperature": 0, "max_tokens": max_tokens}
     req = urllib.request.Request(
@@ -525,7 +523,7 @@ def generate_check(rule_text: str) -> dict:
         return {"language": "python", "status": "invalid", "valid": False,
                 "error": why, "source": source, "generated_by": "deepseek"}
     ran, detail = smoke_run(source)
-    model = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+    model = helmcode.authoring_model()
     return {
         "language": "python",
         "function": "check",

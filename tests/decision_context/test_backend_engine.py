@@ -37,7 +37,7 @@ def runtime(db, tmp_path, monkeypatch):
     monkeypatch.setattr(rr, 'credentials', lambda config: {'HELMCODE_API_KEY': 'synthetic'})
     monkeypatch.setattr(rr.ErpClient, 'snapshot', lambda self: {'records': [], 'pages': [], 'complete': False})
     monkeypatch.setenv('JEV_API_KEY', 'synthetic')
-    monkeypatch.setenv('DEEPSEEK_API_KEY', 'synthetic')
+    monkeypatch.setenv('HELMCODE_API_KEY', 'synthetic')
     for key in ('REVISION_RULESET_PATH', 'REVISION_BACKEND'):
         monkeypatch.delenv(key, raising=False)
 

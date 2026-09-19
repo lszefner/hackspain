@@ -161,8 +161,8 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     if ruleset_bytes is None:
         profile_bytes = Path(profile_path or os.environ.get('REVISION_PROFILE_PATH')
                              or ROOT / 'rules_ingestion' / 'profiles' / 'balanced.yaml').read_bytes()
-        if any(not os.environ.get(key) for key in ('JEV_API_KEY', 'DEEPSEEK_API_KEY')):
-            raise ValueError('AI rule generation requires JEV_API_KEY and DEEPSEEK_API_KEY')
+        if any(not os.environ.get(key) for key in ('JEV_API_KEY', 'HELMCODE_API_KEY')):
+            raise ValueError('AI rule generation requires JEV_API_KEY and HELMCODE_API_KEY')
         rule_sources = [RuleSource('workbook.xlsx', loaded.workbook_bytes),
                         RuleSource('sources.yaml', loaded.source_config_bytes),
                         RuleSource('profile.yaml', profile_bytes)]

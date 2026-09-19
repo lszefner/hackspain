@@ -24,6 +24,7 @@ import urllib.request
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Tuple
 
+from . import helmcode
 from .catalog import CATALOG, CHOICE_LABELS, all_lexicons, catalog_brief, lexicon_grounded
 from .normalize import _accent_fold
 
@@ -441,20 +442,19 @@ class DeepSeekFallback:
     Uses the OpenAI-compatible /chat/completions endpoint over stdlib urllib
     (no SDK dependency). Graceful: no key / provider down -> returns None and
     the caller flags the line for human review. Base URL and model are override-
-    able via env (DEEPSEEK_BASE_URL / DEEPSEEK_MODEL) without code changes.
+    able via env (HELMCODE_BASE_URL / DEEPSEEK_MODEL) without code changes.
     """
 
     def __init__(self, model: Optional[str] = None,
                  base_url: Optional[str] = None,
                  timeout: float = 30.0) -> None:
-        self.model = model or os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
-        self.base_url = base_url or os.environ.get(
-            "DEEPSEEK_BASE_URL", "https://api.helmcode.com/v1/chat/completions")
+        self.model = model or helmcode.authoring_model()
+        self.base_url = base_url or helmcode.chat_endpoint()
         self.timeout = timeout
-        self.api_key = os.environ.get("DEEPSEEK_API_KEY")
+        self.api_key = helmcode.api_key()
 
     def available(self) -> bool:
-        return bool(self.api_key)
+        return bool(self.api_key and self.base_url and self.model)
 
     def classify(self, text: str) -> Optional[dict]:
         if not self.available():
