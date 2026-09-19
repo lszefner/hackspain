@@ -2,6 +2,81 @@
 
 Decisiones tomadas, no lista de commits. Una entrada por hito.
 
+## 2026-09-19 12:25 CEST · Trazabilidad: toda decisión reproducible
+
+Una decisión pasa a ser función pura de entradas registradas. Antes la fila
+de `decisiones` fijaba 4 de las ~12 entradas reales, y una de las 4 mentía.
+
+**Estado:** 500/500 decisiones se vuelven a derivar desde lo guardado ·
+92 tests rápidos (antes 72) · el reparto no cambia.
+
+### El bug que podía costar la entrega
+
+`emite` emparejaba solo por `norma_version`, pero la clave de `decisiones`
+lleva además los dos snapshots. Con un segundo snapshot —**el domingo, cuando
+Alberto cambie un dato**— devolvía N filas por documento y ganaba la primera
+que sacara SQLite. Y `explica` rompía el mismo empate al revés, así que **la
+herramienta de la defensa y el entregable podían enseñar decisiones distintas
+de la misma factura**. Ahora los dos usan `alberto/resolucion.py`, que es el
+único sitio donde se decide qué decisión vale.
+
+### Qué se decidió y por qué
+
+**La identidad de una configuración es su contenido, no su nombre.**
+`norma_version` pasa de `v3` a `v3@806e4d`, con la huella cubriendo la norma
+**y** la política. Cierra tres agujeros de golpe: la política no estaba
+registrada en ninguna parte —y es la mitad del «por qué NO_PAGAR»—, editar
+`norma_v3.yaml` dejaba dos reglamentos llamados igual, y como la clave no
+distinguía esos casos, `INSERT OR REPLACE` **borraba la decisión anterior en
+silencio**. Comprobado: cambiar `R2_pedido` de `ESCALAR` a `NO_PAGAR` ahora
+crea `v3@be558b`, las dos conviven, y una consulta enseña las **14 decisiones
+que cambiaron**.
+
+Se eligió la huella dentro de la etiqueta, y no ampliar la clave primaria,
+porque un compañero está escribiendo en `decisiones` ahora mismo. **Nada de
+esto cambia la forma de esa tabla.** Todo lo nuevo va en tablas aparte.
+
+**Las notas estaban sin versionar y la consulta no filtraba**, así que
+`revisar` era la unión de todas las cargas del Excel que se hubieran hecho
+jamás: `snapshot_maestro` en la clave **mentía** sobre lo que entró en la
+decisión. Era el único sitio donde el registro engañaba en vez de callar.
+Ahora `notas` lleva `version_id`, recargar el maestro ya no duplica, y
+`decidir()` filtra por la versión que dice usar.
+
+**`hoy` era reloj de pared.** Se resuelve una vez por pasada y se registra.
+Con la regla de vencimiento de la v4 esto pasa de molesto a decidir distinto
+cada día.
+
+### Lo que ahora se puede responder
+
+| | |
+|---|---|
+| `alberto audita` | Vuelve a tomar cada decisión desde lo registrado y compara. **500/500** |
+| `alberto coste` | Coste y latencia por vía, sin contar dos veces |
+| `alberto explica` | Añade huellas, `hoy`, commit, pasada, marcas de tiempo e intentos fallidos |
+| `pasadas` | Qué se ejecutó, con qué argumentos y con qué commit (marcado `-sucio` si había cambios sin commitear) |
+| `decision_contexto` | Todo lo necesario para reconstruir el motor exacto |
+
+**Las métricas del ERP dejan de tirarse.** Reintentos por `ORA-00600`,
+esperas por 429 y relogins se persisten en `snapshots_erp`: era la mejor
+evidencia de resiliencia del proyecto y se descartaba con una comprensión de
+diccionario, en dos sitios.
+
+**`eventos` deja de ser write-only**: 69 señales por documento en una pasada,
+donde antes había 5 por etapa y `doc_id` nulo en todas.
+
+**El fichero de oro comprueba valores, no solo presencia** —un cambio que
+convirtiera todos los totales en `1,00` lo dejaba en verde— y **pytest lo
+ejecuta**, que antes no.
+
+### Pendiente
+
+Sigue sin ejecutarse la pasada real de visión: esta sesión no tiene las
+credenciales HelmCode. `alberto coste` da 0 € porque la fase 2 nunca ha
+llamado al proveedor.
+
+---
+
 ---
 
 ## 2026-09-19 11:59 CEST · Cascada de extracción en dos fases

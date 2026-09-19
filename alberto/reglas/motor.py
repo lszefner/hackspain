@@ -25,7 +25,17 @@ RAIZ = Path(__file__).parent
 
 
 def cargar_norma(version: str = "v3") -> dict:
-    return yaml.safe_load((RAIZ / f"norma_{version}.yaml").read_text("utf-8"))
+    """La norma, sellada con la huella de su contenido Y del de la politica.
+
+    `_etiqueta` es lo que acaba en `decisiones.norma_version`: 'v3@7f3a1c'.
+    Antes iba la cadena `version:` del propio YAML, escrita a mano, asi que
+    editar el fichero dejaba dos reglamentos distintos llamados igual y la
+    decision anterior se sobrescribia.
+    """
+    from alberto.procedencia import etiqueta_norma
+    datos = yaml.safe_load((RAIZ / f"norma_{version}.yaml").read_text("utf-8"))
+    datos["_etiqueta"] = etiqueta_norma(version)
+    return datos
 
 
 def cargar_politica(ruta: Path | None = None) -> dict:
@@ -40,6 +50,24 @@ class Motor:
         self.proveedores, self.asientos = proveedores, asientos
         self.revisar = revisar
         self.hoy = hoy or date.today()
+
+    @property
+    def etiqueta(self) -> str:
+        """Lo que se graba como norma_version: 'v3@7f3a1c' si la norma viene
+        sellada, y la version a secas si alguien construyo el dict a mano."""
+        return str(self.norma.get("_etiqueta") or self.norma["version"])
+
+    def regla_por_tipo(self, tipo: str) -> dict:
+        """Busca por `tipo`, NUNCA por posicion. `self.norma["reglas"][2]`
+        devolvia la regla equivocada en silencio en cuanto alguien reordena
+        el YAML, que es justo lo que se hace al escribir la v4."""
+        for r in self.norma.get("reglas", []):
+            if r.get("tipo") == tipo:
+                return r
+        return {}
+
+    def _iva_estandar(self) -> str:
+        return str(self.regla_por_tipo("iva").get("iva_estandar", "21"))
 
     # ------------------------------------------------------------- evaluacion
     def _una(self, r: dict, f: FacturaExtraida) -> VeredictoRegla:
@@ -141,7 +169,7 @@ class Motor:
             motivos.append(f"{f.pedido} esta marcado para revision en el Excel de Alberto")
 
         if f.iva_pct is not None and str(int(f.iva_pct)) != str(
-                self.norma["reglas"][2].get("iva_estandar", "21")):
+                self._iva_estandar()):
             peor(pol.get("iva_no_estandar", "ESCALAR"))
             motivos.append(f"IVA al {f.iva_pct}%, no el estandar")
 
@@ -154,12 +182,17 @@ class Motor:
                 motivos.append(f"faltan datos: {', '.join(v.evidencia['faltan'])}")
 
         if result == "PAGAR" and not motivos:
-            motivos.append("cumple las cinco reglas de la norma " + self.norma["version"])
+            motivos.append("cumple las cinco reglas de la norma "
+                           + str(self.norma["version"]))
 
         return Decision(
             doc_id=f.doc_id, file_id=f.file_id, result=result,
             motivo="; ".join(dict.fromkeys(motivos)),
-            norma_version=self.norma["version"],
+            norma_version=self.etiqueta,
             snapshot_erp=snapshot_erp, snapshot_maestro=snapshot_maestro,
-            reglas=tuple(veredictos), coste_eur=f.coste_eur, latencia_ms=f.latencia_ms,
+            reglas=tuple(veredictos),
+            # El coste de DECIDIR es cero: las reglas son deterministas y no
+            # llaman a nadie. Antes aqui se copiaba el coste de la extraccion,
+            # asi que sumar las dos tablas facturaba dos veces lo mismo.
+            coste_eur=Decimal("0"), latencia_ms=0,
         )
