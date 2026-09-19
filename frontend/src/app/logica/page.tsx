@@ -85,6 +85,13 @@ export default async function ManualPage({
           </div>
           <div className="text-muted">por <b className="text-ink">{norma.autor}</b></div>
           <div className="text-muted">motivo: <span className="text-ink">{norma.motivo}</span></div>
+          <Link
+            href={`/logica/editor?desde=${version}`}
+            className="ml-auto rounded-md border border-line bg-card px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+            title="Abre esta norma en el editor. Los cambios se publican como versión nueva: las publicadas son inmutables."
+          >
+            Editar esta norma
+          </Link>
         </div>
       </Card>
 

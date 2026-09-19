@@ -299,11 +299,18 @@ export function siguienteVersion(): string {
   return `v${n + 1}`;
 }
 
-/** Borrador inicial: copia de la activa con la versión subida. */
-export function borradorInicial(): string {
-  const activa = getNorma(normaActiva())!;
+/**
+ * Borrador a partir de una versión publicada (la activa si no se indica).
+ * Editar una norma NUNCA la muta: abre su YAML con la versión subida y se
+ * publica como versión nueva — las decisiones antiguas conservan su referencia.
+ */
+export function borradorDesde(version?: string): { yaml: string; base: string } {
+  const base = getNorma(version ?? normaActiva()) ?? getNorma(normaActiva())!;
   const nueva = siguienteVersion();
-  return activa.yaml
-    .replace(/^#.*\n/, `# Norma de Pagos a Proveedores ${nueva} — borrador. Edita, ensaya y publica.\n`)
-    .replace(/version: \S+/, `version: ${nueva}`);
+  return {
+    base: base.version,
+    yaml: base.yaml
+      .replace(/^#.*\n/, `# Norma de Pagos a Proveedores ${nueva} — borrador sobre ${base.version}. Edita, ensaya y publica.\n`)
+      .replace(/version: \S+/, `version: ${nueva}`),
+  };
 }
