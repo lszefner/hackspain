@@ -1,0 +1,21 @@
+# GENERADO por `alberto reglas`. Su huella entra en la clave de cada
+# decision, asi que regenerarlo produce una norma nueva y las
+# decisiones anteriores NO se sobrescriben.
+por_defecto: PAGAR
+mapeo:
+  R1_nif_iban:
+    FALLA: NO_PAGAR
+  R2_pedido:
+    FALLA: ESCALAR
+  R3_iva:
+    FALLA: ESCALAR
+  R4_fecha:
+    FALLA: ESCALAR
+  R5_estado_erp:
+    FALLA: NO_PAGAR
+  R6_vencimiento:
+    FALLA: ESCALAR
+datos_incompletos: ESCALAR
+iva_no_estandar: ESCALAR
+marcado_revision: ESCALAR
+documento_ilegible: ESCALAR
