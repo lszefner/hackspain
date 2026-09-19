@@ -418,6 +418,8 @@ def _stamp():
 
 
 def act(name, key=None, reason=None):
+    if key and key.startswith("file:"):
+        return decide(name, key[5:], reason)
     c = cluster(key) if key else None
     _snapshot()
 
@@ -811,10 +813,11 @@ def dossier(file):
     fields = [["Invoice number", r["number"]], ["Supplier", r["vendor"]],
               ["Tax id", r["nif"]], ["Account on the invoice", r["iban"]],
               ["Account on the master", r["iban_master"]], ["Purchase order", r["order"]],
-              ["Net", money(r["base"]) if r["base"] is not None else "—"],
-              ["VAT 21%", money(r["vat"]) if r["vat"] is not None else "—"],
-              ["Total", money(r["total"]) if r["total"] else "—"],
               ["Issued", r["date"]], ["Terms", r["terms"]]]
+    # the three that have to be read together, and in this order
+    amounts = [["Net", money(r["base"]) if r["base"] is not None else "—"],
+               ["VAT 21%", money(r["vat"]) if r["vat"] is not None else "—"],
+               ["Total", money(r["total"]) if r["total"] else "—"]]
 
     reader = "scan, straight to OCR" if r["scanned"] else "native text, no OCR needed"
     tl = [["ROUTED", f"read the file header: {reader}", "router", 8, 0.0]]
@@ -830,7 +833,10 @@ def dossier(file):
     tl.append(["VERDICT", r["action"] + (f", blocked by {', '.join(r['blocking'])}"
                                          if r["blocking"] else ", clean on all five"),
                "engine", 1, 0.0])
-    return {"row": r, "fields": fields, "checks": r["checks"],
+    done = DECIDED.get(file)
+    return {"row": r, "fields": fields, "amounts": amounts, "checks": r["checks"],
+            "decided": (f"{_VERB[done['action']].capitalize()} at {done['when']}"
+                        + (f", {done['reason']}" if done.get("reason") else ".")) if done else None,
             "timeline": [{"kind": k, "detail": d, "actor": a, "ms": m, "cost": c}
                          for k, d, a, m, c in tl],
             "cost": 0.0, "ms": sum(t[3] for t in tl), "ruleset": TOTALS["ruleset"]}
@@ -874,3 +880,70 @@ def lanes(q="", action=""):
     return {"lanes": out, "matched": len(rows), "grand": len(every),
             "counts": {a: sum(1 for r in every if r["action"] == a)
                        for a in ("PAY", "ESCALATE", "DO NOT PAY")}}
+
+
+# --------------------------------------------------------------------------- #
+# Decisions taken on a single invoice from its expediente. Kept apart from the
+# archive itself, which stays a faithful read of what is in the box.
+# --------------------------------------------------------------------------- #
+DECIDED: dict = {}
+
+_VERB = {"approve": "approved for the run", "reject": "rejected",
+         "email": "supplier written to", "defer": "deferred"}
+
+
+def decide(name, file, reason=None):
+    row = next((r for r in archive() if r["file"] == file), None)
+    if not row:
+        return {"said": "I do not have that file."}
+    if name not in _VERB:
+        return {"said": "I do not have that one wired up yet."}
+
+    _snapshot_decided()
+    DECIDED[file] = {"action": name, "reason": reason, "when": _stamp()}
+    amount = money(row["total"])
+    who = row["vendor"]
+
+    if name == "approve":
+        said = (f"{file} goes into the run, {amount} to {who}. "
+                + ("It was clean on all five anyway." if not row["blocking"]
+                   else f"You overrode {', '.join(row['blocking'])}, and I wrote that down."))
+    elif name == "reject":
+        said = f"Rejected. {amount} to {who} will not be paid, and the reason is on the record."
+    elif name == "email":
+        said = (f"Written to {who} about {row['number']}. It sits in the outbox for a minute, "
+                f"so you can still stop it.")
+        OUTBOX.append({"to": who, "subject": f"About invoice {row['number']}", "release": _stamp()})
+    else:
+        said = f"Deferred, {reason or 'for now'}. It shows on {who}'s page so it is not forgotten."
+
+    LOG.append([_stamp(), _VERB[name], who, 1, row["total"]])
+    return {"said": said, "undo": True, "decided": {"file": file, "action": name}}
+
+
+def _snapshot_decided():
+    _undo.append({"DECIDED": copy.deepcopy(DECIDED), "OUTBOX": copy.deepcopy(OUTBOX),
+                  "LOG": copy.deepcopy(LOG)})
+    del _undo[:-12]
+
+
+def invoice_block(file):
+    """One invoice, as a panel the chat can put on screen with its actions."""
+    d = dossier(file)
+    if not d:
+        return None
+    r = d["row"]
+    done = DECIDED.get(file)
+    rows = [{"lead": "", "title": c["name"], "sub": c["detail"], "value": c["verdict"],
+             "tone": "" if c["verdict"] == "PASS" else "warn"} for c in d["checks"]]
+    acts = []
+    if not done:
+        acts = [{"label": f"Approve · {money(r['total'])}", "kind": "primary", "act": "approve",
+                 "file": file},
+                {"label": "Reject", "kind": "danger", "act": "reject", "file": file},
+                {"label": "Write to the supplier", "act": "email", "file": file},
+                {"label": "Defer", "kind": "defer", "file": file}]
+    return {"id": "invoice", "title": file,
+            "meta": f"{r['vendor']} · {money(r['total'])} · "
+                    + (f"{_VERB[done['action']]} at {done['when']}" if done else r["action"]),
+            "rows": rows, "actions": acts}

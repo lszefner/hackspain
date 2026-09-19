@@ -73,6 +73,17 @@ INTENTS = [
 ]
 
 
+_FILE = re.compile(r"([\w./\-\u00c0-\u024f]+\.pdf)", re.IGNORECASE)
+
+
+def named_file(text: str) -> str | None:
+    m = _FILE.search(text or "")
+    if not m:
+        return None
+    name = os.path.basename(m.group(1))
+    return name if any(r["file"] == name for r in state.archive()) else None
+
+
 def route(text: str) -> list[str]:
     """One list on screen, chosen here. Highest keyword count wins; ties go to
     the earlier, more specific intent. The model never picks."""
@@ -109,8 +120,16 @@ HARD RULES
 - Off-topic questions: say plainly you do not have it, then name the nearest thing you do."""
 
 
-def build_messages(text: str, blocks: list[str], history: list[dict]) -> list[dict]:
-    facts = json.dumps(state.facts(), ensure_ascii=False, indent=None)
+def build_messages(text: str, blocks: list[str], history: list[dict],
+                   named: str | None = None) -> list[dict]:
+    world = state.facts()
+    if named:
+        d = state.dossier(named)
+        world = {**world, "the_invoice_he_is_asking_about": {
+            "file": named, "verdict": d["row"]["action"], "supplier": d["row"]["vendor"],
+            "read_off_the_page": dict(d["fields"]), "rules": d["checks"],
+            "already_decided": state.DECIDED.get(named)}}
+    facts = json.dumps(world, ensure_ascii=False, indent=None, default=str)
     on_screen = (", ".join(blocks) if blocks else "nothing")
     ctx = (f"FACTS (the only source of truth):\n{facts}\n\n"
            f"ON SCREEN right now, directly under your sentence: {on_screen}.\n"
@@ -391,10 +410,15 @@ class Handler(SimpleHTTPRequestHandler):
         text = str(req.get("text") or "").strip()
         if not text:
             return self.send_error(400)
-        blocks = route(text)
-        rendered = [b for b in (state.block(n) for n in blocks) if b]
+        # a file named in the question wins: he is asking about that invoice
+        named = named_file(text)
+        if named:
+            blocks, rendered = ["invoice"], [state.invoice_block(named)]
+        else:
+            blocks = route(text)
+            rendered = [b for b in (state.block(n) for n in blocks) if b]
         self._sse_open()
-        self._answer(build_messages(text, blocks, req.get("history") or []), rendered)
+        self._answer(build_messages(text, blocks, req.get("history") or [], named), rendered)
 
     # -- one file, read and inspected for real ------------------------------
     def _upload(self):

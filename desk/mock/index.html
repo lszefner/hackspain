@@ -355,7 +355,33 @@ body.chatting .chips{justify-content:flex-start}
 .sec dt{color:var(--faint);font-size:11.5px;white-space:nowrap;flex:none}
 .sec dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;
   word-break:break-word;min-width:0}
-.sec .why{font-size:14.5px;line-height:1.62}
+.why-box{border:1px solid var(--line2);border-radius:12px;padding:15px 18px;margin-bottom:20px;
+  background:var(--chip)}
+.why-box .lbl3{display:block;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:600;margin-bottom:7px;opacity:.75}
+.why-box .txt3{font-size:16.5px;line-height:1.5;letter-spacing:-.012em}
+.why-box.PAY{background:var(--pay-soft);border-color:color-mix(in srgb,var(--pay) 26%,var(--line))}
+.why-box.PAY .lbl3{color:var(--pay)}
+.why-box.ESCALATE{background:var(--esc-soft);border-color:color-mix(in srgb,var(--esc) 30%,var(--line))}
+.why-box.ESCALATE .lbl3{color:var(--esc)}
+.why-box.DONOTPAY{background:var(--no-soft);border-color:color-mix(in srgb,var(--no) 28%,var(--line))}
+.why-box.DONOTPAY .lbl3{color:var(--no)}
+.sums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 34px;margin-top:14px;
+  padding-top:14px;border-top:1px solid var(--line2)}
+.sum{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
+.sum .k4{font-size:11.5px;color:var(--faint)}
+.sum .v4{font-family:var(--mono);font-size:13px}
+.sum.tot .k4{color:var(--ink);font-weight:600}
+.sum.tot .v4{font-size:14.5px;font-weight:500}
+.dos-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:-8px 0 22px}
+.btn.ask{display:inline-flex;align-items:center;gap:7px;border-color:var(--accent);
+  color:var(--accent);font-weight:600;background:var(--panel)}
+.btn.ask svg{width:14px;height:14px;flex:none}
+.btn.ask:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.ask:hover svg{color:#fff}
+.dos-acts .spacer{flex:1}
+.dos-said{margin:-8px 0 22px;font-size:14.5px;line-height:1.6;display:flex;gap:12px;
+  align-items:baseline;flex-wrap:wrap;animation:enter .3s var(--ease) both}
 .chk{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:baseline;padding:8px 0;
   border-bottom:1px dashed var(--line)}
 .chk .nm{font-size:12px;font-weight:600;letter-spacing:.04em}
@@ -835,6 +861,7 @@ function actionsHTML(list){
     const bits = [`class="btn${k}"`];
     if (a.kind === 'defer') bits.push('data-defer="1"');
     if (a.act) bits.push(`data-act="${esc(a.act)}"`);
+    if (a.file) bits.push(`data-file="${esc(a.file)}"`);
     if (a.ask) bits.push(`data-ask="${esc(a.ask)}"`);
     if (a.ui) bits.push(`data-ui="${esc(a.ui)}"`);
     if (a.href) return `<a class="btn${k}" href="${esc(a.href)}" download>${esc(a.label)}</a>`;
@@ -967,7 +994,8 @@ thread.addEventListener('click', async e => {
   const act = e.target.closest('[data-act]');
   if (act){
     const exp = act.closest('.exp');
-    return runAction(act, act.dataset.act, exp && exp.dataset.key);
+    const key = act.dataset.file ? 'file:' + act.dataset.file : (exp && exp.dataset.key);
+    return runAction(act, act.dataset.act, key);
   }
 
   const tr = e.target.closest('.tbl .tr');
@@ -1072,9 +1100,12 @@ $('#view-invoices').addEventListener('click', e => {
 });
 
 /* the expediente: the real page on the left, what we read off it on the right */
+let dossierFile = null;
+
 async function openDossier(file){
   const d = await (await fetch('/api/dossier?file=' + encodeURIComponent(file))).json();
   const r = d.row;
+  dossierFile = file;
   $('#dos-file').textContent = file;
   $('#dos-sub').innerHTML = `${esc(r.vendor)} · ${esc(money(r.total))} ` +
     `<span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>`;
@@ -1086,11 +1117,29 @@ async function openDossier(file){
       blocked.map(c => c.detail).join('. ') + '.'
     : `Nothing stopped it. All five checks passed under ruleset ${d.ruleset}, so it goes in the run.`;
 
+  const kind = r.action.replace(/[^A-Z]/g, '');
+  const done = d.decided;
   $('#dos-side').innerHTML = `
-    <div class="sec"><h5>What I read off the page</h5>
-      <dl>${d.fields.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
+    <div class="why-box ${esc(kind)}">
+      <span class="lbl3">Why · ${esc(r.action)}</span>
+      <div class="txt3">${esc(why)}</div></div>
 
-    <div class="sec"><h5>Why</h5><div class="why">${esc(why)}</div></div>
+    ${done ? `<div class="dos-said">${esc(done)}</div>` : `<div class="dos-acts">
+      <button class="btn primary" data-dact="approve">Approve · ${esc(money(r.total))}</button>
+      <button class="btn danger" data-dact="reject">Reject</button>
+      <button class="btn" data-dact="email">Write to the supplier</button>
+      <button class="btn" data-dact="defer">Defer</button>
+      <span class="spacer"></span>
+      <button class="btn ask" id="dos-ask">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.8-.9L3 20.5l1.6-4.7A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
+        Ask Albertito about it</button>
+    </div>`}
+
+    <div class="sec"><h5>What I read off the page</h5>
+      <dl>${d.fields.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
+      <div class="sums">${(d.amounts || []).map(([k, v], i) =>
+        `<span class="sum${i === 2 ? ' tot' : ''}"><span class="k4">${esc(k)}</span>
+         <span class="v4">${esc(v)}</span></span>`).join('')}</div></div>
 
     <div class="sec"><h5>Rules · ${d.checks.length} run · ${blocked.length} blocking</h5>
       ${d.checks.map(c => `<div class="chk">
@@ -1113,6 +1162,34 @@ function closeDossier(){
   $('#scrim').classList.remove('on');
   setTimeout(() => { $('#dos-frame').src = 'about:blank'; }, 420);
 }
+$('#dos-side').addEventListener('click', async e => {
+  if (e.target.id === 'dos-ask'){
+    const f = dossierFile;
+    closeDossier();
+    document.querySelector('.nav-item[data-view="agent"]').click();
+    return ask(`What do you make of ${f}?`);
+  }
+  const b = e.target.closest('[data-dact]');
+  if (!b) return;
+  const act = b.dataset.dact;
+  const reason = act === 'defer' ? 'waiting on the supplier' : null;
+  const bar = b.closest('.dos-acts');
+  bar.querySelectorAll('.btn').forEach(x => x.classList.add('done'));
+  b.classList.remove('done'); b.textContent = '…';
+  const res = await (await fetch('/api/action', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({act, key: 'file:' + dossierFile, reason}),
+  })).json();
+  bar.outerHTML = `<div class="dos-said">${esc(res.said)}
+    <button class="btn" id="dos-undo">Put it back</button></div>`;
+  const u = $('#dos-undo');
+  if (u) u.onclick = async () => {
+    await fetch('/api/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
+                                body: JSON.stringify({act: 'undo'})});
+    openDossier(dossierFile);
+  };
+});
+
 $('#dos-x').addEventListener('click', closeDossier);
 $('#scrim').addEventListener('click', closeDossier);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDossier(); });
