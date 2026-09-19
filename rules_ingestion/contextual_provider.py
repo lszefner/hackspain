@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from urllib.parse import urlsplit
 
 import httpx
@@ -9,6 +10,40 @@ from ingestion.contracts import canonical_bytes
 
 from .contextual_contracts import ReviewInputError, ReviewProviderError, strict_json
 from .contextual_review import USAGE_KEYS, ProviderReply
+
+
+def review_provider_from_environment(*, endpoint: str | None = None,
+                                    model: str | None = None,
+                                    transport=None) -> DeepSeekReviewProvider:
+    """The reviewer, configured from the process environment.
+
+    The contextual review is another DeepSeek call on the same Helmcode
+    account as extraction and rule authoring, so it defaults to the same
+    credentials instead of demanding a parallel set. REVIEW_ENDPOINT,
+    REVIEW_MODEL and REVIEW_API_KEY remain as overrides, for running the
+    second opinion on a stronger model or a separate account.
+
+    The reviewer's identity is recorded in the run signature and in the review
+    record either way, so an implicit default is still auditable after the
+    fact -- but note that changing HELMCODE_DEEPSEEK_MODEL then changes the
+    reviewer too.
+    """
+    from . import helmcode
+
+    resolved = {
+        "REVIEW_ENDPOINT / HELMCODE_BASE_URL":
+            endpoint or os.environ.get("REVIEW_ENDPOINT") or helmcode.chat_endpoint(),
+        "REVIEW_MODEL / HELMCODE_DEEPSEEK_MODEL":
+            model or os.environ.get("REVIEW_MODEL") or helmcode.model(),
+        "REVIEW_API_KEY / HELMCODE_API_KEY":
+            os.environ.get("REVIEW_API_KEY") or helmcode.api_key(),
+    }
+    missing = [name for name, value in resolved.items() if not value]
+    if missing:
+        raise ValueError("Missing configuration: " + ", ".join(missing))
+    values = list(resolved.values())
+    return DeepSeekReviewProvider(endpoint=values[0], model=values[1],
+                                  api_key=values[2], transport=transport)
 
 
 class DeepSeekReviewProvider:

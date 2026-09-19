@@ -137,7 +137,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                        review_provider=None) -> dict:
     from rules_ingestion import loader
     from rules_ingestion.build_rules import build_frozen_rules
-    from rules_ingestion.contextual_provider import DeepSeekReviewProvider
+    from rules_ingestion.contextual_provider import review_provider_from_environment
 
     evaluation_date = _resolve_evaluation_date(evaluation_date)
     backend = backend or os.environ.get('REVISION_BACKEND') or 'supabase'
@@ -180,8 +180,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     config = settings(interpreter='deepseek', dpi=200, concurrency=3, ocr='helmcode-vision')
     config['schema_hashes'], config['schemas'] = contracts.hashes, contracts.schemas
     secrets = credentials(config)
-    provider = review_provider or DeepSeekReviewProvider(
-        endpoint=os.environ['REVIEW_ENDPOINT'], model=os.environ['REVIEW_MODEL'], api_key=os.environ['REVIEW_API_KEY'])
+    provider = review_provider or review_provider_from_environment()
     documents = {file_id: digest((root / file_id).read_bytes()) for file_id in file_ids}
     signature = {'files': [{'file_id': name, 'sha256': sha} for name, sha in documents.items()],
                  'evaluation_date': evaluation_date, 'extraction_config': config,

@@ -74,12 +74,13 @@ def test_supabase_factory_never_falls_back(monkeypatch):
 def test_cli_missing_credentials_has_no_secret_output(monkeypatch, capsys):
     from rules_ingestion.engine_cli import main
 
-    monkeypatch.delenv('REVIEW_API_KEY', raising=False)
+    for key in ('REVIEW_API_KEY', 'HELMCODE_API_KEY'):
+        monkeypatch.delenv(key, raising=False)
     assert main(['review', '--record-id', 'er_' + '0' * 64, '--request-key', 'intent',
                  '--reviewed-at', REVIEWED, '--endpoint', 'https://example.invalid/review', '--model', 'test']) == 1
     captured = capsys.readouterr()
     assert not captured.out
-    assert 'core_engine_failed: KeyError' in captured.err
+    assert 'core_engine_failed: ValueError' in captured.err
 
 
 @pytest.mark.asyncio

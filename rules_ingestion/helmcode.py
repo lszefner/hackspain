@@ -28,14 +28,18 @@ def chat_endpoint() -> str | None:
     return f"{base}/{CHAT_PATH}" if base else None
 
 
+def model() -> str | None:
+    """The DeepSeek model the engine runs on."""
+    return os.environ.get("HELMCODE_DEEPSEEK_MODEL") or None
+
+
 def authoring_model() -> str | None:
     """The model that authors rules.
 
     Defaults to the one used for interpretation; DEEPSEEK_MODEL overrides it
     so rule authoring can run on a cheaper model without a second account.
     """
-    return (os.environ.get("DEEPSEEK_MODEL")
-            or os.environ.get("HELMCODE_DEEPSEEK_MODEL") or None)
+    return os.environ.get("DEEPSEEK_MODEL") or model()
 
 
 def available() -> bool:

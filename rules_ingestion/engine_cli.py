@@ -4,7 +4,6 @@ import argparse
 import asyncio
 import json
 import mimetypes
-import os
 import sys
 from pathlib import Path
 
@@ -14,7 +13,7 @@ from psycopg import Error as DatabaseError
 
 from ingestion.contracts import canonical_bytes
 
-from .contextual_provider import DeepSeekReviewProvider
+from .contextual_provider import review_provider_from_environment
 from .decision_context import SourceSnapshot
 from .engine import InvoiceDecisionEngine, RuleSource
 from .engine_storage import ArchiveError
@@ -55,8 +54,8 @@ def main(argv=None) -> int:
     review.add_argument('--record-id', required=True)
     review.add_argument('--request-key', required=True)
     review.add_argument('--reviewed-at', required=True)
-    review.add_argument('--endpoint', required=True)
-    review.add_argument('--model', required=True)
+    review.add_argument('--endpoint')
+    review.add_argument('--model')
     show = commands.add_parser('show')
     show.add_argument('--record-id', required=True)
     args = parser.parse_args(argv)
@@ -71,8 +70,8 @@ def main(argv=None) -> int:
                       'snapshots': _snapshots(args.snapshots),
                       'evaluation_date': args.evaluation_date, 'captured_at': args.captured_at}
         elif args.command == 'review':
-            provider = DeepSeekReviewProvider(endpoint=args.endpoint, model=args.model,
-                                              api_key=os.environ['REVIEW_API_KEY'])
+            provider = review_provider_from_environment(endpoint=args.endpoint,
+                                                        model=args.model)
         engine = InvoiceDecisionEngine.from_supabase()
         if args.command == 'evaluate':
             packet = engine.evaluate(**values)
