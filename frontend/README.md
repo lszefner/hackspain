@@ -25,6 +25,7 @@ Candado de acceso: `SITE_ACCESS_CODE` (ver `.env.example`).
 | `/logica` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
 | `/logica/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
 | `/muro` | La pared de 500 baldosas coloreada por resultado — la portada de la demo | demo |
+| `/phone_calls` | La centralita de voz: atiende al proveedor por teléfono y le contesta lo que el motor ya decidió — sin decirle lo que no debe | bonus |
 
 ## Arquitectura: la costura
 
@@ -41,3 +42,29 @@ estado medido: 431 PAGAR · 49 ESCALAR · 20 NO_PAGAR y los € al céntimo.
 Las normas (`src/lib/normas.ts`) se suben como YAML pero se presentan como
 manual: versiones inmutables, ensayo en seco antes de publicar, y la última
 publicada es la activa por defecto en todo el sitio.
+
+## La centralita (`/phone_calls`)
+
+No es una página de Next. Es **la misma página** que sirve `make centralita` en
+el 8011, publicada tal cual en `public/` por `make web-centralita`, más una
+Vercel Function de Python en `api/centralita/turno.py` que importa `guion.py`
+**verbatim** desde `centralita_py/`. La política de lo que se dice y lo que se
+calla es un único fichero, y corre igual en los dos sitios.
+
+```bash
+make web-centralita      # desde la raíz del repo, tras tocar phone_calls/
+```
+
+`centralita_py/` y `public/phone_calls/` son **artefactos generados**: no se
+editan a mano. `tests/test_publicacion_web.py` compara byte a byte contra el
+original y falla si alguien toca `guion.py` y no republica.
+
+El audio va precomputado (`public/phone_calls/voz/`, 9 frases de Inés). En
+producción **no hay ninguna llamada a ElevenLabs**: `voz.py` no está
+desplegado, y un test lo comprueba con un grep. Lo que se improvise fuera del
+guion lo dirá la voz del navegador.
+
+> **No crear `requirements.txt` ni `pyproject.toml` aquí.** Vercel detectaría
+> un framework preset de Python y éste se quedaría con **todas** las rutas del
+> proyecto, tumbando el sitio entero. El árbol vendorizado es stdlib puro y no
+> necesita ninguno; la versión se fija en `.python-version`.
