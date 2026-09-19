@@ -169,10 +169,12 @@ WHERE request_key = %s AND request_sha256 = %s AND state = 'running' RETURNING *
     def latest_results(self, file_id=None):
         return self._rows('''
 SELECT DISTINCT ON (i.file_name) i.file_name AS file_id, i.id AS input_id, i.batch_id,
+ i.content_hash, i.size_bytes, i.created_at AS received_at,
  r.status AS extraction_status, r.error AS extraction_error, b.status AS batch_status,
+ r.artifact_id AS outcome_artifact_id,
  e.record_id AS evaluation_record_id, e.decision,
  v.record_id AS review_record_id, review_body.payload AS contextual_review,
- run.state AS run_state, run.error_code AS run_error
+ run.state AS run_state, run.error_code AS run_error, run.request_key
 FROM ingestion.inputs i JOIN ingestion.batches b ON b.id = i.batch_id
 LEFT JOIN ingestion.input_results r ON r.input_id = i.id AND r.interpreter = b.config->>'interpreter'
 LEFT JOIN LATERAL (

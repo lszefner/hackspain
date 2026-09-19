@@ -323,6 +323,110 @@ async def test_backend_read_api_uses_database_records(runtime, monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_flujo_endpoint_exposes_full_pipeline(runtime, monkeypatch):
+    from backend import server
+    from backend.export_outcomes import decide_output
+
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+    result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    store = PostgresResultsStore(engine)
+    monkeypatch.setattr(server, 'STORE', store)
+    handler = object.__new__(server.Handler)
+    responses = []
+    handler._json = lambda status, body: responses.append((status, body))
+    handler._flujo('invoice.pdf')
+    status, body = responses[0]
+    assert status == 200
+    json.dumps(body)
+    extraccion = body['extraccion']
+    assert extraccion['ruta'] == 'vision'
+    assert extraccion['determinista'] == {'attempted': False, 'accepted': False,
+                                        'gaps': ['no_text_layer_or_cascade_off']}
+    assert extraccion['por_que_vision'] == ['no_text_layer_or_cascade_off']
+    assert [t['stage'] for t in extraccion['trabajos']] == ['reading', 'interpretation']
+    for trabajo in extraccion['trabajos']:
+        assert trabajo['provider'] == 'scripted'
+        assert trabajo['model'] == 'test'
+        assert trabajo['state'] == 'succeeded'
+        assert 'config' not in trabajo and 'settings' not in trabajo
+        assert len(trabajo['intentos']) == 1
+        assert trabajo['intentos'][0]['status'] == 'succeeded'
+    assert len(extraccion['trabajos'][0]['intentos'][0]['raw_artifact_ids']) == 1
+    assert extraccion['factura']['file_id'] == 'invoice.pdf'
+    assert body['evaluacion']['record_id'] == result['files'][0]['evaluation_record_id']
+    assert body['evaluacion']['resultado']['preliminary_decision'] == body['evaluacion']['decision']
+    assert body['revision']['status'] == 'INCOMPLETE'
+    assert body['revision']['record_id'] == result['files'][0]['review_record_id']
+    assert body['ejecucion']['request_key'] == 'intent-1'
+    assert body['ejecucion']['state'] == 'completed'
+    assert body['ejecucion']['rule_generation'] == 'generated'
+    assert 'workbook' in body['ejecucion']['snapshots']
+    assert all('payload_artifact' not in s for s in body['ejecucion']['snapshots'].values())
+    assert body['salida'] == dict(zip(('verdict', 'basis'), decide_output(store.get('invoice.pdf'))))
+    assert body['resolucion'] is None and body['pago'] is None
+    assert [e['etapa'] for e in body['etapas']] == \
+        ['recibida', 'extraida', 'evaluada', 'revisada', 'emitida', 'resuelta', 'pagada']
+    etapas = {e['etapa']: e for e in body['etapas']}
+    assert etapas['resuelta']['estado'] == 'no_registrada'
+    assert etapas['pagada']['estado'] == 'no_registrada'
+    assert etapas['evaluada']['estado'] == 'hecha'
+    assert etapas['revisada']['estado'] == 'hecha'
+
+
+@pytest.mark.asyncio
+async def test_flujo_extraction_failure_shows_failed_stage(runtime, monkeypatch):
+    from backend import server
+
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+
+    async def fail(*args):
+        raise StageError('synthetic_read_error')
+
+    monkeypatch.setattr(Pipeline, 'read', fail)
+    await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    monkeypatch.setattr(server, 'STORE', PostgresResultsStore(engine))
+    handler = object.__new__(server.Handler)
+    responses = []
+    handler._json = lambda status, body: responses.append((status, body))
+    handler._flujo('invoice.pdf')
+    status, body = responses[0]
+    assert status == 200
+    assert body['extraccion']['status'] == 'failed'
+    assert body['extraccion']['error']['code'] == 'synthetic_read_error'
+    assert body['extraccion']['trabajos'] == []
+    assert body['evaluacion'] is None
+    assert body['revision'] is None
+    assert body['salida'] == {'verdict': 'ESCALAR', 'basis': 'no_evaluation'}
+    etapas = {e['etapa']: e for e in body['etapas']}
+    assert etapas['extraida']['estado'] == 'error'
+    assert etapas['evaluada']['estado'] == 'pendiente'
+
+
+@pytest.mark.asyncio
+async def test_flujo_pending_and_missing(runtime, monkeypatch):
+    from backend import server
+
+    engine, kwargs, _calls, _rules, _workbook_path = runtime
+    monkeypatch.setattr(server, 'STORE', PostgresResultsStore(engine))
+    monkeypatch.setattr(server, 'FACTURAS_DIR', kwargs['input_dir'])
+    handler = object.__new__(server.Handler)
+    responses = []
+    handler._json = lambda status, body: responses.append((status, body))
+    handler._flujo('invoice.pdf')
+    status, body = responses[-1]
+    assert status == 200
+    assert body['identidad'] is None
+    assert body['extraccion'] is None
+    assert body['salida'] == {'verdict': 'ESCALAR', 'basis': 'not_processed'}
+    etapas = {e['etapa']: e for e in body['etapas']}
+    assert etapas['recibida']['estado'] == 'pendiente'
+    handler._flujo('nope.pdf')
+    assert responses[-1][0] == 404
+    handler._flujo('../x.pdf')
+    assert responses[-1][0] == 422
+
+
+@pytest.mark.asyncio
 async def test_issue_date_policy_evaluates_on_each_invoice_date(runtime):
     engine, kwargs, _calls, _rules, _workbook_path = runtime
     kwargs['evaluation_date'] = 'issue-date'

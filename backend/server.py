@@ -105,7 +105,11 @@ class Handler(BaseHTTPRequestHandler):
         if url.path == "/api/resumen":
             self._json(200, _resumen())
         elif url.path.startswith("/api/factura/"):
-            self._factura(url.path[len("/api/factura/"):])
+            rest = url.path[len("/api/factura/"):]
+            if rest.endswith("/flujo"):
+                self._flujo(rest[:-len("/flujo")])
+            else:
+                self._factura(rest)
         elif url.path.startswith('/api/ejecucion/'):
             key = unquote(url.path[len('/api/ejecucion/'):])
             try:
@@ -181,6 +185,20 @@ class Handler(BaseHTTPRequestHandler):
             'review_status': row.get('review_status'),
             'attention_required': row.get('attention_required'),
         })
+
+    def _flujo(self, file_id: str):
+        from backend.flujo import flujo
+
+        file_id = unquote(file_id)
+        if Path(file_id).name != file_id or '/' in file_id or '\\' in file_id:
+            self._json(422, {'error': 'invalid_file_id'})
+            return
+        body = flujo(get_store(), file_id,
+                     en_disco=(FACTURAS_DIR / file_id).is_file())
+        if body is None:
+            self._json(404, {"error": "factura_no_encontrada"})
+            return
+        self._json(200, body)
 
 
 def main(port: int = 8010) -> int:
