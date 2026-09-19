@@ -74,8 +74,6 @@ def _load_dotenv() -> None:
                 os.environ.setdefault(k.strip(), v.strip())
 
 
-_load_dotenv()
-
 
 # --------------------------------------------------------------------------- #
 # Shared result type + router

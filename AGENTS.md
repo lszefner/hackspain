@@ -5,6 +5,9 @@
   covers `Contracts`, `blank_invoice`, and the offline `fixture` command.
 - Run checks: `uv run --locked --extra worker pytest -q tests` and
   `uv run --locked --extra worker ruff check <files>`.
+- Decision-layer checks: `uv sync --locked --extra worker --extra decision`,
+  then `uv run --locked --extra worker --extra decision pytest -q
+  tests/test_payments.py tests/test_payment_io.py tests/test_erp_snapshot.py`.
 - For packaging-only changes, refresh the lockfile with `uv lock --offline`
   without upgrading dependency versions.
 - Tests must not call paid APIs or shared databases. Postgres tests use the

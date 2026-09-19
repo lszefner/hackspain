@@ -58,6 +58,9 @@ def parser():
     commands.add_parser("preflight").add_argument(
         "--interpreter", choices=["deepseek", "jev"], default="deepseek"
     )
+    from payments.cli import add_commands
+
+    add_commands(commands)
     return p
 
 
@@ -132,6 +135,23 @@ def main(argv=None):
     try:
         if args.command == "fixture":
             result = offline_fixture(args.schema_dir, args.output)
+        elif args.command in ("decide", "erp-snapshot", "replay-decisions"):
+            try:
+                from payments.cli import run
+
+                result = run(args)
+            except ImportError:
+                print(
+                    json.dumps(
+                        {
+                            "error": {
+                                "code": "decision_dependencies_missing",
+                                "message": "Install invoice-ingestion-agent[decision] to run decision commands",
+                            }
+                        }
+                    )
+                )
+                return 2
         else:
             from dotenv import load_dotenv
 
@@ -141,7 +161,7 @@ def main(argv=None):
             result = asyncio.run(execute_command(args))
         print(json.dumps(result, ensure_ascii=False, default=str, allow_nan=False))
         return 0
-    except (ValueError, OSError) as exc:
+    except (ValueError, TypeError, OSError) as exc:
         # Exceptions raised here are application-controlled; never print HTTP/DB exception strings.
         print(
             json.dumps(

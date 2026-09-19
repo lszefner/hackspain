@@ -47,21 +47,34 @@ def check_vendor(inv: dict, master: dict, params: dict) -> Verdict:
 
 # --- R2 · DUPLICATES ------------------------------------------------------- #
 def check_duplicates(inv: dict, master: dict, params: dict) -> Verdict:
+    estado = None
+    if inv.get("pedido"):
+        estado = master.get("erp_estado", {}).get(inv["pedido"])
+
     # already paid in the ERP (authoritative state) -> hard stop
     if params.get("require_erp_pending", True) and inv.get("pedido"):
-        estado = master.get("erp_estado", {}).get(inv["pedido"])
         if estado == "PAGADA":
             return "FAIL", f"order {inv['pedido']} is already marked PAGADA in the ERP"
 
     # same invoice + same vendor already processed -> hard stop
     hard_key = (inv.get("invoice_number"), inv.get("vendor_id"))
-    if hard_key in master.get("seen_invoice_keys", set()):
+    if all(hard_key) and hard_key in master.get("seen_invoice_keys", set()):
         return "FAIL", "same invoice and vendor already processed"
 
+    if inv.get("pedido") and inv["pedido"] in master.get("seen_order_keys", set()):
+        return params.get("soft_duplicate_verdict", "NEEDS_REVIEW"), \
+            "multiple invoices claim the same order; reconcile before payment"
+
+    if params.get("require_erp_pending", True) and inv.get("pedido"):
+        if estado != "PENDIENTE":
+            return "NEEDS_REVIEW", "ERP state is missing or not PENDIENTE"
+
     # same amount + same date -> not certain, needs a human
-    soft_key = (str(inv.get("total")), inv.get("date"))
-    if soft_key in master.get("seen_amount_date", set()):
-        return "NEEDS_REVIEW", "same amount and date as another invoice"
+    soft_key = (inv.get("total"), inv.get("date"))
+    if all(x is not None for x in soft_key) \
+            and soft_key in master.get("seen_amount_date", set()):
+        return params.get("soft_duplicate_verdict", "NEEDS_REVIEW"), \
+            "same amount and date as another invoice"
 
     return "PASS", "no signs of a duplicate payment"
 
@@ -84,11 +97,18 @@ def check_amount(inv: dict, master: dict, params: dict) -> Verdict:
         if abs((base + iva) - total) > tol:
             return "FAIL", f"total {total} ≠ base+VAT ({base + iva})"
 
+    vat_rate = inv.get("vat_rate")
+    if params.get("check_iva", True) and vat_rate is not None \
+            and base is not None and iva is not None:
+        if abs(base * vat_rate / 100 - iva) > tol:
+            return "FAIL", f"VAT {iva} invalid for base {base} at rate {vat_rate}%"
+
     if params.get("check_matches_pedido", True) and total is not None:
         ped = master["pedidos"].get(inv.get("pedido"))
-        if ped is not None and ped.get("importe_total") is not None:
-            if abs(total - ped["importe_total"]) > tol:
-                return "FAIL", f"total {total} ≠ purchase-order amount {ped['importe_total']}"
+        if ped is None or ped.get("importe_total") is None:
+            return "NEEDS_REVIEW", "purchase order missing or has no amount"
+        if abs(total - ped["importe_total"]) > tol:
+            return "FAIL", f"total {total} ≠ purchase-order amount {ped['importe_total']}"
 
     return "PASS", "amounts, VAT and total add up"
 
@@ -162,10 +182,17 @@ def run_checks(inv: dict, master: dict, ruleset: dict) -> List[dict]:
             continue
         check = CHECKS.get(rule["canonical"])
         if check is None:
+            out.append({
+                "rule_id": rule.get("id", rule.get("rule_id")),
+                "canonical": rule.get("canonical"),
+                "verdict": "NEEDS_REVIEW",
+                "reason": "unsupported canonical rule; never executed",
+                "on_fail": rule.get("on_fail"),
+            })
             continue
         verdict, reason = check(inv, master, rule.get("params", {}))
         out.append({
-            "rule_id": rule.get("rule_id"),
+            "rule_id": rule.get("id", rule.get("rule_id")),
             "canonical": rule["canonical"],
             "verdict": verdict,
             "reason": reason,
