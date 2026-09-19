@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mesa de Alberto</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand"><span class="dot"></span><span class="brand-name">Mesa de Alberto</span></div>
+
+    <nav class="nav">
+      <button class="nav-item active" data-view="agent"><span>Agente</span></button>
+      <button class="nav-item" data-view="invoices"><span>Facturas</span><b id="n-inv"></b></button>
+      <button class="nav-item" data-view="payments"><span>Pagos</span><b id="n-pay"></b></button>
+    </nav>
+
+    <div class="nav-label">Traza</div>
+    <nav class="nav">
+      <button class="nav-item" data-view="rules"><span>Reglas</span><b id="n-rules"></b></button>
+      <button class="nav-item" data-view="activity"><span>Actividad</span></button>
+    </nav>
+
+    <div class="side-foot">
+      <div class="kv"><span>Coste hoy</span><b id="f-cost">—</b></div>
+      <div class="kv"><span>Por factura</span><b id="f-per">—</b></div>
+      <div class="kv"><span>Ruleset</span><b id="f-rs">—</b></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div class="top-main">
+        <div id="brief" class="brief">Cargando…</div>
+        <div id="statusbar" class="statusbar"></div>
+      </div>
+      <div class="top-right"><button id="btn-reseed" class="ghost" title="Nueva demo" hidden>↺</button></div>
+    </header>
+
+    <section id="view-agent" class="view active">
+      <div id="thread" class="thread"></div>
+      <div class="composer-wrap">
+        <div id="chips" class="chips"></div>
+        <form id="composer" class="composer">
+          <input id="q" autocomplete="off" placeholder="Pregunta por una factura, o dime una regla nueva…">
+          <button type="submit" aria-label="Enviar">➤</button>
+        </form>
+      </div>
+    </section>
+
+    <section id="view-invoices" class="view">
+      <div class="view-head">
+        <input id="inv-q" class="search" placeholder="Buscar por fichero, proveedor o numero…">
+        <div class="filters" id="inv-filters"></div>
+      </div>
+      <div id="inv-body" class="scroll"></div>
+    </section>
+
+    <section id="view-payments" class="view"><div id="pay-body" class="scroll"></div></section>
+    <section id="view-rules" class="view"><div id="rules-body" class="scroll"></div></section>
+    <section id="view-activity" class="view"><div id="act-body" class="scroll"></div></section>
+  </main>
+
+  <aside id="drawer" class="drawer">
+    <div class="drawer-head">
+      <b id="drawer-title">Expediente</b>
+      <button id="drawer-close" class="ghost">✕</button>
+    </div>
+    <div id="drawer-body" class="drawer-body"></div>
+  </aside>
+</div>
+
+<div id="toast" class="toast"></div>
+<script src="/static/app.js"></script>
+</body>
+</html>

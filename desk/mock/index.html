@@ -1,0 +1,1107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Albertito to guapo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#fbf9f5; --panel:#ffffff; --ink:#2b1f16; --mut:#7b6a5c; --faint:#a49486;
+  --line:#e9e2d8; --line2:#d9cec0; --accent:#4a3324;
+  --pay:#4a6b2f; --esc:#9a6412; --no:#a33124;
+  --pay-soft:#eef3e7; --esc-soft:#faf1e2; --no-soft:#faebe8;
+  --chip:#f3efe8; --chip2:#eae4da;
+  --shadow:0 1px 2px rgba(60,40,24,.05), 0 6px 18px rgba(60,40,24,.06);
+  --shadow-lift:0 2px 4px rgba(60,40,24,.06), 0 14px 32px rgba(60,40,24,.09);
+  --load:#2f62d8; --load-soft:#eef2fd; --load-line:#d5e0fa;
+  --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --ease:cubic-bezier(.2,.7,.2,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14.5px/1.55 var(--sans);
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;padding:0}
+.num,.mono{font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12.5px}
+
+.app{position:fixed;inset:0;display:grid;grid-template-columns:228px 1fr;overflow:hidden}
+
+/* ───────────────── sidebar */
+.side{border-right:1px solid var(--line);padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.brand{display:grid;grid-template-columns:32px 1fr;align-items:center;gap:10px;
+  padding:5px 7px;margin-bottom:14px;border-radius:10px;transition:background .15s var(--ease)}
+.brand:hover{background:var(--chip)}
+.tile{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;position:relative;
+  display:grid;place-items:center;font:600 13px/1 var(--sans);letter-spacing:-.02em}
+.brand .who2{min-width:0;line-height:1.25}
+.brand .k{display:block;font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brand .n{display:block;font-size:13.5px;font-weight:600;letter-spacing:-.014em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.nav{display:flex;flex-direction:column;gap:1px}
+.nav-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border-radius:8px;
+  text-align:left;color:var(--mut);font-size:13.5px;transition:background .15s var(--ease),color .15s var(--ease)}
+.nav-item svg{width:16px;height:16px;flex:none;opacity:.7;transition:opacity .15s var(--ease)}
+.nav-item.active svg{opacity:1}
+.nav-item:hover{background:var(--chip);color:var(--ink)}
+.nav-item.active{background:var(--chip);color:var(--ink);font-weight:600}
+
+/* ───────────────── main */
+.main{display:flex;flex-direction:column;min-width:0;overflow:hidden;position:relative}
+.view{display:none;flex:1;min-height:0;flex-direction:column}
+.view.on{display:flex}
+
+.hello{position:absolute;left:0;right:0;bottom:100%;margin-bottom:32px;text-align:center;
+  transition:opacity .3s var(--ease),transform .45s var(--ease)}
+body.chatting .hello{opacity:0;transform:translateY(-12px);pointer-events:none}
+.hello h1{margin:0 0 12px;font-size:32px;line-height:1.15;letter-spacing:-.028em;font-weight:600;
+  animation:rise .7s var(--ease) both}
+.hello p{margin:0 auto;font-size:16px;color:var(--mut);max-width:470px;line-height:1.55;
+  animation:rise .7s var(--ease) .09s both}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+/* ───────────────── thread */
+.thread{flex:1;overflow:auto;padding:30px 32px 210px;display:flex;flex-direction:column;gap:24px;
+  opacity:0;transition:opacity .4s var(--ease) .12s}
+body.chatting .thread{opacity:1}
+.msg{max-width:800px;width:100%;margin:0 auto;animation:enter .36s var(--ease) both}
+@keyframes enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.msg .who{font-size:10.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--faint);
+  margin-bottom:9px;display:flex;gap:9px;align-items:center;font-weight:600}
+.msg .who time{font-weight:400;letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.msg .say{font-size:15.5px;line-height:1.62;white-space:pre-wrap}
+.msg.user{display:flex;justify-content:flex-end}
+.msg.user .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:78%}
+.msg.user .bubble{background:var(--chip);padding:9px 15px;border-radius:16px;
+  border-bottom-right-radius:6px;font-size:15px}
+.meta{font-size:11px;color:var(--faint);margin-top:10px;font-family:var(--mono);letter-spacing:.02em}
+
+/* ───────────────── thinking: sits in the thread, where the answer lands */
+.think{display:inline-flex;align-items:center;gap:11px;padding:7px 20px 7px 8px;border-radius:999px;
+  background:var(--load-soft);border:1px solid var(--load-line);color:var(--load);
+  font-size:15px;letter-spacing:-.008em;animation:enter .3s var(--ease) both}
+.think canvas{flex:none;display:block}
+.think .lbl{min-width:184px}
+.think .lbl:after{content:"";animation:dots 1.5s steps(1,end) infinite}
+@keyframes dots{0%{content:"."}25%{content:".."}50%{content:"..."}75%{content:"...."}}
+
+/* the answer arrives word by word, each one condensing out of a blur */
+.say .w{display:inline-block;opacity:0;filter:blur(7px);transform:translateY(4px);
+  animation:cloud .52s var(--ease) forwards}
+@keyframes cloud{to{opacity:1;filter:blur(0);transform:none}}
+
+/* ───────────────── panel: the list first, the actions after */
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:16px;
+  box-shadow:var(--shadow);overflow:hidden;animation:enter .4s var(--ease) both}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+  padding:13px 18px 12px;border-bottom:1px solid var(--line)}
+.panel-head h4{margin:0;font-size:11px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;color:var(--mut)}
+.panel-head .m{font-size:12.5px;color:var(--faint);font-family:var(--mono);white-space:nowrap}
+
+.rows{display:flex;flex-direction:column}
+@keyframes rowin{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+.blocks .rows>*{animation:rowin .3s var(--ease) both}
+.blocks .rows>*:nth-child(1){animation-delay:.05s}
+.blocks .rows>*:nth-child(2){animation-delay:.10s}
+.blocks .rows>*:nth-child(3){animation-delay:.15s}
+.blocks .rows>*:nth-child(4){animation-delay:.20s}
+.blocks .rows>*:nth-child(5){animation-delay:.25s}
+.blocks .rows>*:nth-child(n+6){animation-delay:.30s}
+.blocks .panel-foot{animation:rowin .3s var(--ease) .34s both}
+.row{display:grid;grid-template-columns:30px 1fr auto 16px;align-items:center;gap:14px;
+  padding:11px 18px;border-bottom:1px solid var(--line);text-align:left;width:100%;
+  transition:background .14s var(--ease)}
+.row:last-of-type{border-bottom:0}
+.rows .exp:last-child .row{border-bottom:0}
+.row.tap{cursor:pointer}
+.row.tap:hover{background:var(--chip)}
+.row .lead{font-family:var(--mono);font-size:13px;color:var(--faint);text-align:right}
+.row .mid{min-width:0}
+.row .t{font-size:14.5px;font-weight:500;letter-spacing:-.008em;display:flex;gap:9px;align-items:baseline;flex-wrap:wrap}
+.row .s{font-size:12.5px;color:var(--mut);margin-top:2px}
+.row .v{font-family:var(--mono);font-size:13px;white-space:nowrap;text-align:right}
+.row .v.warn{color:var(--esc)} .row .v.good{color:var(--pay)}
+.row .chev{width:6px;height:6px;border-right:1.5px solid var(--line2);border-bottom:1.5px solid var(--line2);
+  transform:rotate(-45deg);transition:transform .2s var(--ease);justify-self:center}
+.exp.open .chev{transform:rotate(45deg)}
+.dotk{width:6px;height:6px;border-radius:50%;flex:none;display:inline-block}
+.dotk.unseen{background:var(--ink)} .dotk.seen{background:var(--line2)} .dotk.deferred{background:var(--esc)}
+.vd{font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:1px 7px;border-radius:5px}
+.vd.PAY{background:var(--pay-soft);color:var(--pay)}
+.vd.DONOTPAY{background:var(--no-soft);color:var(--no)}
+
+.exp .drop{display:grid;grid-template-rows:0fr;opacity:0;border-bottom:0 solid var(--line);
+  transition:grid-template-rows .44s var(--ease),opacity .3s var(--ease)}
+.exp.open .drop{grid-template-rows:1fr;opacity:1;border-bottom-width:1px}
+.exp .drop>.in{overflow:hidden;min-height:0;padding:0 18px 0 62px}
+.exp.open .drop>.in{padding-top:6px;padding-bottom:16px}
+.exp .row{transition:background .3s var(--ease)}
+.exp.open .row{background:var(--chip)}
+.drop p{margin:0 0 14px;font-size:14px;line-height:1.62;color:var(--ink);max-width:62ch}
+
+/* the invoices behind a cluster: one lane per column, with a header */
+.tbl{margin:0 0 15px;font-family:var(--mono);font-size:12px}
+.tbl .th,.tbl .tr{display:grid;
+  grid-template-columns:minmax(0,1.45fr) minmax(0,1.1fr) 58px 92px minmax(0,1.25fr);
+  gap:16px;align-items:center;padding:7px 8px;border-radius:7px}
+.tbl .th{font-family:var(--sans);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--faint);font-weight:600;padding-bottom:6px;border-bottom:1px solid var(--line2)}
+.tbl .tr{border-bottom:1px solid var(--line);cursor:pointer;transition:background .16s var(--ease)}
+.tbl .tr:hover{background:var(--chip)}
+.tbl .frow.open .tr{background:var(--chip)}
+.tbl .c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tbl .c1{color:var(--ink)}
+.tbl .c2,.tbl .c3{color:var(--mut)}
+.tbl .c4{text-align:right;color:var(--ink)}
+.tbl .c5{text-align:right;color:var(--mut)}
+.tbl .fields{display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows .4s var(--ease),opacity .28s var(--ease)}
+.tbl .frow.open .fields{grid-template-rows:1fr;opacity:1}
+.tbl .fields>.in{overflow:hidden;min-height:0}
+.tbl dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 28px;margin:0;padding:4px 8px 12px}
+.tbl dl div{display:flex;justify-content:space-between;gap:14px;padding:5px 0;
+  border-bottom:1px dashed var(--line)}
+.tbl dt{color:var(--faint);font-family:var(--sans);font-size:11.5px;white-space:nowrap}
+.tbl dd{margin:0;color:var(--ink);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.acts{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.panel-foot{display:flex;gap:7px;flex-wrap:wrap;align-items:center;padding:13px 18px;background:var(--chip)}
+.btn{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:6px 12px;font-size:13px;
+  font-weight:500;transition:all .15s var(--ease);line-height:1.3;white-space:nowrap}
+.btn:hover{background:var(--chip2);border-color:var(--line2)}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{background:#2f3033}
+.btn.danger{color:var(--no)}
+.btn.danger:hover{background:var(--no-soft);border-color:color-mix(in srgb,var(--no) 28%,var(--line))}
+.btn.quiet{border-color:transparent;background:none;color:var(--faint)}
+.btn.quiet:hover{color:var(--ink);background:var(--panel);border-color:var(--line)}
+.btn.done{opacity:.4;pointer-events:none}
+.row-undo{margin-top:10px}
+a.btn{text-decoration:none;display:inline-block}
+.spacer{flex:1}
+
+.reason{margin-top:11px;padding:11px 13px;border:1px dashed var(--line2);border-radius:10px;display:none}
+.reason.open{display:block;animation:enter .22s var(--ease) both}
+.reason .q{font-size:12.5px;color:var(--mut);margin-bottom:9px}
+.reason .opts{display:flex;gap:6px;flex-wrap:wrap}
+.reason .opts button{border:1px solid var(--line);border-radius:999px;padding:4px 12px;font-size:12.5px}
+.reason .opts button:hover{border-color:var(--ink);background:var(--panel)}
+
+/* ───────────────── composer, with the attachments waiting above it */
+.composer-wrap{position:absolute;left:0;right:0;bottom:50%;transform:translateY(50%);
+  padding:0 32px 22px;pointer-events:none;
+  transition:bottom .6s var(--ease),transform .6s var(--ease),padding .6s var(--ease)}
+body.chatting .composer-wrap{bottom:0;transform:none;padding-top:26px;
+  background:linear-gradient(180deg,transparent,var(--bg) 34%)}
+.composer-in{position:relative;max-width:720px;margin:0 auto;pointer-events:auto;
+  transition:max-width .6s var(--ease)}
+body.chatting .composer-in{max-width:800px}
+
+.tray{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:9px}
+.tray:empty{display:none}
+.att{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;
+  background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 9px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden;animation:enter .28s var(--ease) both}
+.att .ico{width:28px;height:28px;border-radius:7px;background:var(--chip);color:var(--mut);
+  display:grid;place-items:center;font:500 8.5px/1 var(--mono);letter-spacing:.04em;
+  transition:background .35s var(--ease),color .35s var(--ease)}
+.att.ok .ico{background:var(--pay-soft);color:var(--pay)}
+.att.bad .ico{background:var(--no-soft);color:var(--no)}
+.att .nm{display:block;font-size:13.5px;font-weight:500;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:260px}
+.att .st{display:block;font-size:11.5px;color:var(--faint);font-family:var(--mono);margin-top:2px}
+.att.ok .st{color:var(--pay)}
+.att.bad .st{color:var(--no)}
+.att .pct{font-family:var(--mono);font-size:12px;color:var(--faint);min-width:30px;text-align:right}
+.att .x{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:var(--faint);font-size:12px}
+.att .x:hover{background:var(--chip);color:var(--ink)}
+.att .fbar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--ink);
+  transition:width .18s linear,opacity .5s .3s}
+.att.ok .fbar,.att.bad .fbar{opacity:0}
+.tick{animation:pop .3s var(--ease) both;display:inline-block}
+@keyframes pop{from{opacity:0;scale:.5}to{opacity:1;scale:1}}
+.msg.user .att{box-shadow:none}
+
+.composer{display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;padding:6px 6px 6px 8px;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .25s}
+.composer:focus-within{border-color:var(--line2);box-shadow:var(--shadow-lift)}
+.composer input[type=text]{flex:1;border:0;background:none;outline:none;color:var(--ink);font:inherit;
+  font-size:15px;padding:10px 6px}
+.composer input[type=text]::placeholder{color:var(--faint)}
+.icon-btn{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:var(--faint);
+  transition:all .15s var(--ease);position:relative}
+.icon-btn:hover{background:var(--chip);color:var(--ink)}
+.icon-btn.has{color:var(--ink)}
+.icon-btn.has:after{content:"";position:absolute;top:5px;right:5px;width:6px;height:6px;border-radius:50%;
+  background:var(--pay);box-shadow:0 0 0 2px var(--panel)}
+.send{width:36px;height:36px;border-radius:11px;background:var(--accent);color:#fff;display:grid;place-items:center;
+  transition:transform .15s var(--ease),background .15s,opacity .2s}
+.send:hover{transform:translateY(-1px);background:#2f3033}
+.send[disabled]{opacity:.3;pointer-events:none}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px;justify-content:center}
+body.chatting .chips{justify-content:flex-start}
+.chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 13px;
+  font-size:12.5px;color:var(--mut);transition:all .16s var(--ease)}
+.chip:hover{color:var(--ink);border-color:var(--line2);transform:translateY(-1px);box-shadow:var(--shadow)}
+.hint{text-align:center;font-size:11.5px;color:var(--faint);margin-top:12px;transition:color .2s}
+.hint kbd{font-family:var(--mono);font-size:10.5px;border:1px solid var(--line);border-radius:4px;
+  padding:1px 5px;background:var(--panel)}
+.hint.busy{color:var(--esc)}
+.hint.ready{color:var(--pay)}
+
+/* ───────────────── invoices */
+.inv-head{display:flex;gap:9px;align-items:center;padding:14px 32px;border-bottom:1px solid var(--line);
+  flex-wrap:wrap}
+.search,.sel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px;
+  color:var(--ink);font:inherit;font-size:13.5px;outline:none;transition:border-color .15s var(--ease)}
+.search{flex:1;min-width:220px}
+.search:focus,.sel:focus{border-color:var(--line2)}
+.sel{max-width:210px;cursor:pointer}
+.seg{display:flex;background:var(--chip);border-radius:10px;padding:2px;gap:2px}
+.seg button{padding:6px 12px;border-radius:8px;font-size:12.5px;color:var(--mut);white-space:nowrap;
+  transition:background .16s var(--ease),color .16s var(--ease)}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:var(--shadow)}
+.inv-count{font-family:var(--mono);font-size:12px;color:var(--faint);margin-left:auto}
+
+.itbl{max-width:1040px;margin:0 auto}
+.ihead,.irow{display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(0,1.4fr) minmax(0,.95fr) 62px 96px 92px minmax(0,1fr);
+  gap:14px;align-items:center;padding:9px 12px;border-radius:8px}
+.ihead{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:600;
+  border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--bg);z-index:2}
+.irow{font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--line);cursor:pointer;
+  transition:background .14s var(--ease)}
+.irow:hover{background:var(--chip)}
+.irow .f{color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow .v,.irow .n,.irow .d,.irow .b{color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.irow .v{font-family:var(--sans);font-size:12.5px}
+.irow .a{text-align:right;color:var(--ink)}
+.irow .k{font-family:var(--sans);font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;justify-self:start;white-space:nowrap}
+.k.PAY{background:var(--pay-soft);color:var(--pay)}
+.k.ESCALATE{background:var(--esc-soft);color:var(--esc)}
+.k.DONOTPAY{background:var(--no-soft);color:var(--no)}
+.more{display:block;margin:18px auto 0;border:1px solid var(--line);background:var(--panel);
+  border-radius:9px;padding:8px 16px;font-size:13px;color:var(--mut)}
+.more:hover{background:var(--chip);color:var(--ink)}
+.empty-note{text-align:center;color:var(--faint);padding:46px;font-size:14px}
+
+/* ───────────────── the expediente: the real page beside what we read off it */
+.scrim{position:fixed;inset:0;background:rgba(43,31,22,.26);backdrop-filter:blur(2px);opacity:0;
+  pointer-events:none;transition:opacity .34s var(--ease);z-index:40}
+.scrim.on{opacity:1;pointer-events:auto}
+.dossier{position:fixed;top:0;right:0;height:100%;width:min(76vw,1180px);background:var(--bg);
+  border-left:1px solid var(--line2);box-shadow:-24px 0 60px rgba(43,31,22,.14);
+  transform:translateX(102%);transition:transform .42s var(--ease);z-index:41;
+  display:grid;grid-template-rows:auto 1fr}
+.dossier.on{transform:none}
+.dos-head{display:flex;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.dos-head .t{font-family:var(--mono);font-size:13px}
+.dos-head .sub{color:var(--mut);font-size:12.5px}
+.dos-head .x{margin-left:auto;width:30px;height:30px;border-radius:8px;display:grid;place-items:center;
+  color:var(--mut);font-size:15px}
+.dos-head .x:hover{background:var(--chip);color:var(--ink)}
+.dos-body{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:0}
+.dos-pdf{border-right:1px solid var(--line);background:var(--chip);min-height:0}
+.dos-pdf iframe{width:100%;height:100%;border:0;display:block}
+.dos-side{overflow:auto;padding:18px 22px 60px;min-width:0}
+.sec{margin-bottom:22px}
+.sec h5{margin:0 0 10px;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
+  font-weight:600}
+.sec dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 26px;margin:0}
+.sec dl div{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.sec dt{color:var(--faint);font-size:11.5px;white-space:nowrap}
+.sec dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.sec .why{font-size:14.5px;line-height:1.62}
+.chk{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:baseline;padding:8px 0;
+  border-bottom:1px dashed var(--line)}
+.chk .nm{font-size:12px;font-weight:600;letter-spacing:.04em}
+.chk .dt{font-family:var(--mono);font-size:11.5px;color:var(--mut);line-height:1.5}
+.chk .vd2{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;white-space:nowrap}
+.vd2.PASS{background:var(--pay-soft);color:var(--pay)}
+.vd2.BLOCKS{background:var(--no-soft);color:var(--no)}
+.tl{list-style:none;margin:0;padding:0;position:relative}
+.tl:before{content:"";position:absolute;left:4px;top:8px;bottom:12px;width:1px;background:var(--line2)}
+.tl li{position:relative;padding:0 0 14px 20px}
+.tl li:before{content:"";position:absolute;left:0;top:5px;width:9px;height:9px;border-radius:50%;
+  background:var(--panel);border:1.5px solid var(--line2)}
+.tl li.hot:before{background:var(--esc);border-color:var(--esc)}
+.tl .k2{font-size:11px;font-weight:600;letter-spacing:.06em}
+.tl .d2{font-size:12.5px;color:var(--mut);margin-top:1px}
+.tl .m2{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:3px}
+@media (max-width:1000px){
+  .dossier{width:96vw}
+  .dos-body{grid-template-columns:1fr;grid-template-rows:38% 1fr}
+  .dos-pdf{border-right:0;border-bottom:1px solid var(--line)}
+}
+
+/* ───────────────── other views */
+.scroll{overflow:auto;padding:26px 32px 50px}
+.page{max-width:800px;margin:0 auto}
+.page h2{margin:0 0 4px;font-size:20px;letter-spacing:-.02em;font-weight:600}
+.page .lede{color:var(--mut);font-size:14px;margin:0 0 20px;max-width:62ch}
+.soon{border:1px dashed var(--line2);border-radius:14px;padding:34px;text-align:center;color:var(--faint);font-size:14px}
+
+.drop-ov{position:absolute;inset:12px;border:1.5px dashed var(--ink);border-radius:18px;
+  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(3px);
+  display:none;place-items:center;z-index:30;text-align:center}
+.drop-ov.on{display:grid;animation:enter .18s var(--ease) both}
+.drop-ov h3{margin:0 0 6px;font-size:21px;letter-spacing:-.02em;font-weight:600}
+.drop-ov p{margin:0;color:var(--mut);font-size:14px}
+
+@media (max-width:760px){
+  .app{grid-template-columns:54px 1fr}
+  .nav-item span,.brand .who2{display:none}
+  .nav-item{justify-content:center;padding:9px 0}
+  .brand{grid-template-columns:32px;justify-content:center;padding:5px 0;margin-bottom:10px}
+  .thread,.composer-wrap,.scroll{padding-left:14px;padding-right:14px}
+  .hello h1{font-size:25px} .hello p{font-size:14.5px}
+  .row{grid-template-columns:26px 1fr auto 12px;gap:10px;padding:11px 14px}
+  .exp .drop{padding-left:20px}
+  .att .nm{max-width:160px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="brand" title="One desk. One Alberto. Enough drama for both.">
+      <span class="tile">A</span>
+      <span class="who2"><span class="k">Owner</span><span class="n">Albertito to guapo</span></span>
+    </div>
+    <nav class="nav" id="nav">
+      <button class="nav-item active" data-view="agent">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.8-.9L3 20.5l1.6-4.7A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
+        <span>Agent</span></button>
+      <button class="nav-item" data-view="invoices">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h5"/></svg>
+        <span>Invoices</span></button>
+      <button class="nav-item" data-view="summary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16.5A1.5 1.5 0 0 0 4.5 21H21"/><path d="M7.5 15.5v2M12 10v7.5M16.5 12.5v5M21 6.5v11"/></svg>
+        <span>Summary</span></button>
+      <button class="nav-item" data-view="rules">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-6M4 11V3M12 21v-9M12 8V3M20 21v-4M20 13V3"/><path d="M1.5 15h5M9.5 8h5M17.5 17h5"/></svg>
+        <span>Rules</span></button>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <section class="view on" id="view-agent">
+      <div class="thread" id="thread"></div>
+
+      <div class="composer-wrap">
+        <div class="composer-in">
+          <div class="hello">
+            <h1>Good morning, Alberto.</h1>
+            <p>I did the boring part while you slept. What is left needs an actual human, which is where you come in.</p>
+          </div>
+          <div class="tray" id="tray"></div>
+          <form class="composer" id="composer">
+            <input type="file" id="file" multiple accept=".pdf,.zip,application/pdf,application/zip" hidden>
+            <button class="icon-btn" type="button" id="clip" title="Attach a PDF or ZIP" aria-label="Attach">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.05l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.66 5.66l-9.2 9.2a2 2 0 0 1-2.83-2.83l8.5-8.5"/></svg>
+            </button>
+            <input type="text" id="q" autocomplete="off" placeholder="Ask me anything, throw me a batch, or invent a new rule…">
+            <button class="send" type="submit" id="send" aria-label="Send">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+            </button>
+          </form>
+          <div class="chips" id="chips"></div>
+          <div class="hint" id="hint">Drop a <kbd>.pdf</kbd> or a <kbd>.zip</kbd> anywhere</div>
+        </div>
+      </div>
+
+      <div class="drop-ov" id="dropov"><div><h3>Go on, let go</h3><p>.pdf or .zip · it waits in the box until you say send</p></div></div>
+    </section>
+
+    <section class="view" id="view-invoices">
+      <div class="inv-head">
+        <input type="search" id="inv-q" class="search" placeholder="Search a file, a supplier or an invoice number…">
+        <div class="seg" id="inv-action"></div>
+        <select id="inv-vendor" class="sel"></select>
+        <span class="inv-count" id="inv-count"></span>
+      </div>
+      <div class="scroll" id="inv-body"></div>
+    </section>
+
+    <section class="view" id="view-summary"><div class="scroll"><div class="page">
+      <h2>Summary</h2>
+      <p class="lede">One row per supplier: invoice count, amount, the mix of pay, escalate and do not pay, and the incident that costs the most time with each of them.</p>
+      <div class="soon">Next phase.</div>
+    </div></div></section>
+
+    <section class="view" id="view-rules"><div class="scroll"><div class="page" id="rules-page"></div></div></section>
+  </main>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="dossier" id="dossier" aria-hidden="true">
+  <div class="dos-head">
+    <span class="t" id="dos-file"></span>
+    <span class="sub" id="dos-sub"></span>
+    <button class="x" id="dos-x" aria-label="Close">✕</button>
+  </div>
+  <div class="dos-body">
+    <div class="dos-pdf"><iframe id="dos-frame" title="The invoice"></iframe></div>
+    <div class="dos-side" id="dos-side"></div>
+  </div>
+</aside>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const now = () => new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
+const KB = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, n >> 10) + ' KB';
+const EXT = n => (n.split('.').pop() || '').toUpperCase().slice(0, 3);
+
+const CHIPS = ['Which payments do I need to do today',
+               'Which invoices do I need to review',
+               "Show me today's report"];
+$('#chips').innerHTML = CHIPS.map(c => `<button class="chip">${esc(c)}</button>`).join('');
+
+$('#nav').addEventListener('click', e => {
+  const b = e.target.closest('.nav-item'); if (!b) return;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n === b));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
+  if (b.dataset.view === 'invoices' && !INV.rows.length) loadInvoices();
+});
+
+/* ───────────────── the dotted globe that turns while it thinks */
+function globe(host, px = 30, colour = '#2b1f16'){
+  const c = document.createElement('canvas');
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  c.width = px * dpr; c.height = px * dpr;
+  c.style.width = c.style.height = px + 'px';
+  host.prepend(c);
+  const g = c.getContext('2d');
+  g.scale(dpr, dpr);
+
+  const pts = [], LAT = 11, LON = 22;
+  for (let i = 1; i < LAT; i++){
+    const phi = Math.PI * i / LAT, y = Math.cos(phi), r = Math.sin(phi);
+    for (let j = 0; j < LON; j++){
+      const th = 2 * Math.PI * j / LON;
+      pts.push([Math.cos(th) * r, y, Math.sin(th) * r]);
+    }
+  }
+  const R = px * 0.40, cx = px / 2, cy = px / 2;
+  const tilt = -0.40, ct = Math.cos(tilt), st = Math.sin(tilt);
+  let a = 0, raf = 0;
+
+  (function tick(){
+    g.clearRect(0, 0, px, px);
+    const ca = Math.cos(a), sa = Math.sin(a);
+    for (let i = 0; i < pts.length; i++){
+      const p = pts[i];
+      const x = p[0] * ca - p[2] * sa, zr = p[0] * sa + p[2] * ca;   // spin on its axis
+      const y = p[1] * ct - zr * st,   z  = p[1] * st + zr * ct;     // tipped toward us
+      const depth = (z + 1) / 2;                                     // 0 far … 1 near
+      g.globalAlpha = 0.09 + depth * 0.86;
+      g.beginPath();
+      g.arc(cx + x * R, cy - y * R, 0.5 + depth * 0.85, 0, 6.2832);
+      g.fillStyle = colour;
+      g.fill();
+    }
+    a += 0.0135;
+    raf = requestAnimationFrame(tick);
+  })();
+  return () => cancelAnimationFrame(raf);
+}
+
+/* ───────────────── chat */
+const thread = $('#thread');
+const MIN_THINK = 4000;          // it never answers faster than this, however quick the model is
+let history = [], busy = false, staged = [];
+const scroll = () => { thread.scrollTop = thread.scrollHeight; };
+
+function bubble(html){
+  const d = document.createElement('div');
+  d.className = 'msg user';
+  d.innerHTML = `<div class="stack">${html}</div>`;
+  thread.append(d); scroll();
+  return d.querySelector('.stack');
+}
+
+function replyShell(){
+  const d = document.createElement('div');
+  d.className = 'msg';
+  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
+    <div class="say"></div><div class="blocks"></div><div class="meta"></div>`;
+  thread.append(d); scroll();
+  return d;
+}
+
+/* the globe waits in the thread, in the slot the answer will take */
+let waiting = null, cycle = 0;
+function think(labels){
+  const d = document.createElement('div');
+  d.className = 'msg';
+  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
+    <div class="say"><span class="think"><span class="lbl"></span></span></div>`;
+  thread.append(d);
+  const lbl = d.querySelector('.lbl');
+  const stop = globe(d.querySelector('.think'), 34, '#2f62d8');
+  let i = 0;
+  lbl.textContent = labels[0];
+  clearInterval(cycle);
+  cycle = setInterval(() => { lbl.textContent = labels[++i % labels.length]; }, 1900);
+  waiting = {el: d, stop};
+  scroll();
+}
+function unthink(){
+  clearInterval(cycle);
+  if (waiting){ waiting.stop(); waiting.el.remove(); waiting = null; }
+}
+
+/* Split on whitespace but keep it, so wrapping survives. */
+const tokenise = t => t.split(/(\s+)/).filter(x => x !== '');
+
+/* The globe holds for at least MIN_THINK. Then the sentence condenses in,
+   one word at a time, and only once it settles does the panel arrive. */
+async function consume(res, labels){
+  const t0 = Date.now();
+  let buf = '', pending = null, info = null, streamDone = false, failed = null;
+
+  const pump = (async () => {
+    try {
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      let raw = '';
+      for (;;){
+        const {done, value} = await reader.read();
+        if (done) break;
+        raw += dec.decode(value, {stream: true});
+        const parts = raw.split('\n\n'); raw = parts.pop();
+        for (const p of parts){
+          const line = p.trim(); if (!line.startsWith('data:')) continue;
+          let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+          if (ev.type === 'blocks' && ev.blocks && ev.blocks.length) pending = ev.blocks;
+          else if (ev.type === 'delta') buf += ev.text;
+          else if (ev.type === 'done') info = ev;
+        }
+      }
+    } catch (err){ failed = err; }
+    streamDone = true;
+  })();
+
+  await new Promise(r => {
+    (function wait(){
+      if (Date.now() - t0 >= MIN_THINK && (buf || streamDone)) return r();
+      setTimeout(wait, 90);
+    })();
+  });
+
+  unthink();
+  if (failed && !buf) buf = 'The desk did not answer (' + (failed.message || failed) + '). Nothing moved.';
+
+  const d = replyShell();
+  const say = d.querySelector('.say'), blocks = d.querySelector('.blocks'), meta = d.querySelector('.meta');
+
+  let out = 0;
+  await new Promise(r => {
+    (function step(){
+      const parts = tokenise(buf);
+      const limit = streamDone ? parts.length : Math.max(0, parts.length - 1);
+      if (out < limit){
+        const t = parts[out++];
+        if (/^\s+$/.test(t)) say.append(document.createTextNode(t));
+        else {
+          const w = document.createElement('span');
+          w.className = 'w'; w.textContent = t;
+          say.append(w);
+        }
+        scroll();
+        return setTimeout(step, /^\s+$/.test(t) ? 0 : 24);
+      }
+      if (!streamDone) return setTimeout(step, 50);
+      r();
+    })();
+  });
+
+  await pump;
+  if (info) meta.textContent = [info.model, info.ms != null ? info.ms + ' ms' : null,
+                                info.tokens ? info.tokens + ' tokens' : null].filter(Boolean).join(' · ');
+  if (pending){
+    const html = pending.map(panelHTML).join('');
+    setTimeout(() => { blocks.innerHTML = html; scroll(); }, 200);
+  }
+  scroll();
+  return buf;
+}
+
+const THINK_ASK   = ['Digging through the ledger', 'Arguing with the rules',
+                     'Making it make sense', 'Nearly there, Alberto'];
+const THINK_BATCH = ['Opening what you threw at me', 'Reading every last page',
+                     'Running them past the rules', 'Rounding up the awkward ones'];
+
+async function ask(text){
+  if (busy || !text.trim()) return;
+  busy = true; refreshSend();
+  document.body.classList.add('chatting');
+  bubble(`<div class="bubble">${esc(text)}</div>`);
+  think(THINK_ASK);
+  let out = '';
+  try {
+    out = await consume(await fetch('/api/chat', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text, history}),
+    }), THINK_ASK);
+  } catch (err){
+    unthink();
+    replyShell().querySelector('.say').textContent =
+      'The desk did not answer (' + (err.message || err) + '). Nothing moved.';
+  }
+  history.push({role: 'user', content: text}, {role: 'assistant', content: out});
+  busy = false; refreshSend();
+}
+
+/* ───────────────── attachments wait in the box until you send them */
+const tray = $('#tray');
+
+function refreshSend(){
+  const uploading = staged.some(s => !s.settled);
+  const hint = $('#hint');
+  $('#clip').classList.toggle('has', staged.length > 0);
+  $('#send').disabled = busy || uploading || (!$('#q').value.trim() && !staged.length);
+  hint.classList.toggle('busy', uploading);
+  hint.classList.toggle('ready', !uploading && staged.length > 0);
+  hint.innerHTML = uploading
+    ? 'Coming up the wire. Give it a second.'
+    : staged.length
+      ? `${staged.length} file${staged.length > 1 ? 's' : ''} in. Say something about ${staged.length > 1 ? 'them' : 'it'}, or just send.`
+      : 'Throw a <kbd>.pdf</kbd> or a <kbd>.zip</kbd> anywhere on this page';
+}
+
+function attach(file){
+  const el = document.createElement('div');
+  el.className = 'att';
+  el.innerHTML = `<span class="ico">${esc(EXT(file.name))}</span>
+    <span><span class="nm">${esc(file.name)}</span><span class="st">${KB(file.size)} · uploading</span></span>
+    <span class="pct">0%</span>
+    <button class="x" type="button" title="Remove">✕</button><i class="fbar"></i>`;
+  tray.append(el);
+
+  const item = {file, el, settled: false, result: null};
+  staged.push(item);
+  el.querySelector('.x').onclick = () => {
+    staged = staged.filter(s => s !== item);
+    el.remove(); refreshSend();
+  };
+  refreshSend();
+
+  const bar = el.querySelector('.fbar'), pctEl = el.querySelector('.pct'), stEl = el.querySelector('.st');
+  let answer = null, walked = false;
+
+  const settle = () => {
+    if (!answer || !walked) return;
+    const r = answer;
+    item.result = r; item.settled = true;
+    el.classList.add(r.ok ? 'ok' : 'bad');
+    bar.style.width = '100%';
+    const n = (r.invoices || []).length;
+    stEl.textContent = r.ok
+      ? `${KB(file.size)} · uploaded · ${n} invoice${n === 1 ? '' : 's'}`
+      : (r.reason || 'could not read it');
+    pctEl.innerHTML = `<span class="tick">${r.ok ? '✓' : '✕'}</span>`;
+    refreshSend();
+  };
+
+  // On localhost the bytes land instantly, which reads as nothing happening.
+  // The bar is walked over a couple of seconds so the transfer is legible.
+  const span = Math.min(6500, 2000 + file.size / 26000);
+  const t0 = Date.now();
+  (function walk(){
+    const p = Math.min(0.99, (Date.now() - t0) / span);
+    bar.style.width = (p * 100) + '%';
+    pctEl.textContent = Math.round(p * 100) + '%';
+    if (p < 0.99) return requestAnimationFrame(walk);
+    walked = true; settle();
+  })();
+
+  const x = new XMLHttpRequest();
+  x.open('POST', '/api/upload?name=' + encodeURIComponent(file.name));
+  x.onload = () => {
+    try { answer = JSON.parse(x.responseText); }
+    catch { answer = {ok: false, name: file.name, reason: 'the server could not make sense of it'}; }
+    settle();
+  };
+  x.onerror = () => { answer = {ok: false, name: file.name, reason: 'the upload gave up halfway'}; settle(); };
+  x.send(file);
+}
+
+const addFiles = list => { [...list].forEach(attach); $('#q').focus(); };
+
+async function sendBatch(text, items){
+  document.body.classList.add('chatting');
+  const stack = bubble(text ? `<div class="bubble">${esc(text)}</div>` : '');
+  items.slice().reverse().forEach(s => {          // prepend backwards to keep the order
+    const x = s.el.querySelector('.x'); if (x) x.remove();
+    stack.prepend(s.el);
+  });
+  staged = []; tray.innerHTML = '';
+  refreshSend(); scroll();
+
+  think(THINK_BATCH);
+  let out = '';
+  try {
+    out = await consume(await fetch('/api/batch', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({files: items.map(s => s.result), text, history}),
+    }), THINK_BATCH);
+  } catch (err){
+    unthink();
+    replyShell().querySelector('.say').textContent =
+      'The desk did not answer (' + (err.message || err) + '). Nothing moved.';
+  }
+  history.push({role: 'user',
+                content: (text ? text + ' — ' : '') + 'sent ' + items.map(s => s.file.name).join(', ')},
+               {role: 'assistant', content: out});
+}
+
+$('#composer').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (busy || staged.some(s => !s.settled)) return;
+  const text = $('#q').value.trim();
+  const items = staged.slice();
+  if (!text && !items.length) return;
+  $('#q').value = '';
+  if (items.length){
+    busy = true; refreshSend();
+    await sendBatch(text, items);
+    busy = false; refreshSend();
+  } else {
+    await ask(text);
+  }
+});
+$('#q').addEventListener('input', refreshSend);
+$('#chips').addEventListener('click', e => {
+  const c = e.target.closest('.chip'); if (c) ask(c.textContent);
+});
+$('#clip').addEventListener('click', () => $('#file').click());
+$('#file').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+
+/* ───────────────── panels */
+function actionsHTML(list){
+  return (list || []).map(a => {
+    const k = a.kind === 'primary' ? ' primary' : a.kind === 'danger' ? ' danger'
+            : a.kind === 'quiet' ? ' quiet' : '';
+    const bits = [`class="btn${k}"`];
+    if (a.kind === 'defer') bits.push('data-defer="1"');
+    if (a.act) bits.push(`data-act="${esc(a.act)}"`);
+    if (a.ask) bits.push(`data-ask="${esc(a.ask)}"`);
+    if (a.ui) bits.push(`data-ui="${esc(a.ui)}"`);
+    if (a.href) return `<a class="btn${k}" href="${esc(a.href)}" download>${esc(a.label)}</a>`;
+    return `<button ${bits.join(' ')}>${esc(a.label)}</button>`;
+  }).join('');
+}
+
+function tableHTML(t){
+  if (!t || !t.rows || !t.rows.length) return '';
+  const head = `<div class="th">${t.head.map((h, i) =>
+    `<span class="c c${i + 1}">${esc(h)}</span>`).join('')}</div>`;
+  const body = t.rows.map(row => `
+    <div class="frow">
+      <div class="tr">${row.cells.map((c, i) => `<span class="c c${i + 1}">${esc(c)}</span>`).join('')}</div>
+      <div class="fields"><div class="in"><dl>${(row.fields || []).map(([k, v]) =>
+        `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div></div>
+    </div>`).join('');
+  return `<div class="tbl">${head}${body}</div>`;
+}
+
+function rowHTML(r){
+  const open = r.detail || (r.actions && r.actions.length) || (r.table && r.table.rows.length);
+  const dot = r.state ? `<i class="dotk ${esc(String(r.state).split(' ')[0])}"></i>` : '';
+  const vd  = r.verdict ? `<span class="vd ${esc(r.verdict.replace(/[^A-Z]/g, ''))}">${esc(r.verdict)}</span>` : '';
+  const inner = `
+    <div class="row${open ? ' tap' : ''}"${r.key ? ` data-key="${esc(r.key)}"` : ''}>
+      <span class="lead">${esc(r.lead ?? '')}</span>
+      <span class="mid">
+        <span class="t">${dot}${esc(r.title)}${vd}</span>
+        ${r.sub ? `<span class="s">${esc(r.sub)}</span>` : ''}
+      </span>
+      <span class="v ${esc(r.tone || '')}">${esc(r.value ?? '')}</span>
+      ${open ? '<span class="chev"></span>' : '<span></span>'}
+    </div>`;
+  if (!open) return inner;
+  return `<div class="exp"${r.key ? ` data-key="${esc(r.key)}"` : ''}>${inner}
+    <div class="drop"><div class="in">
+      ${r.detail ? `<p>${esc(r.detail)}</p>` : ''}
+      ${tableHTML(r.table)}
+      ${r.actions ? `<div class="acts">${actionsHTML(r.actions)}</div>
+        <div class="reason"><div class="q">Why are you deferring? It leaves the queue and shows on the supplier's page.</div>
+        <div class="opts"><button>waiting on the supplier</button><button>waiting on Management</button>
+        <button>missing information</button><button>looking at it tomorrow</button></div></div>` : ''}
+    </div></div></div>`;
+}
+
+function panelHTML(b){
+  return `<div class="panel" data-panel="${esc(b.id)}">
+    <div class="panel-head"><h4>${esc(b.title)}</h4><span class="m">${esc(b.meta || '')}</span></div>
+    <div class="rows">${b.rows.map(rowHTML).join('')}</div>
+    ${b.actions ? `<div class="panel-foot">${actionsHTML(b.actions)}</div>` : ''}
+  </div>`;
+}
+
+/* A button now moves real state. The answer is deterministic and instant --
+   no model in the way of an action -- and most of them can be put back. */
+async function runAction(btn, act, key, reason){
+  const row = btn.closest('.acts, .panel-foot');
+  if (row) row.querySelectorAll('.btn').forEach(b => b.classList.add('done'));
+  btn.classList.remove('done');
+  btn.textContent = '…';
+
+  let res;
+  try {
+    res = await (await fetch('/api/action', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({act, key, reason}),
+    })).json();
+  } catch (err){
+    if (row) row.querySelectorAll('.btn').forEach(b => b.classList.remove('done'));
+    btn.textContent = 'Try again';
+    return;
+  }
+
+  btn.textContent = '✓';
+  say(res.said, res.undo);
+  if (res.panels) restate(res.panels);
+}
+
+/* A short line from the desk, with a way back if there is one. */
+function say(text, undoable){
+  const d = document.createElement('div');
+  d.className = 'msg';
+  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
+    <div class="say">${esc(text)}</div>
+    ${undoable ? '<div class="row-undo"><button class="btn" data-act="undo">Put it back</button></div>' : ''}`;
+  thread.append(d); scroll();
+}
+
+/* Every panel on screen is re-drawn from what the desk now holds, so the
+   queue you are looking at is never a stale copy of one you already acted on. */
+function restate(panels){
+  document.querySelectorAll('.panel[data-panel]').forEach(p => {
+    const fresh = panels[p.dataset.panel];
+    if (!fresh) return;
+    const open = [...p.querySelectorAll('.exp.open')].map(x => x.dataset.key);
+    p.outerHTML = panelHTML(fresh);
+    open.forEach(k => {
+      const el = document.querySelector(`.panel .exp[data-key="${k}"]`);
+      if (el) el.classList.add('open');
+    });
+  });
+}
+
+thread.addEventListener('click', async e => {
+  const askBtn = e.target.closest('[data-ask]');
+  if (askBtn) return ask(askBtn.dataset.ask);
+
+  const ui = e.target.closest('[data-ui]');
+  if (ui){
+    if (ui.dataset.ui === 'first'){
+      const first = ui.closest('.panel').querySelector('.exp');
+      if (first){ first.classList.add('open'); first.scrollIntoView({block: 'center', behavior: 'smooth'}); }
+    } else if (ui.dataset.ui === 'invoices'){
+      document.querySelector('.nav-item[data-view="invoices"]').click();
+    }
+    return;
+  }
+
+  const def = e.target.closest('[data-defer]');
+  if (def) return def.closest('.drop').querySelector('.reason').classList.toggle('open');
+
+  const opt = e.target.closest('.reason .opts button');
+  if (opt){
+    const exp = opt.closest('.exp');
+    exp.querySelector('.reason').classList.remove('open');
+    return runAction(exp.querySelector('[data-defer]'), 'defer', exp.dataset.key, opt.textContent);
+  }
+
+  const act = e.target.closest('[data-act]');
+  if (act){
+    const exp = act.closest('.exp');
+    return runAction(act, act.dataset.act, exp && exp.dataset.key);
+  }
+
+  const tr = e.target.closest('.tbl .tr');
+  if (tr){ tr.closest('.frow').classList.toggle('open'); return; }
+
+  const row = e.target.closest('.row.tap');
+  if (row) row.closest('.exp').classList.toggle('open');
+});
+
+/* ───────────────── invoices: the archive, and one invoice up close */
+const INV = {q: '', action: '', vendor: '', offset: 0, limit: 60, rows: [], total: 0};
+let invTimer = 0, invReady = false;
+
+const ACTS = [['', 'All'], ['PAY', 'Pay'], ['ESCALATE', 'Escalate'], ['DO NOT PAY', 'Do not pay']];
+$('#inv-action').innerHTML = ACTS.map(([v, l]) =>
+  `<button data-a="${esc(v)}"${v === '' ? ' class="on"' : ''}>${esc(l)}</button>`).join('');
+
+async function loadInvoices(more){
+  if (!more) INV.offset = 0;
+  const p = new URLSearchParams({q: INV.q, action: INV.action, vendor: INV.vendor,
+                                 offset: INV.offset, limit: INV.limit});
+  const d = await (await fetch('/api/invoices?' + p)).json();
+  INV.rows = more ? INV.rows.concat(d.rows) : d.rows;
+  INV.total = d.total;
+
+  if (!invReady){
+    $('#inv-vendor').innerHTML = `<option value="">Every supplier</option>` +
+      d.vendors.map(v => `<option value="${esc(v.id)}">${esc(v.name)} · ${v.n}</option>`).join('');
+    $('#inv-action').querySelectorAll('button').forEach(b => {
+      const k = b.dataset.a;
+      if (k) b.textContent += ' · ' + (d.counts[k] ?? 0);
+    });
+    invReady = true;
+  }
+  $('#inv-count').textContent = `${INV.total} of ${d.grand}`;
+
+  $('#inv-body').innerHTML = !INV.rows.length
+    ? `<div class="empty-note">Nothing matches that. Try a supplier name, or clear the filters.</div>`
+    : `<div class="itbl">
+        <div class="ihead"><span>File</span><span>Supplier</span><span>Invoice</span><span>Issued</span>
+          <span style="text-align:right">Amount</span><span>Action</span><span>What blocked it</span></div>
+        ${INV.rows.map(r => `<div class="irow" data-file="${esc(r.file)}">
+          <span class="f">${esc(r.file)}</span>
+          <span class="v">${esc(r.vendor)}</span>
+          <span class="n">${esc(r.number)}</span>
+          <span class="d">${esc(r.date)}</span>
+          <span class="a">${esc(money(r.total))}</span>
+          <span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>
+          <span class="b">${esc(r.blocking.length ? r.blocking.join(', ').toLowerCase() : '—')}</span>
+        </div>`).join('')}
+        ${INV.rows.length < INV.total
+          ? `<button class="more" id="inv-more">Show ${Math.min(INV.limit, INV.total - INV.rows.length)} more</button>`
+          : ''}
+      </div>`;
+}
+
+const money = n => '€' + Number(n).toLocaleString('en-GB',
+  {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+$('#inv-q').addEventListener('input', e => {
+  INV.q = e.target.value;
+  clearTimeout(invTimer); invTimer = setTimeout(() => loadInvoices(), 180);
+});
+$('#inv-action').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b) return;
+  $('#inv-action').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
+  INV.action = b.dataset.a; loadInvoices();
+});
+$('#inv-vendor').addEventListener('change', e => { INV.vendor = e.target.value; loadInvoices(); });
+$('#view-invoices').addEventListener('click', e => {
+  if (e.target.id === 'inv-more'){ INV.offset += INV.limit; return loadInvoices(true); }
+  const row = e.target.closest('.irow');
+  if (row) openDossier(row.dataset.file);
+});
+
+/* the expediente: the real page on the left, what we read off it on the right */
+async function openDossier(file){
+  const d = await (await fetch('/api/dossier?file=' + encodeURIComponent(file))).json();
+  const r = d.row;
+  $('#dos-file').textContent = file;
+  $('#dos-sub').innerHTML = `${esc(r.vendor)} · ${esc(money(r.total))} ` +
+    `<span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>`;
+  $('#dos-frame').src = '/api/pdf?file=' + encodeURIComponent(file) + '#view=FitH';
+
+  const blocked = d.checks.filter(c => c.verdict === 'BLOCKS');
+  const why = blocked.length
+    ? `${blocked.map(c => c.name).join(' and ')} stopped it. ` +
+      blocked.map(c => c.detail).join('. ') + '.'
+    : `Nothing stopped it. All five checks passed under ruleset ${d.ruleset}, so it goes in the run.`;
+
+  $('#dos-side').innerHTML = `
+    <div class="sec"><h5>What I read off the page</h5>
+      <dl>${d.fields.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl></div>
+
+    <div class="sec"><h5>Why</h5><div class="why">${esc(why)}</div></div>
+
+    <div class="sec"><h5>Rules · ${d.checks.length} run · ${blocked.length} blocking</h5>
+      ${d.checks.map(c => `<div class="chk">
+        <span class="nm ${c.verdict === 'BLOCKS' ? 'NOPAY' : ''}">${esc(c.name)}</span>
+        <span class="dt">${esc(c.detail)}</span>
+        <span class="vd2 ${esc(c.verdict)}">${esc(c.verdict)}</span></div>`).join('')}</div>
+
+    <div class="sec"><h5>What happened · ${d.timeline.length} events · ${d.ms} ms · $${d.cost}</h5>
+      <ul class="tl">${d.timeline.map(t => `<li class="${t.kind === 'VERDICT' ? 'hot' : ''}">
+        <div class="k2">${esc(t.kind)}</div>
+        <div class="d2">${esc(t.detail)}</div>
+        <div class="m2">${esc(t.actor)} · ${t.ms} ms · $${t.cost.toFixed(5)}</div></li>`).join('')}</ul></div>`;
+
+  $('#dossier').classList.add('on'); $('#dossier').setAttribute('aria-hidden', 'false');
+  $('#scrim').classList.add('on');
+}
+
+function closeDossier(){
+  $('#dossier').classList.remove('on'); $('#dossier').setAttribute('aria-hidden', 'true');
+  $('#scrim').classList.remove('on');
+  setTimeout(() => { $('#dos-frame').src = 'about:blank'; }, 420);
+}
+$('#dos-x').addEventListener('click', closeDossier);
+$('#scrim').addEventListener('click', closeDossier);
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDossier(); });
+
+/* ───────────────── rules view */
+const RULES = [
+  ['VENDOR','ESCALATE','Supplier is active and the NIF and account match the master.','master = FINAL_v7 · account compared in full'],
+  ['DUPLICATES','DO NOT PAY','No invoice with the same number from the same supplier has been paid.','key = invoice number + supplier id'],
+  ['AMOUNT','ESCALATE','The total matches the purchase order and the tax adds up.','tolerance 0.5% · VAT 21%'],
+  ['DATES','ESCALATE','The due date falls inside the supplier’s agreed terms.','terms read from the master per supplier'],
+  ['MISSING','ESCALATE','A purchase order number is present and exists in the master.','no exception configured'],
+];
+const HIST = [
+  ['v3.1','v3.2','18 Sep 14:20','VAT tolerance raised to 0.5%','round the cents, a two cent gap is not a problem'],
+  ['v3.0','v3.1','16 Sep 09:05','DUPLICATES now blocks instead of escalating','if we already paid it, do not even ask me'],
+];
+$('#rules-page').innerHTML = `
+  <h2>Rules</h2>
+  <p class="lede">The engine is deterministic. These five checks, in this order, decide every invoice.
+     Nothing else does, and it does not have opinions. Change one and every past verdict
+     can be replayed against it, which is the only honest way to argue with me.</p>
+  <div class="panel" style="margin-top:0">
+    <div class="panel-head"><h4>Ruleset v3.2</h4><span class="m">sha256 9f2c1ab4 · 5 rules</span></div>
+    <div class="rows">${RULES.map(([n, f, t, p]) => `
+      <div class="exp"><div class="row tap">
+        <span class="lead mono">${esc(n.slice(0, 3))}</span>
+        <span class="mid"><span class="t">${esc(n)}</span><span class="s">${esc(t)}</span></span>
+        <span class="v ${f === 'DO NOT PAY' ? '' : 'warn'}">${esc(f)}</span><span class="chev"></span>
+      </div><div class="drop"><p class="mono" style="color:var(--mut)">${esc(p)}</p></div></div>`).join('')}</div>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><h4>What changed</h4><span class="m">${HIST.length} changes</span></div>
+    <div class="rows">${HIST.map(([a, b, w, t, s]) => `
+      <div class="row"><span class="lead mono">${esc(b)}</span>
+        <span class="mid"><span class="t">${esc(t)}</span><span class="s">you said: “${esc(s)}”</span></span>
+        <span class="v">${esc(w)}</span><span></span></div>`).join('')}</div>
+  </div>`;
+$('#view-rules').addEventListener('click', e => {
+  const row = e.target.closest('.row.tap');
+  if (row) row.closest('.exp').classList.toggle('open');
+});
+
+/* ───────────────── drop anywhere */
+const ov = $('#dropov'), main = document.querySelector('.main');
+let dc = 0;
+main.addEventListener('dragenter', e => { e.preventDefault(); dc++; ov.classList.add('on'); });
+main.addEventListener('dragover', e => e.preventDefault());
+main.addEventListener('dragleave', () => { if (--dc <= 0){ dc = 0; ov.classList.remove('on'); } });
+main.addEventListener('drop', e => {
+  e.preventDefault(); dc = 0; ov.classList.remove('on');
+  const f = e.dataTransfer && e.dataTransfer.files;
+  if (f && f.length) addFiles(f);
+});
+
+refreshSend();
+$('#q').focus();
+</script>
+</body>
+</html>
