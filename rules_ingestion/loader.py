@@ -14,9 +14,12 @@ renamed column and see it in the report instead of a silent wrong answer.
 from __future__ import annotations
 
 import csv
+import io
 import os
 import re
 from dataclasses import dataclass, field
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Dict, List, Optional
 
 import yaml
@@ -39,11 +42,26 @@ class LoadResult:
     schema: Dict[str, dict] = field(default_factory=dict)
     warnings: List[str] = field(default_factory=list)
     ruleset_version: str = "v3"
+    source_records: Dict[str, List[dict]] = field(default_factory=dict)
+    source_provenance: Dict[str, List[dict]] = field(default_factory=dict)
+    workbook_bytes: bytes = b""
+    source_config_bytes: bytes = b""
+
+
+def _cell_safe(value: Any) -> Any:
+    if isinstance(value, Decimal):
+        return format(value, "f")
+    if isinstance(value, (datetime, date)):
+        return value.isoformat()
+    if isinstance(value, bool) or value is None \
+            or isinstance(value, (str, int, float)):
+        return value
+    return str(value)
 
 
 def load_config(path: str) -> dict:
-    with open(path, "r", encoding="utf-8") as fh:
-        return yaml.safe_load(fh)
+    with open(path, "rb") as fh:
+        return yaml.safe_load(fh.read())
 
 
 def _apply_normalizers(row: dict, norm_map: Dict[str, str]) -> dict:
@@ -96,12 +114,26 @@ def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult) -> No
     table: Dict[str, dict] = {}
     dupes = 0
     blanks = 0
-    for raw in data:
+    captured: List[dict] = []
+    provenance: List[dict] = []
+    header_row = sheet_cfg.get("header_row") or 1
+    from openpyxl.utils import get_column_letter
+    for offset, raw in enumerate(data):
+        row_number = header_row + 1 + offset
         record: Dict[str, Any] = {}
+        cells: Dict[str, str] = {}
+        raw_values: Dict[str, Any] = {}
         for canonical, source_header in col_map.items():
             idx = index_of.get(source_header)
-            record[canonical] = raw[idx] if (idx is not None and idx < len(raw)) else None
+            if idx is not None:
+                cells[canonical] = f"{get_column_letter(idx + 1)}{row_number}"
+            value = raw[idx] if (idx is not None and idx < len(raw)) else None
+            raw_values[canonical] = _cell_safe(value)
+            record[canonical] = value
         record = _apply_normalizers(record, norm_map)
+        captured.append({k: _cell_safe(v) for k, v in record.items()})
+        provenance.append({"sheet": sheet_cfg["sheet"], "row": row_number,
+                           "cells": cells, "raw": raw_values})
         key_val = record.get(key_col)
         if key_val in (None, ""):
             blanks += 1
@@ -119,6 +151,8 @@ def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult) -> No
     if blanks:
         result.warnings.append(f"[{sheet_key}] {blanks} row(s) with blank key skipped")
     result.lookups[sheet_key] = table
+    result.source_records[sheet_key] = captured
+    result.source_provenance[sheet_key] = provenance
 
 
 def _load_norma(ws, norma_cfg: dict, result: LoadResult) -> None:
@@ -153,12 +187,19 @@ def load(config_path: str, base_dir: Optional[str] = None) -> LoadResult:
     """Load everything declared in sources.yaml. base_dir defaults to config dir."""
     import openpyxl
 
-    cfg = load_config(config_path)
+    with open(config_path, "rb") as fh:
+        config_bytes = fh.read()
+    cfg = yaml.safe_load(config_bytes)
     base_dir = base_dir or os.path.dirname(os.path.abspath(config_path))
     wb_path = os.path.join(base_dir, cfg["workbook"]["path"])
-    wb = openpyxl.load_workbook(wb_path, read_only=True, data_only=True)
+    with open(wb_path, "rb") as fh:
+        workbook_bytes = fh.read()
+    wb = openpyxl.load_workbook(io.BytesIO(workbook_bytes),
+                              read_only=True, data_only=True)
 
     result = LoadResult()
+    result.workbook_bytes = workbook_bytes
+    result.source_config_bytes = config_bytes
 
     # record which sheets we deliberately dropped (auditability)
     declared = {c["sheet"] for c in cfg["workbook"]["sheets"].values()}

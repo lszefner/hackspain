@@ -1,7 +1,8 @@
-# Albertito · frontend
+# tito.ai · frontend
 
-La web del trabajador digital: el muro de 500 baldosas, la traza de cada
-decisión, la bandeja de escalados y el manual de normas versionado.
+La web del trabajador digital: el listado crudo de facturas, la traza de cada
+decisión, la bandeja de escalados, los logs del pipeline y el manual de
+normas versionado.
 
 ```bash
 cd frontend
@@ -15,12 +16,15 @@ Candado de acceso: `SITE_ACCESS_CODE` (ver `.env.example`).
 
 | Ruta | Qué es | Rúbrica |
 |---|---|---|
-| `/` | Ficha de Albertito + KPIs (€ reales) + muro de 500 baldosas, filtros y selector de norma | demo + traza |
+| `/` | Redirige a `/facturas` | — |
+| `/facturas` | El listado crudo: etapa del pipeline, vía, proveedor, pedido, total, decisión, motivo, latencia y coste | traza |
 | `/expediente/[fileId]` | Una decisión de punta a punta: reglas con evidencia, campos, custodia (sha256), versiones, eventos | 20 traza |
 | `/bandeja` | Los 49 escalados; resolver como Alberto y borrador de email al proveedor (nunca toca outcomes.jsonl) | +10 bonus |
-| `/operacion` | Coste por ruta medido, proyecciones, diff entre normas, salud, parte de trabajo | 25 + 10 |
-| `/manual` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
-| `/manual/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
+| `/logs` | El registro de eventos: cuándo se ingirió, extrajo y decidió cada factura, filtrable | 20 traza |
+| `/finanzas` | Coste por ruta medido, proyecciones, diff entre normas, salud, parte de trabajo | 25 + 10 |
+| `/logica` | Las normas como fichas legibles, versionadas e inmutables, con versión activa | 35 producto |
+| `/logica/editor` | Redactar norma nueva: borrador → **ensayo en seco sobre las 500** → publicar y reprocesar | bonus |
+| `/muro` | La pared de 500 baldosas coloreada por resultado — la portada de la demo | demo |
 
 ## Arquitectura: la costura
 

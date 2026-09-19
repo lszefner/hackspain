@@ -4,7 +4,7 @@ import { eur, hora, num } from "@/lib/format";
 import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
 
-export const metadata = { title: "Operación · Albertito" };
+export const metadata = { title: "Finanzas · tito.ai" };
 export const dynamic = "force-dynamic";
 
 const coma = (n: number, dec = 2) => n.toFixed(dec).replace(".", ",");
@@ -22,7 +22,7 @@ export default async function OperacionPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight">Operación</h1>
+        <h1 className="text-2xl font-bold tracking-tight">Finanzas</h1>
         <p className="mt-1 text-sm text-muted">
           Coste medido (no estimado), capacidad, salud del sistema y qué cambia cuando cambia la norma.
         </p>

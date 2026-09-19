@@ -1,0 +1,183 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Immutable preliminary rule evaluation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "evaluation_id", "context_id", "context_sha256", "context_schema_version", "evaluation_date", "ruleset", "evaluator", "policy", "rule_results", "completeness", "outstanding_findings", "preliminary_decision"],
+  "properties": {
+    "schema_version": {"const": "evaluation-result/1"},
+    "evaluation_id": {"type": "string", "pattern": "^ev_[a-f0-9]{64}$"},
+    "context_id": {"type": "string", "pattern": "^dc_[a-f0-9]{64}$"},
+    "context_sha256": {"$ref": "#/$defs/hash"},
+    "context_schema_version": {"$ref": "#/$defs/name"},
+    "evaluation_date": {"type": "string", "format": "date"},
+    "ruleset": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "sha256", "ruleset_version", "policy_id"],
+      "properties": {
+        "source": {"$ref": "#/$defs/name"},
+        "sha256": {"$ref": "#/$defs/hash"},
+        "ruleset_version": {"$ref": "#/$defs/name"},
+        "policy_id": {"$ref": "#/$defs/name"}
+      }
+    },
+    "evaluator": {
+      "type": "object", "additionalProperties": false,
+      "required": ["version", "capability_version", "implementation_sha256"],
+      "properties": {
+        "version": {"$ref": "#/$defs/name"},
+        "capability_version": {"$ref": "#/$defs/name"},
+        "implementation_sha256": {"$ref": "#/$defs/hash"}
+      }
+    },
+    "policy": {
+      "type": "object", "additionalProperties": false,
+      "required": ["precedence", "verdict_semantics"],
+      "properties": {
+        "precedence": {"const": ["NO_PAGAR", "ESCALAR", "PAGAR"]},
+        "verdict_semantics": {
+          "const": {"PASS": "PAGAR", "NEEDS_REVIEW": "ESCALAR", "FAIL": "on_fail"}
+        }
+      }
+    },
+    "rule_results": {"type": "array", "items": {"$ref": "#/$defs/ruleResult"}},
+    "completeness": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled_rule_ids", "accounted_rule_ids", "all_enabled_accounted", "evaluation_complete", "approval_eligible"],
+      "properties": {
+        "enabled_rule_ids": {"$ref": "#/$defs/names"},
+        "accounted_rule_ids": {"$ref": "#/$defs/names"},
+        "all_enabled_accounted": {"type": "boolean"},
+        "evaluation_complete": {"type": "boolean"},
+        "approval_eligible": {"type": "boolean"}
+      }
+    },
+    "outstanding_findings": {"type": "array", "items": {"$ref": "#/$defs/finding"}},
+    "preliminary_decision": {"$ref": "#/$defs/decision"},
+    "decision_reasons": {
+      "type": "array", "minItems": 1,
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["code", "rule_id", "consequence", "explanation", "refs"],
+        "properties": {
+          "code": {"$ref": "#/$defs/name"},
+          "rule_id": {"oneOf": [{"$ref": "#/$defs/name"}, {"type": "null"}]},
+          "consequence": {"$ref": "#/$defs/decision"},
+          "explanation": {"$ref": "#/$defs/name"},
+          "refs": {"$ref": "#/$defs/refs"}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "name": {"type": "string", "minLength": 1},
+    "names": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/name"}},
+    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "pointer": {"type": "string", "pattern": "^(?:/(?:[^~/]|~[01])*)*$"},
+    "decision": {"enum": ["PAGAR", "ESCALAR", "NO_PAGAR"]},
+    "sourceRef": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source", "pointer"],
+      "properties": {
+        "source": {"$ref": "#/$defs/name"},
+        "pointer": {"$ref": "#/$defs/pointer"}
+      }
+    },
+    "ref": {
+      "oneOf": [
+        {"$ref": "#/$defs/sourceRef"},
+        {
+          "type": "object", "additionalProperties": false,
+          "required": ["field"],
+          "properties": {"field": {"$ref": "#/$defs/name"}}
+        }
+      ]
+    },
+    "refs": {"type": "array", "items": {"$ref": "#/$defs/ref"}},
+    "finding": {
+      "type": "object", "additionalProperties": false,
+      "required": ["code", "severity", "rule_ids", "refs"],
+      "properties": {
+        "code": {"$ref": "#/$defs/name"},
+        "severity": {"enum": ["info", "blocking"]},
+        "rule_ids": {"$ref": "#/$defs/names"},
+        "refs": {"$ref": "#/$defs/refs"}
+      }
+    },
+    "input": {
+      "type": "object", "additionalProperties": false,
+      "required": ["field", "fact_pointer", "state", "value"],
+      "properties": {
+        "field": {"$ref": "#/$defs/name"},
+        "fact_pointer": {"$ref": "#/$defs/pointer"},
+        "state": {"enum": ["present", "missing", "ambiguous", "invalid", "unavailable"]},
+        "value": {"type": ["string", "integer", "boolean", "array", "null"]}
+      },
+      "allOf": [{
+        "if": {"properties": {"state": {"const": "present"}}},
+        "then": {"properties": {"value": {"not": {"type": "null"}}}},
+        "else": {"properties": {"value": {"type": "null"}}}
+      }]
+    },
+    "trace": {
+      "type": "object", "additionalProperties": false,
+      "required": ["node", "operation", "input_refs", "result"],
+      "properties": {
+        "node": {"$ref": "#/$defs/pointer"},
+        "operation": {"$ref": "#/$defs/name"},
+        "input_refs": {"$ref": "#/$defs/refs"},
+        "result": {"enum": ["TRUE", "FALSE", "UNKNOWN", "NOT_EVALUATED"]},
+        "operands": {"type": "array"},
+        "computed_value": {"type": ["string", "integer", "boolean", "array", "null"]},
+        "tolerance": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)?$"},
+        "effective_params": {"type": "object"},
+        "required": {"type": "boolean"},
+        "reason_code": {"$ref": "#/$defs/name"},
+        "explanation": {"$ref": "#/$defs/name"},
+        "verdict": {"enum": ["PASS", "FAIL", "NEEDS_REVIEW", "BLOCKED"]}
+      }
+    },
+    "ruleResult": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule_id", "rule_ref", "capability_id", "status", "applicability", "compliance", "complete", "on_fail", "applied_consequence", "reason_codes", "explanation", "inputs", "evidence_refs", "trace"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/name"},
+        "rule_ref": {"$ref": "#/$defs/sourceRef"},
+        "capability_id": {"oneOf": [{"$ref": "#/$defs/name"}, {"type": "null"}]},
+        "status": {"enum": ["PASS", "VIOLATED", "NEEDS_REVIEW", "NOT_APPLICABLE", "BLOCKED", "UNSUPPORTED", "ERROR"]},
+        "applicability": {"enum": ["APPLICABLE", "NOT_APPLICABLE", "UNKNOWN", "NOT_EVALUATED"]},
+        "compliance": {"enum": ["PASS", "FAIL", "NEEDS_REVIEW", "NOT_EVALUATED"]},
+        "complete": {"type": "boolean"},
+        "on_fail": {"enum": ["ESCALAR", "NO_PAGAR", null]},
+        "applied_consequence": {"enum": ["PAGAR", "ESCALAR", "NO_PAGAR", null]},
+        "reason_codes": {"$ref": "#/$defs/names"},
+        "explanation": {"$ref": "#/$defs/name"},
+        "inputs": {"type": "array", "items": {"$ref": "#/$defs/input"}},
+        "evidence_refs": {"$ref": "#/$defs/refs"},
+        "trace": {"type": "array", "items": {"$ref": "#/$defs/trace"}}
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"status": {"const": "PASS"}}},
+          "then": {"properties": {"applicability": {"const": "APPLICABLE"}, "compliance": {"const": "PASS"}, "applied_consequence": {"const": "PAGAR"}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "VIOLATED"}}},
+          "then": {"properties": {"applicability": {"const": "APPLICABLE"}, "compliance": {"const": "FAIL"}, "on_fail": {"enum": ["ESCALAR", "NO_PAGAR"]}, "applied_consequence": {"enum": ["ESCALAR", "NO_PAGAR"]}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "NEEDS_REVIEW"}}},
+          "then": {"properties": {"applicability": {"const": "APPLICABLE"}, "compliance": {"const": "NEEDS_REVIEW"}, "applied_consequence": {"const": "ESCALAR"}}}
+        },
+        {
+          "if": {"properties": {"status": {"const": "NOT_APPLICABLE"}}},
+          "then": {"properties": {"applicability": {"const": "NOT_APPLICABLE"}, "compliance": {"const": "NOT_EVALUATED"}, "complete": {"const": true}, "applied_consequence": {"type": "null"}}}
+        },
+        {
+          "if": {"properties": {"status": {"enum": ["BLOCKED", "UNSUPPORTED", "ERROR"]}}},
+          "then": {"properties": {"compliance": {"const": "NOT_EVALUATED"}, "complete": {"const": false}, "applied_consequence": {"const": "ESCALAR"}}}
+        }
+      ]
+    }
+  }
+}

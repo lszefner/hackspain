@@ -1,0 +1,118 @@
+{
+  "approved": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "history.approved"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "history",
+    "payload": {
+      "complete": true,
+      "kind": "approved",
+      "records": []
+    },
+    "scope": "test snapshot"
+  },
+  "erp": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "order.payment_status"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "erp",
+    "payload": {
+      "complete": true,
+      "records": [
+        {
+          "estado": "PENDIENTE",
+          "pedido": "PO-1"
+        }
+      ]
+    },
+    "scope": "test snapshot"
+  },
+  "orders": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "order.identity",
+      "order.amount",
+      "order.currency"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "order_master",
+    "payload": {
+      "records": [
+        {
+          "currency": "EUR",
+          "importe_total": "121.00",
+          "nif": "B12345678",
+          "pedido": "PO-1",
+          "proveedor_id": "P042"
+        }
+      ]
+    },
+    "scope": "test snapshot"
+  },
+  "paid": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "history.paid"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "history",
+    "payload": {
+      "complete": true,
+      "kind": "paid",
+      "records": []
+    },
+    "scope": "test snapshot"
+  },
+  "processed": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "history.processed"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "history",
+    "payload": {
+      "complete": true,
+      "kind": "processed",
+      "records": []
+    },
+    "scope": "test snapshot"
+  },
+  "suppliers": {
+    "as_of": null,
+    "asserted_by": "configured-source",
+    "authoritative_for": [
+      "supplier.identity",
+      "supplier.bank_details",
+      "supplier.payment_terms",
+      "supplier.active"
+    ],
+    "availability": "available",
+    "captured_at": "2026-09-19T10:00:00Z",
+    "kind": "supplier_master",
+    "payload": {
+      "records": [
+        {
+          "condiciones": "30 dias",
+          "iban": "ES9121000418450200051332",
+          "id": "P042",
+          "nif": "B12345678"
+        }
+      ]
+    },
+    "scope": "test snapshot"
+  }
+}

@@ -181,12 +181,13 @@ export interface FacturaFila {
   nif: string | null;
   pedido: string | null;
   total_cent: number | null;
-  result: Resultado;
+  /** null = aún sin decidir (recién ingerida, espera la próxima pasada) */
+  result: Resultado | null;
   motivo: string | null;
   latencia_ms: number;
   coste_eur: number;
   intentos: number;
-  decidida_at: string;
+  decidida_at: string | null;
 }
 
 /** Un evento del registro, con la factura resuelta para poder enlazarla. */
