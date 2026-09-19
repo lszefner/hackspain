@@ -153,12 +153,15 @@ def main(argv: list[str] | None = None) -> int:
         from alberto.web import datos as wdatos
         from alberto.web.servidor import servir
         if a.instantanea:
-            snap = wdatos.instantanea(con, lote=a.lote)
+            # OJO: no llamarla `snap`. El modulo importa `snapshot as snap`
+            # arriba, y una asignacion aqui lo convierte en local de main():
+            # `alberto decide` moria con UnboundLocalError sin tocar la web.
+            instante = wdatos.instantanea(con, lote=a.lote)
             a.instantanea.parent.mkdir(parents=True, exist_ok=True)
             a.instantanea.write_text(
-                json.dumps(snap, ensure_ascii=False, default=str), encoding="utf-8")
+                json.dumps(instante, ensure_ascii=False, default=str), encoding="utf-8")
             ver({"instantanea": str(a.instantanea),
-                 "facturas": len(snap["facturas"]),
+                 "facturas": len(instante["facturas"]),
                  "bytes": a.instantanea.stat().st_size})
             return 0
         return servir(a.db, puerto=a.puerto, lote=a.lote, caja=a.caja,
