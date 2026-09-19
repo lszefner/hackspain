@@ -1,7 +1,7 @@
 /**
  * LA COSTURA. Las páginas consumen únicamente esta interfaz.
- * Hoy la implementa el mock; enchufar alberto.db es escribir una segunda
- * DataSource (better-sqlite3 o fetch al FastAPI) sin tocar ninguna vista.
+ * Implementaciones: mock, `alberto` (SQLite web) y `engine` (`backend.server`).
+ * Enchufar otra fuente es escribir un DataSource sin tocar ninguna vista.
  */
 import type {
   Baldosa, CambioNorma, Coste, Escalado, EventoLog, Expediente, FacturaFila,
@@ -273,11 +273,10 @@ const mockSource: DataSource = {
 };
 
 // ── eleccion de fuente ──────────────────────────────────────────────
-// Con NEXT_PUBLIC_API_BASE apuntando a `alberto web`, las vistas leen
-// alberto.db: los mismos numeros que salen en outcomes.jsonl. Sin el, el
-// mock. El aviso de abajo es deliberado: una demo con datos inventados
-// delante del jurado es peor que no tener demo, asi que si caemos al mock
-// tiene que verse en la consola del servidor.
+// Preferencia: engine API (`backend.server`, probe /api/salud.postgres) →
+// alberto web (SQLite, /api/normas) → mock. Sin NEXT_PUBLIC_API_BASE, mock.
+// El aviso de abajo es deliberado: una demo con datos inventados delante
+// del jurado es peor que no tener demo.
 async function elegirFuente(): Promise<DataSource> {
   const base = process.env.NEXT_PUBLIC_API_BASE;
   if (!base) {
@@ -285,9 +284,18 @@ async function elegirFuente(): Promise<DataSource> {
     return mockSource;
   }
   try {
+    const { probeEngine, engineSource } = await import("./source/engine");
+    if (await probeEngine(base)) {
+      console.info(`[albertito] engine API desde ${base}`);
+      return engineSource;
+    }
+  } catch (e) {
+    console.warn(`[albertito] engine probe falló en ${base}`, e);
+  }
+  try {
     const { albertoSource, precargarNormas } = await import("./source/alberto");
     await precargarNormas();
-    console.info(`[albertito] datos reales desde ${base}`);
+    console.info(`[albertito] datos reales (alberto) desde ${base}`);
     return albertoSource;
   } catch (e) {
     console.warn(`[albertito] ${base} no responde -> DATOS DE MOCK`, e);

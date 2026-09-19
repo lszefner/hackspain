@@ -1,0 +1,150 @@
+{
+  "ejecucion": {
+    "captured_at": "2026-09-19T22:01:42.064057+02:00",
+    "error": null,
+    "evaluation_date_policy": "fixed",
+    "request_key": "intent-2",
+    "rule_generation": "generated",
+    "snapshots": {
+      "erp": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.payment_status"
+        ],
+        "availability": "unavailable",
+        "captured_at": "2026-09-19T22:01:42.064057+02:00",
+        "kind": "erp",
+        "scope": "erp capture failed (no_response)"
+      },
+      "orders": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "order.identity",
+          "order.amount"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:42.064057+02:00",
+        "kind": "order_master",
+        "scope": "workbook sheet 'Pedidos_2026'"
+      },
+      "source_mapping": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:42.064057+02:00",
+        "kind": "source_mapping",
+        "scope": "configured sources.yaml mapping"
+      },
+      "suppliers": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [
+          "supplier.identity",
+          "supplier.bank_details",
+          "supplier.payment_terms"
+        ],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:42.064057+02:00",
+        "kind": "supplier_master",
+        "scope": "workbook sheet 'Proveedores'"
+      },
+      "workbook": {
+        "as_of": null,
+        "asserted_by": "master-data-capture",
+        "authoritative_for": [],
+        "availability": "available",
+        "captured_at": "2026-09-19T22:01:42.064057+02:00",
+        "kind": "master_workbook",
+        "scope": "configured master workbook"
+      }
+    },
+    "state": "failed"
+  },
+  "etapas": [
+    {
+      "at": "2026-09-19T22:01:42.072368+02:00",
+      "estado": "hecha",
+      "etapa": "recibida",
+      "ref": "0d78912e-f412-4081-93a7-854d6318eb09"
+    },
+    {
+      "at": null,
+      "estado": "error",
+      "etapa": "extraida",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "pendiente",
+      "etapa": "evaluada",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "pendiente",
+      "etapa": "revisada",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "hecha",
+      "etapa": "emitida",
+      "ref": "ESCALAR"
+    },
+    {
+      "at": null,
+      "estado": "no_registrada",
+      "etapa": "resuelta",
+      "ref": null
+    },
+    {
+      "at": null,
+      "estado": "no_registrada",
+      "etapa": "pagada",
+      "ref": null
+    }
+  ],
+  "evaluacion": null,
+  "extraccion": {
+    "checks": null,
+    "cost_usd": null,
+    "determinista": {
+      "accepted": false,
+      "attempted": false,
+      "gaps": [
+        "no_text_layer_or_cascade_off"
+      ]
+    },
+    "error": {
+      "code": "synthetic_read_error",
+      "unknown_outcome": false
+    },
+    "factura": null,
+    "gaps": [],
+    "paginas": null,
+    "por_que_vision": [
+      "no_text_layer_or_cascade_off"
+    ],
+    "ruta": "vision",
+    "status": "failed",
+    "trabajos": []
+  },
+  "file_id": "invoice.pdf",
+  "identidad": {
+    "batch_id": "1f644a53-66f0-43ef-8fcc-347e2aec6f45",
+    "bytes": 9,
+    "input_id": "0d78912e-f412-4081-93a7-854d6318eb09",
+    "recibida_at": "2026-09-19T22:01:42.072368+02:00",
+    "sha256": "3c87d37f1dbea6909f917ce437c390fb8e655a774387d9e69301c0b2283d5b63"
+  },
+  "pago": null,
+  "resolucion": null,
+  "revision": null,
+  "salida": {
+    "basis": "no_evaluation",
+    "verdict": "ESCALAR"
+  }
+}
