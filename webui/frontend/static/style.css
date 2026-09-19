@@ -1,0 +1,17 @@
+body{font-family:system-ui,Arial,sans-serif;margin:24px;background:#f4f4f2;color:#222}
+h1{font-size:20px}
+.resumen{display:flex;gap:16px;margin:12px 0 20px}
+.tarjeta{background:#fff;border:1px solid #ddd;border-radius:6px;padding:10px 16px;min-width:110px}
+.tarjeta b{display:block;font-size:20px}
+table{border-collapse:collapse;width:100%;background:#fff}
+td,th{border:1px solid #ddd;padding:6px 10px;text-align:left;font-size:13px}
+th{background:#eee;position:sticky;top:0}
+.pendiente{color:#888}.procesando{color:#b8860b}.hecha{color:#1e7e1e}.error{color:#b00020}
+.PAGAR{color:#1e7e1e;font-weight:bold}.ESCALAR{color:#b8860b;font-weight:bold}.NO_PAGAR{color:#b00020;font-weight:bold}
+.PASS{color:#1e7e1e}.FAIL{color:#b00020;font-weight:bold}.NEEDS_REVIEW{color:#b8860b;font-weight:bold}
+form{display:inline}
+button{cursor:pointer;padding:6px 12px;border-radius:4px;border:1px solid #999;background:#fafafa}
+.aviso{background:#fff3cd;border:1px solid #e0c36a;padding:8px 12px;border-radius:6px;margin:10px 0}
+a{color:#0645ad;text-decoration:none}
+.checks{margin-top:12px}
+.check{border:1px solid #ddd;border-radius:6px;padding:8px 12px;margin-bottom:6px;background:#fff}

@@ -1,0 +1,14 @@
+<html><head><title>$file_id_esc</title><link rel="stylesheet" href="/static/style.css"></head><body>
+<p><a href="/">&larr; volver</a></p>
+<h1>$file_id_esc &middot; $decision_html</h1>
+$error_html
+<form method="post" action="/lanzar">
+  <input type="hidden" name="objetivo" value="una">
+  <input type="hidden" name="file_id" value="$file_id_esc">
+  <button $disabled>Volver a revisar</button>
+</form>
+<h3>Checks (rules_ingestion/checks.py)</h3>
+<div class="checks">$check_html</div>
+<h3>Campos extraidos (mapeados a rules_ingestion.invoice)</h3>
+<table>$campos_html</table>
+</body></html>
