@@ -148,7 +148,7 @@ el modelo de coste medido (T07) y cualquier cosa que envíe correo (T27).
 
 ## P0 · Sin esto no hay entrega
 
-- [ ] **T01 · `git init` y repo público** 👤P3 ⏱15m
+- [x] **T01 · `git init` y repo público** 👤P3 ⏱15m
   Crear el repo en GitHub **público** (el detector de stack de HackSpain se niega
   a escanear repos privados), `hackspain team repo <url>`, y que **cada uno haga
   su primer commit desde su propia cuenta vinculada**.
@@ -485,7 +485,7 @@ Estimación honesta si defendiéramos hoy: **~50-55 de 110**, con riesgo real de
 T28 → T29 → T02 → T30
 ```
 
-T01 ya está hecho: el repo es público y hay commits de los cuatro.
+T01 ✅ hecho: el repo es público y los cuatro figuran en `git shortlog -sn`.
 
 1. **T28 · blindar el lote 2.** Los tres fallos están localizados y leídos. Es
    T03 pero sin ensayar a ciegas.
