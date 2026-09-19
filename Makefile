@@ -5,7 +5,9 @@ LOTE2_ERP ?= ../lote_2_sorpresa/erp_export_lote2.csv
 ERP := $(PYTHON) alberto_erp.py --puerto $(ERP_PORT)
 
 .DEFAULT_GOAL := help
-.PHONY: help erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login
+POLICY ?= balanced
+SCAN_INPUT ?= rules_ingestion/eval/fixtures
+.PHONY: help erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
 
 help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
@@ -31,3 +33,37 @@ erp-login: ## Request and print a local ERP session token.
 	@curl --fail --silent --show-error -X POST "http://$(ERP_HOST):$(ERP_PORT)/erp/login" \
 		-d 'usuario=alberto' -d 'clave=FACTURAS2009'
 	@printf '\n'
+
+rules: ## Build outcome/<ver>/$(POLICY)/rules.json (POLICY=balanced|strict|conservative).
+	$(PYTHON) -m rules_ingestion.build_rules --policy "$(POLICY)"
+
+rules-offline: ## Same, fully offline (no JEV / LLM).
+	$(PYTHON) -m rules_ingestion.build_rules --policy "$(POLICY)" --no-jev --no-llm
+
+rules-all-policies: ## Build balanced + strict + conservative offline.
+	$(PYTHON) -m rules_ingestion.build_rules --policy balanced --no-jev --no-llm
+	$(PYTHON) -m rules_ingestion.build_rules --policy strict --no-jev --no-llm
+	$(PYTHON) -m rules_ingestion.build_rules --policy conservative --no-jev --no-llm
+
+scan: ## Discover rules in SCAN_INPUT; fold into outcome/<ver>/$(POLICY)/rules.json.
+	$(PYTHON) -m rules_ingestion.build_rules --policy "$(POLICY)" --scan "$(SCAN_INPUT)"
+
+scan-gen: ## Discover + codegen for NEW rules.
+	$(PYTHON) -m rules_ingestion.build_rules --policy "$(POLICY)" --scan "$(SCAN_INPUT)" --gen-code
+
+test: eval-score ## Alias: run eval offline score (baseline + traps + structural).
+
+eval-fixtures: ## Regenerate seeded eval fixtures (baseline / traps / structural).
+	$(PYTHON) -m rules_ingestion.eval.generate_fixtures
+
+eval-score: ## Score full pipeline offline against eval fixtures.
+	$(PYTHON) -m rules_ingestion.eval.score_pipeline --regen
+
+eval-score-live: ## Same with live JEV + DeepSeek (needs keys).
+	$(PYTHON) -m rules_ingestion.eval.score_pipeline --regen --live
+
+# Back-compat aliases
+e2e-fixtures: eval-fixtures
+e2e-score: eval-score
+e2e-score-live: eval-score-live
+
