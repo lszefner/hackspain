@@ -1023,3 +1023,51 @@ def summary():
         "touched": len(DECIDED),
         "ruleset": TOTALS["ruleset"],
     }
+
+
+# --------------------------------------------------------------------------- #
+# The ruleset, as it actually behaves. Not documentation: each rule carries
+# what it caught across the 500 invoices in the box.
+# --------------------------------------------------------------------------- #
+_ORDER = [
+    ("READABLE", "gate", "The page has a text layer at all.",
+     "Nothing else can run on a scan. It stops here and waits for OCR."),
+    ("DUPLICATES", "DO NOT PAY", "No invoice with this number has been paid before.",
+     "The only rule that refuses outright. Everything else brings it to you."),
+    ("VENDOR", "ESCALATE", "The account and the NIF on the page match the master.",
+     "A changed account is how invoice fraud actually works, so it never auto-pays."),
+    ("AMOUNT", "ESCALATE", "Base plus VAT reaches the total the page states.",
+     "Tolerance 0.5%. Where the page prints no VAT line it is taken as the difference."),
+    ("DATES", "ESCALATE", "There is a readable issue date, and the terms are known.",
+     ("It reports the due date but does not block: nothing records when an invoice "
+      "reached the desk, so calling it late would be a guess.")),
+    ("MISSING", "ESCALATE", "A purchase order number is on the page.",
+     "No exception configured. Turning one into a rule from a cluster adds it here."),
+]
+
+
+def rules_view():
+    rows = archive()
+    hit = {}
+    for r in rows:
+        for b in r["blocking"]:
+            slot = hit.setdefault(b, {"n": 0, "eur": 0.0})
+            slot["n"] += 1
+            slot["eur"] = round(slot["eur"] + r["total"], 2)
+
+    out = []
+    for i, (name, effect, does, note) in enumerate(_ORDER, 1):
+        got = hit.get(name, {"n": 0, "eur": 0.0})
+        out.append({"step": i, "name": name, "effect": effect, "does": does, "note": note,
+                    "n": got["n"], "eur": got["eur"],
+                    "share": round(got["n"] / len(rows) * 100, 1) if rows else 0})
+
+    extra = [r for r in RULES if r["name"] not in {o[0] for o in _ORDER}]
+    for j, r in enumerate(extra, len(out) + 1):
+        out.append({"step": j, "name": r["name"], "effect": r["on_fail"], "does": r["text"],
+                    "note": r["params"], "n": 0, "eur": 0.0, "share": 0, "added": True})
+
+    return {"version": TOTALS["ruleset"], "sha": TOTALS["ruleset_sha"],
+            "checked": len(rows), "clean": sum(1 for r in rows if not r["blocking"]),
+            "stopped": sum(1 for r in rows if r["blocking"]),
+            "rules": out, "history": RULE_HISTORY}

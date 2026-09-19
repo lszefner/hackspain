@@ -255,6 +255,60 @@ body.chatting .chips{justify-content:flex-start}
 .hint.busy{color:var(--esc)}
 .hint.ready{color:var(--pay)}
 
+/* ───────────────── rules */
+.rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:16px}
+.rhead h2{margin:0 0 5px;font-size:20px;letter-spacing:-.02em;font-weight:600}
+.rhead p{margin:0;font-size:13.5px;color:var(--mut);max-width:60ch;line-height:1.55}
+.stamp{text-align:right;white-space:nowrap}
+.stamp .vv{font-family:var(--mono);font-size:17px;letter-spacing:-.01em}
+.stamp .ss{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:2px}
+
+.chain{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow);margin-bottom:12px}
+.rule{border-bottom:1px solid var(--line)}
+.rule:last-child{border-bottom:0}
+.rule-top{display:grid;grid-template-columns:24px minmax(0,1fr) 96px 132px 12px;gap:14px;
+  align-items:center;width:100%;text-align:left;padding:10px 16px;
+  transition:background .15s var(--ease)}
+.rule-top:hover{background:var(--chip)}
+.rule.open .rule-top{background:var(--chip)}
+.rule .no{font-family:var(--mono);font-size:11px;color:var(--faint);text-align:right}
+.rule .mid3{display:flex;align-items:baseline;gap:13px;min-width:0}
+.rule .nm3{font-size:13px;font-weight:600;letter-spacing:.05em;flex:none}
+.rule .ds{font-size:12.5px;color:var(--mut);overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.rule .ef{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;justify-self:start;white-space:nowrap}
+.ef.ESCALATE{background:var(--esc-soft);color:var(--esc)}
+.ef.DONOTPAY{background:var(--no-soft);color:var(--no)}
+.ef.gate{background:var(--chip2);color:var(--mut)}
+.rule .ct{display:flex;align-items:center;gap:9px;justify-content:flex-end}
+.rule .ct .tk{width:56px;height:5px;border-radius:999px;background:var(--chip2);overflow:hidden}
+.rule .ct .tk i{display:block;height:100%;background:var(--accent);border-radius:999px}
+.rule .ct .nq{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums}
+.rule .ct .nq.zero{color:var(--faint)}
+.rule .cv3{width:6px;height:6px;border-right:1.5px solid var(--line2);border-bottom:1.5px solid var(--line2);
+  transform:rotate(-45deg);transition:transform .25s var(--ease);justify-self:center}
+.rule.open .cv3{transform:rotate(45deg)}
+.rule-body{display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows .4s var(--ease),opacity .28s var(--ease)}
+.rule.open .rule-body{grid-template-rows:1fr;opacity:1}
+.rule-body>.in3{overflow:hidden;min-height:0}
+.rule-body .pad3{padding:2px 16px 15px 54px;font-size:13.5px;line-height:1.6;color:var(--ink);max-width:74ch}
+.rule-body .amt3{font-family:var(--mono);font-size:12px;color:var(--mut);margin-top:9px}
+
+.hist{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  box-shadow:var(--shadow)}
+.hist h3{margin:0;padding:12px 16px;font-size:11px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--mut);font-weight:600;border-bottom:1px solid var(--line)}
+.hr2{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:14px;align-items:baseline;
+  padding:11px 16px;border-bottom:1px solid var(--line)}
+.hr2:last-child{border-bottom:0}
+.hr2 .vj{font-family:var(--mono);font-size:11.5px;color:var(--faint)}
+.hr2 .tt{font-size:13.5px}
+.hr2 .qq{font-size:12.5px;color:var(--mut);margin-top:2px;font-style:italic}
+.hr2 .wn{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap}
+
 /* ───────────────── summary */
 .wide{max-width:1060px;margin:0 auto}
 .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
@@ -558,7 +612,7 @@ body.chatting .chips{justify-content:flex-start}
 
     <section class="view" id="view-summary"><div class="scroll"><div class="wide" id="sum-body"></div></div></section>
 
-    <section class="view" id="view-rules"><div class="scroll"><div class="page" id="rules-page"></div></div></section>
+    <section class="view" id="view-rules"><div class="scroll"><div class="wide" id="rules-page"></div></div></section>
   </main>
 </div>
 
@@ -593,6 +647,7 @@ $('#nav').addEventListener('click', e => {
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
   if (b.dataset.view === 'invoices' && !invReady) loadInvoices();
   if (b.dataset.view === 'summary' && !sumReady) loadSummary();
+  if (b.dataset.view === 'rules' && !rulesReady) loadRules();
 });
 
 /* ───────────────── the dotted globe that turns while it thinks */
@@ -1364,42 +1419,58 @@ async function loadSummary(){
   sumReady = true;
 }
 
-/* ───────────────── rules view */
-const RULES = [
-  ['VENDOR','ESCALATE','Supplier is active and the NIF and account match the master.','master = FINAL_v7 · account compared in full'],
-  ['DUPLICATES','DO NOT PAY','No invoice with the same number from the same supplier has been paid.','key = invoice number + supplier id'],
-  ['AMOUNT','ESCALATE','The total matches the purchase order and the tax adds up.','tolerance 0.5% · VAT 21%'],
-  ['DATES','ESCALATE','The due date falls inside the supplier’s agreed terms.','terms read from the master per supplier'],
-  ['MISSING','ESCALATE','A purchase order number is present and exists in the master.','no exception configured'],
-];
-const HIST = [
-  ['v3.1','v3.2','18 Sep 14:20','VAT tolerance raised to 0.5%','round the cents, a two cent gap is not a problem'],
-  ['v3.0','v3.1','16 Sep 09:05','DUPLICATES now blocks instead of escalating','if we already paid it, do not even ask me'],
-];
-$('#rules-page').innerHTML = `
-  <h2>Rules</h2>
-  <p class="lede">The engine is deterministic. These five checks, in this order, decide every invoice.
-     Nothing else does, and it does not have opinions. Change one and every past verdict
-     can be replayed against it, which is the only honest way to argue with me.</p>
-  <div class="panel" style="margin-top:0">
-    <div class="panel-head"><h4>Ruleset v3.2</h4><span class="m">sha256 9f2c1ab4 · 5 rules</span></div>
-    <div class="rows">${RULES.map(([n, f, t, p]) => `
-      <div class="exp"><div class="row tap">
-        <span class="lead mono">${esc(n.slice(0, 3))}</span>
-        <span class="mid"><span class="t">${esc(n)}</span><span class="s">${esc(t)}</span></span>
-        <span class="v ${f === 'DO NOT PAY' ? '' : 'warn'}">${esc(f)}</span><span class="chev"></span>
-      </div><div class="drop"><p class="mono" style="color:var(--mut)">${esc(p)}</p></div></div>`).join('')}</div>
-  </div>
-  <div class="panel">
-    <div class="panel-head"><h4>What changed</h4><span class="m">${HIST.length} changes</span></div>
-    <div class="rows">${HIST.map(([a, b, w, t, s]) => `
-      <div class="row"><span class="lead mono">${esc(b)}</span>
-        <span class="mid"><span class="t">${esc(t)}</span><span class="s">you said: “${esc(s)}”</span></span>
-        <span class="v">${esc(w)}</span><span></span></div>`).join('')}</div>
-  </div>`;
+/* ───────────────── rules: the ruleset, and what it actually caught */
+let rulesReady = false;
+
+async function loadRules(){
+  const d = await (await fetch('/api/rules')).json();
+  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
+  const worst = Math.max(...d.rules.map(r => r.n), 1);
+
+  $('#rules-page').innerHTML = `
+    <div class="rhead">
+      <div>
+        <h2>Rules</h2>
+        <p>Six checks run on every invoice, in this order. The first one that stops it
+           decides, and nothing outside this list has a say. Change one and every verdict
+           can be replayed against it.</p>
+      </div>
+      <div class="stamp"><div class="vv">${esc(d.version)}</div>
+        <div class="ss">sha256 ${esc(d.sha)}</div>
+        <div class="ss">${d.checked} checked · ${d.stopped} stopped</div></div>
+    </div>
+
+    <div class="chain">${d.rules.map(r => `
+      <div class="rule" data-rule="${esc(r.name)}">
+        <button class="rule-top" type="button">
+          <span class="no">${r.step}</span>
+          <span class="mid3"><span class="nm3">${esc(r.name)}</span>
+            <span class="ds">${esc(r.does)}</span></span>
+          <span class="ef ${esc(r.effect.replace(/[^A-Za-z]/g, ''))}">${esc(r.effect)}</span>
+          <span class="ct">
+            <span class="tk"><i style="width:${r.n ? Math.max(6, r.n / worst * 100) : 0}%"></i></span>
+            <span class="nq${r.n ? '' : ' zero'}">${r.n}</span></span>
+          <span class="cv3"></span>
+        </button>
+        <div class="rule-body"><div class="in3"><div class="pad3">${esc(r.note)}
+          <div class="amt3">${r.n
+            ? `stopped ${r.n} of ${d.checked} · ${esc(eur0(r.eur))} held back · ${r.share}% of the box`
+            : (r.added ? 'added from a cluster, nothing has hit it yet'
+                       : 'nothing in the box fails this one')}</div>
+        </div></div></div>
+      </div>`).join('')}</div>
+
+    <div class="hist"><h3>What changed · ${d.history.length}</h3>
+      ${d.history.map(h => `<div class="hr2">
+        <span class="vj">${esc(h.from)} → ${esc(h.to)}</span>
+        <span><span class="tt">${esc(h.title)}</span><div class="qq">you said: “${esc(h.said)}”</div></span>
+        <span class="wn">${esc(h.when)}</span></div>`).join('')}</div>`;
+  rulesReady = true;
+}
+
 $('#view-rules').addEventListener('click', e => {
-  const row = e.target.closest('.row.tap');
-  if (row) row.closest('.exp').classList.toggle('open');
+  const top = e.target.closest('.rule-top');
+  if (top) top.closest('.rule').classList.toggle('open');
 });
 
 /* ───────────────── drop anywhere */

@@ -347,6 +347,9 @@ class Handler(SimpleHTTPRequestHandler):
                 limit=int((q.get("limit") or ["60"])[0]),
                 offset=int((q.get("offset") or ["0"])[0])))
 
+        if path == "/api/rules":
+            return self._json(state.rules_view())
+
         if path == "/api/summary":
             return self._json(state.summary())
 
