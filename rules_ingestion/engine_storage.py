@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import re
 
+from ingestion.artifact_cache import active_session, cached, forget, remember
 from ingestion.contracts import canonical_bytes, digest
 from ingestion.storage import PostgresRepository
 
@@ -17,6 +18,72 @@ WHERE r.record_id = %s
 
 
 class EngineRepository(PostgresRepository):
+    def save_artifact(self, *args, **kwargs):
+        from .decision_storage import _jsonable
+        row = super().save_artifact(*args, **kwargs)
+        remember(self, str(row['id']), canonical_bytes(_jsonable(row)))
+        return row
+
+    def get_artifact(self, artifact_id):
+        value = cached(self, str(artifact_id))
+        return json.loads(value) if value is not None else super().get_artifact(artifact_id)
+
+    def extraction_trace(self, input_id):
+        return self._rows('''SELECT j.*, COALESCE((
+SELECT jsonb_agg(to_jsonb(a) ORDER BY a.attempt_number) FROM ingestion.attempts a WHERE a.job_id = j.id
+), '[]'::jsonb) AS attempts FROM ingestion.jobs j WHERE j.input_id = %s''', (input_id,))
+
+    def record_local_job(self, *, batch_id, input_id, stage, source_hash, provider,
+                         model, config, settings, artifact_id, status, latency_seconds):
+        """Publish completed pure CPU work and its trace in one transaction.
+
+        No external effect is possible in this path; paid jobs retain leases,
+        pre-call attempts, recovery and unknown-outcome protection.
+        """
+        if (stage, provider) not in (('reading', 'native-text'), ('interpretation', 'deterministic')):
+            raise ValueError('only native deterministic stages may publish local jobs')
+        work_key = 'local-v1-' + digest(canonical_bytes({
+            'input_id': str(input_id), 'source_hash': source_hash, 'stage': stage,
+            'provider': provider, 'model': model, 'config': config, 'settings': settings}))
+        row = self._query('''WITH stored AS (
+ INSERT INTO ingestion.jobs
+ (batch_id,input_id,stage,input_artifact_hash,provider,model,config_version,prompt_version,
+  adapter_version,schema_hash,settings,work_key,state,max_attempts,attempt_count,artifact_id)
+ SELECT %s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,1,1,id
+ FROM ingestion.artifacts WHERE id = %s AND verified_at IS NOT NULL
+ ON CONFLICT (work_key) DO UPDATE SET updated_at = now() RETURNING *
+), attempt AS (
+ INSERT INTO ingestion.attempts (job_id,attempt_number,status,finished_at,latency_seconds,usage)
+ SELECT id,1,state,now(),%s,'{}'::jsonb FROM stored
+ ON CONFLICT (job_id,attempt_number) DO NOTHING
+) SELECT * FROM stored''', (
+            batch_id, input_id, stage, source_hash, provider, model,
+            config['version'], config['version'], config['version'],
+            config['schema_hashes']['reading' if stage == 'reading' else 'invoice'],
+            canonical_bytes(settings).decode(), work_key, status, artifact_id, latency_seconds))
+        if row is None:
+            raise ValueError('local job artifact is missing or unverified')
+        return row
+
+    def recent_erp_snapshot(self, cache_key):
+        return self._query('''SELECT * FROM ingestion.artifacts
+WHERE kind = 'engine-erp-cache' AND payload->>'cache_key' = %s
+AND created_at >= now() - interval '30 seconds'
+ORDER BY created_at DESC LIMIT 1''', (cache_key,))
+
+    def save_artifacts(self, values):
+        """One metadata round trip after all independent uploads verify."""
+        return self._rows('''
+INSERT INTO ingestion.artifacts
+(sha256,kind,object_key,content_type,byte_size,payload,parent_artifact_ids,verified_at)
+SELECT sha256,kind,object_key,content_type,byte_size,payload,parent_artifact_ids,now()
+FROM jsonb_to_recordset(%s::jsonb) AS x(
+ sha256 text,kind text,object_key text,content_type text,byte_size bigint,
+ payload jsonb,parent_artifact_ids uuid[])
+ON CONFLICT (sha256,kind) DO UPDATE SET updated_at = now()
+RETURNING *
+''', (canonical_bytes(values).decode(),))
+
     def _query(self, sql, params=()):
         from psycopg.rows import dict_row
 
@@ -33,8 +100,11 @@ class EngineRepository(PostgresRepository):
 
     def extraction(self, input_id: str, interpreter: str):
         return self._query('''
-SELECT i.*, r.artifact_id AS outcome_artifact_id, r.status AS outcome_status
+SELECT i.*, r.artifact_id AS outcome_artifact_id, r.status AS outcome_status,
+ to_jsonb(original) AS original_artifact, to_jsonb(outcome) AS outcome_artifact
 FROM ingestion.inputs i JOIN ingestion.input_results r ON r.input_id = i.id
+LEFT JOIN ingestion.artifacts original ON original.object_key = i.object_key AND original.kind = 'original'
+LEFT JOIN ingestion.artifacts outcome ON outcome.id = r.artifact_id
 WHERE i.id = %s AND r.interpreter = %s
 ''', (input_id, interpreter))
 
@@ -174,7 +244,8 @@ SELECT DISTINCT ON (i.file_name) i.file_name AS file_id, i.id AS input_id, i.bat
  r.artifact_id AS outcome_artifact_id,
  e.record_id AS evaluation_record_id, e.decision,
  v.record_id AS review_record_id, review_body.payload AS contextual_review,
- run.state AS run_state, run.error_code AS run_error, run.request_key
+ run.state AS run_state, run.error_code AS run_error, run.request_key,
+ run_input.payload->'review_policy' AS review_policy
 FROM ingestion.inputs i JOIN ingestion.batches b ON b.id = i.batch_id
 LEFT JOIN ingestion.input_results r ON r.input_id = i.id AND r.interpreter = b.config->>'interpreter'
 LEFT JOIN LATERAL (
@@ -188,6 +259,7 @@ LEFT JOIN LATERAL (
 LEFT JOIN ingestion.artifacts review_packet ON review_packet.id = v.artifact_id
 LEFT JOIN ingestion.artifacts review_body ON review_body.id = (review_packet.payload->'review'->>'artifact_id')::uuid
 LEFT JOIN ingestion.engine_runs run ON run.batch_id = i.batch_id
+LEFT JOIN ingestion.artifacts run_input ON run_input.id = run.input_artifact_id
 WHERE (%s::text IS NULL OR i.file_name = %s)
 ORDER BY i.file_name, i.created_at DESC, i.id DESC
 ''', (file_id, file_id))
@@ -209,6 +281,94 @@ class EngineStore:
     def __init__(self, repository: EngineRepository, storage):
         self.repository, self.storage = repository, storage
 
+    def put_many(self, items):
+        """Persist independent artifacts concurrently; publish packets afterwards."""
+        from concurrent.futures import ThreadPoolExecutor
+        from contextvars import copy_context
+
+        items = list(items)
+        if not items:
+            return []
+        specs = {}
+        order = []
+        for item in items:
+            data, kind, *rest = item
+            content_type = rest[0] if rest else 'application/json'
+            parents = list(rest[1]) if len(rest) > 1 else []
+            sha = digest(data)
+            key = (self.storage.object_key(data, kind, content_type) if hasattr(self.storage, 'object_key')
+                   else f'sha256/{sha[:2]}/{sha}/{kind}')
+            spec = {'sha256': sha, 'object_key': key, 'kind': kind, 'byte_size': len(data),
+                    'content_type': content_type, 'parent_artifact_ids': parents,
+                    'payload': json.loads(data) if content_type == 'application/json' else None}
+            if key in specs and specs[key][1] != spec:
+                raise ContextError('conflicting artifact metadata in batch')
+            specs[key] = (data, spec)
+            order.append(key)
+        alternatives = {key: key.removeprefix('postgres/') if key.startswith('postgres/')
+                        else 'postgres/' + key for key in specs}
+        candidates = list(specs) + list(alternatives.values())
+        existing = {row['object_key']: row for row in self.repository.artifacts_by_keys(candidates)}
+        for key in list(specs):
+            legacy = alternatives[key]
+            if key not in existing and legacy in existing:
+                data, spec = specs.pop(key)
+                specs[legacy] = (data, spec | {'object_key': legacy})
+                order = [legacy if value == key else value for value in order]
+
+        def persist(key):
+            data, spec = specs[key]
+            if key in existing:
+                ref = self.reference(existing[key])
+                if any(ref[k] != spec[k] for k in ('sha256', 'object_key', 'kind', 'byte_size', 'content_type')):
+                    raise ContextError('conflicting engine artifact metadata')
+                if active_session() and existing[key].get('verified_at') is not None:
+                    # The caller supplies the exact source bytes, and the
+                    # immutable object has already been durably verified.
+                    # Avoid re-downloading shared workbooks/schemas per invoice.
+                    self._verify(data, ref)
+                    remember(self.storage, key, data)
+                else:
+                    self._verify(self.storage.get(key), ref)
+                return
+            ref = self.storage.put(data, spec['kind'], spec['content_type'])
+            if any(getattr(ref, k) != spec[k] for k in ('sha256', 'object_key', 'kind', 'byte_size', 'content_type')):
+                raise ContextError('engine upload reference mismatch')
+            if not key.startswith('postgres/'):
+                self._verify(self.storage.get(key), spec)
+
+        with ThreadPoolExecutor(max_workers=min(8, len(items))) as pool:
+            futures = [pool.submit(copy_context().run, persist, key) for key in specs]
+            for future in futures:
+                future.result()
+        missing = [spec for key, (_, spec) in specs.items() if key not in existing]
+        if missing:
+            for row in self.repository.save_artifacts(missing):
+                existing[row['object_key']] = row
+        result = []
+        for key in order:
+            ref = self.reference(existing[key])
+            if any(ref[k] != specs[key][1][k] for k in ('sha256', 'object_key', 'kind', 'byte_size', 'content_type')):
+                raise ContextError('conflicting engine artifact metadata')
+            self._remember_row(existing[key])
+            if hasattr(self.storage, 'remember_persisted'):
+                self.storage.remember_persisted(existing[key])
+            result.append(ref)
+        return result
+
+    def _remember_row(self, row):
+        from .decision_storage import _jsonable
+        remember(self, str(row['id']), canonical_bytes(_jsonable(row)))
+
+    def _row(self, artifact_id):
+        value = cached(self, str(artifact_id))
+        if value is not None:
+            return json.loads(value)
+        row = self.repository.get_artifact(artifact_id)
+        if row is not None:
+            self._remember_row(row)
+        return row
+
     @staticmethod
     def reference(row: dict) -> dict:
         return {'artifact_id': str(row['id']), **{key: row[key] for key in
@@ -218,40 +378,62 @@ class EngineStore:
     def _verify(data: bytes, ref: dict):
         sha = digest(data)
         if (sha != ref['sha256'] or len(data) != ref['byte_size']
-                or ref['object_key'] != f"sha256/{sha[:2]}/{sha}/{ref['kind']}"):
+                or ref['object_key'].removeprefix('postgres/') != f"sha256/{sha[:2]}/{sha}/{ref['kind']}"):
             raise ContextError('engine artifact integrity failure')
 
-    def get(self, ref: dict) -> bytes:
-        row = self.repository.get_artifact(ref['artifact_id'])
-        if row is None or self.reference(row) != ref:
-            raise ContextError('engine artifact metadata mismatch')
+    def _data(self, row, ref, *, fresh=False):
+        if fresh:
+            forget(self.storage, ref['object_key'])
+        elif active_session() and row['content_type'] == 'application/json' and row.get('payload') is not None:
+            # Postgres stores these exact canonical bytes as well as their
+            # Storage copy. Verify the hash before using the durable projection.
+            data = canonical_bytes(row['payload'])
+            if digest(data) == ref['sha256']:
+                self._verify(data, ref)
+                return data
+            # Original JSON sources can contain significant noncanonical bytes
+            # (whitespace/number spelling). Their exact Storage copy is authority.
         data = self.storage.get(ref['object_key'])
         self._verify(data, ref)
         return data
 
+    def get(self, ref: dict, *, fresh=False) -> bytes:
+        row = self._row(ref['artifact_id'])
+        if row is None or self.reference(row) != ref:
+            raise ContextError('engine artifact metadata mismatch')
+        return self._data(row, ref, fresh=fresh)
+
     def ref(self, artifact_id: str) -> dict:
-        row = self.repository.get_artifact(artifact_id)
+        row = self._row(artifact_id)
         if row is None:
             raise ContextError('engine artifact missing')
         ref = self.reference(row)
-        self.get(ref)
+        self._data(row, ref)
         return ref
 
     def put(self, data: bytes, kind: str, content_type='application/json', parents=()) -> dict:
         ref = self.storage.put(data, kind, content_type)
         expected = {'sha256': digest(data), 'byte_size': len(data), 'kind': kind,
-                    'object_key': f'sha256/{digest(data)[:2]}/{digest(data)}/{kind}',
+                    'object_key': (self.storage.object_key(data, kind, content_type)
+                                   if hasattr(self.storage, 'object_key') else
+                                   f'sha256/{digest(data)[:2]}/{digest(data)}/{kind}'),
                     'content_type': content_type}
         if any(getattr(ref, key) != value for key, value in expected.items()):
             raise ContextError('engine upload reference mismatch')
-        self._verify(self.storage.get(ref.object_key), expected)
+        if not ref.object_key.startswith('postgres/'):
+            self._verify(self.storage.get(ref.object_key), expected)
         payload = None
         if content_type == 'application/json':
             payload = json.loads(data)
         row = self.repository.save_artifact(ref, payload=payload, parent_artifact_ids=parents)
         saved = self.reference(row)
+        if saved['object_key'].removeprefix('postgres/') == expected['object_key'].removeprefix('postgres/'):
+            expected['object_key'] = saved['object_key']
         if any(saved[key] != value for key, value in expected.items()):
             raise ContextError('conflicting engine artifact metadata')
+        self._remember_row(row)
+        if hasattr(self.storage, 'remember_persisted'):
+            self.storage.remember_persisted(row)
         return saved
 
     def save_packet(self, unsigned: dict) -> dict:

@@ -93,8 +93,15 @@ def db(postgres_dsn: str):
     psycopg = pytest.importorskip("psycopg")
     from ingestion.storage import PostgresRepository
 
+    # Other tests use postgres_dsn directly with separate mock Storage buckets.
+    # Isolate both metadata and bytes at the start of each repository fixture.
+    with psycopg.connect(postgres_dsn) as connection:
+        connection.execute("DROP SCHEMA IF EXISTS ingestion CASCADE")
+        for migration in MIGRATIONS:
+            connection.execute(migration.read_text(encoding="utf-8"))
     repository = PostgresRepository(postgres_dsn)
     yield repository
+    repository.close()
     with psycopg.connect(postgres_dsn) as connection:
         connection.execute("DROP SCHEMA IF EXISTS ingestion CASCADE")
         connection.commit()

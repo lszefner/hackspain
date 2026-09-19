@@ -187,11 +187,15 @@ class PostgresResultsStore:
 
         review = row.get('contextual_review') or {}
         status = review.get('status')
+        if (not status and row.get('evaluation_record_id')
+                and (row.get('review_policy') or {}).get('enabled') is False):
+            status = 'DISABLED'
         failed = (status == 'FAILED' or row['extraction_status'] in ('failed', 'unknown')
                   or (not status and row['run_state'] in ('completed', 'partial', 'failed', 'unknown')))
         return _jsonable(row) | {
-            'estado': 'error' if failed else 'hecha' if status in ('COMPLETED', 'INCOMPLETE') else 'procesando',
-            'review_status': status, 'attention_required': review.get('attention_required', True),
+            'estado': 'error' if failed else 'hecha' if status in ('COMPLETED', 'INCOMPLETE', 'DISABLED') else 'procesando',
+            'review_status': status, 'attention_required': (
+                row.get('decision') == 'ESCALAR' if status == 'DISABLED' else review.get('attention_required', True)),
             'error': review.get('error') or row.get('extraction_error') or row.get('run_error'),
             'raw_invoice': None, 'checks': None,
         }

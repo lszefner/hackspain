@@ -66,11 +66,26 @@ Requiere Supabase y configuración explícita por entorno (nunca dotenv): las
 credenciales de Supabase/ingestion, que también configuran la revisión
 contextual (`REVIEW_ENDPOINT`/`REVIEW_MODEL`/`REVIEW_API_KEY` solo si se quiere
 revisar con otro modelo o cuenta); la generación de reglas por defecto además
-pide `JEV_API_KEY`. Autoría de reglas y revisión corren en el mismo Helmcode
-que la extracción. Construye las reglas con el pipeline de IA, ejecuta la
-extracción persistida, el evaluador v2 y la revisión contextual obligatoria.
+pide `JEV_API_KEY` cuando no hay reglas guardadas para esas fuentes. Las reglas
+se reutilizan por hash del libro, mapeo, perfil y configuración del generador.
+Ejecuta la extracción persistida, el evaluador v2 y, por defecto, la revisión contextual.
 `--status-key INTENT` recupera una corrida durable sin los PDFs locales, y
 `python -m backend.server` sirve la API JSON sobre el mismo camino.
+
+Modo rápido (exportar estas variables desde el launcher; el backend no carga `.env`):
+
+```bash
+export REVISION_REVIEW_ENABLED=false
+export REVISION_JSON_STORAGE=postgres
+# Opcional: fijar las reglas de una ejecución completada; exige las mismas fuentes.
+export REVISION_RULESET_RUN_KEY=e2e-1d-221545
+```
+
+Con revisión desactivada, la salida es la del evaluador, incluido `PAGAR`, y la
+traza registra `DISABLED`. No se inventa una revisión ni se ejecuta un pago.
+Los JSON canónicos quedan durables en Postgres; PDFs y fuentes originales siguen
+en Storage privado. Los snapshots ERP completos se reutilizan como máximo 30 s,
+conservando su fecha original. Véase [medición y límites](docs/revision-fast-path.md).
 
 ## Dos terminales
 

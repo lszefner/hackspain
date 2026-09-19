@@ -8,6 +8,8 @@ import mimetypes
 import os
 import re
 import sys
+import time
+from contextlib import ExitStack
 from dataclasses import asdict
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -18,14 +20,18 @@ sys.path.insert(0, str(ROOT))
 # La Caja se resuelve en backend/caja_paths.py (caja/ viva, o la instantanea
 # mas reciente de caja_de_alberto/). El motor no depende del paquete alberto.
 from backend import caja_paths as _caja
+from backend.erp_cache import capture_cached_erp
 from backend.master_data import (
-    ErpClient,
-    capture_erp_snapshot,
+    ErpClient as ErpClient,  # noqa: PLC0414 - compatibility for existing backend callers
+)
+from backend.master_data import (
     capture_master_snapshots,
 )
 from backend.results_store import PostgresResultsStore
+from ingestion.artifact_cache import artifact_session
 from ingestion.config import credentials, settings
 from ingestion.contracts import Contracts, canonical_bytes, digest
+from ingestion.events import emit
 from ingestion.pipeline import Pipeline
 from rules_ingestion.decision_context import (
     ContextError,
@@ -119,14 +125,26 @@ def _freeze_snapshots(engine, snapshots):
     from rules_ingestion.decision_context import _snapshot_payload_bytes
 
     frozen = {}
+    names, items = [], []
     for name, snapshot in snapshots.items():
         metadata = asdict(snapshot)
         metadata.pop('payload')
         raw = _snapshot_payload_bytes(snapshot)
-        metadata['payload_artifact'] = (engine.archive.put(raw, 'engine-run-source', 'application/octet-stream')
-                                        if raw is not None else None)
+        metadata['payload_artifact'] = None
+        if raw is not None:
+            names.append(name)
+            items.append((raw, 'engine-run-source', 'application/octet-stream'))
         frozen[name] = metadata
+    for name, ref in zip(names, engine.archive.put_many(items)):
+        frozen[name]['payload_artifact'] = ref
     return frozen
+
+
+def _review_enabled():
+    value = os.environ.get('REVISION_REVIEW_ENABLED', 'true').strip().lower()
+    if value not in ('true', 'false', '1', '0'):
+        raise ValueError('REVISION_REVIEW_ENABLED must be true/false or 1/0')
+    return value in ('true', '1')
 
 
 async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
@@ -137,10 +155,13 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                        input_dir: str | Path | None = None,
                        engine: InvoiceDecisionEngine | None = None,
                        review_provider=None) -> dict:
+    from backend.rules_cache import generation_signature, reusable_rules
     from rules_ingestion import loader
-    from rules_ingestion.build_rules import build_frozen_rules
     from rules_ingestion.contextual_provider import review_provider_from_environment
 
+    started = time.monotonic()
+    timings = {}
+    enabled = _review_enabled()
     evaluation_date = _resolve_evaluation_date(evaluation_date)
     date_policy = 'issue-date' if evaluation_date == 'issue-date' else 'fixed'
     backend = backend or os.environ.get('REVISION_BACKEND') or 'supabase'
@@ -164,8 +185,6 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     if ruleset_bytes is None:
         profile_bytes = Path(profile_path or os.environ.get('REVISION_PROFILE_PATH')
                              or ROOT / 'rules_ingestion' / 'profiles' / 'balanced.yaml').read_bytes()
-        if any(not os.environ.get(key) for key in ('JEV_API_KEY', 'HELMCODE_API_KEY')):
-            raise ValueError('AI rule generation requires JEV_API_KEY and HELMCODE_API_KEY')
         rule_sources = [RuleSource('workbook.xlsx', loaded.workbook_bytes),
                         RuleSource('sources.yaml', loaded.source_config_bytes),
                         RuleSource('profile.yaml', profile_bytes)]
@@ -183,15 +202,18 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     config = settings(interpreter='deepseek', dpi=200, concurrency=3, ocr='helmcode-vision')
     config['schema_hashes'], config['schemas'] = contracts.hashes, contracts.schemas
     secrets = credentials(config)
-    provider = review_provider or review_provider_from_environment()
+    provider = (review_provider or review_provider_from_environment()) if enabled else None
+    rule_signature = generation_signature(loaded, profile_bytes) if ruleset_bytes is None else None
     documents = {file_id: digest((root / file_id).read_bytes()) for file_id in file_ids}
     signature = {'files': [{'file_id': name, 'sha256': sha} for name, sha in documents.items()],
                  'evaluation_date': evaluation_date, 'extraction_config': config,
                  'ruleset_sha256': digest(ruleset_bytes) if ruleset_bytes is not None else None,
                  'rule_sources': {source.name: digest(source.content) for source in rule_sources},
                  'master_workbook': digest(loaded.workbook_bytes), 'master_mapping': digest(loaded.source_config_bytes),
+                 'rule_generation_signature': rule_signature,
+                 'json_storage': os.environ.get('REVISION_JSON_STORAGE', 'storage'),
                  'reviewer': {'provider': provider.provider, 'model': provider.model,
-                              'endpoint': getattr(provider, 'endpoint', None)}}
+                              'endpoint': getattr(provider, 'endpoint', None)} if enabled else {'enabled': False}}
     request_sha = digest(canonical_bytes(signature))
     if store is not None:
         if engine is not None and engine is not store.engine:
@@ -201,57 +223,84 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
     engine = engine or InvoiceDecisionEngine.from_supabase()
     store = store or PostgresResultsStore(engine)
     repo = engine.repository
+    json_storage = os.environ.get('REVISION_JSON_STORAGE', 'storage')
+    if json_storage not in ('storage', 'postgres'):
+        if owned:
+            engine.close()
+        raise ValueError('REVISION_JSON_STORAGE must be storage or postgres')
+    previous_compact = engine.storage.compact_json
+    engine.storage.compact_json = json_storage == 'postgres'
     acquired = False
+    session = ExitStack()
+    session.enter_context(artifact_session())
+    snapshots_task = None
+    review_tasks = []
     try:
         claim, acquired = repo.claim_run(request_key, request_sha)
         if not acquired:
             return run_status(engine, request_key)
         captured_at = claim['created_at'].isoformat()
-        originals = {}
+        def capture_sources():
+            began = time.monotonic()
+            captured = capture_master_snapshots(str(sources_file), captured_at=captured_at, loaded=loaded)
+            captured['erp'], reused = capture_cached_erp(engine, captured_at=captured_at)
+            return captured, _freeze_snapshots(engine, captured), time.monotonic() - began, reused
+
+        snapshots_task = asyncio.create_task(asyncio.to_thread(capture_sources))
+        original_items = []
         for name, sha in documents.items():
             raw = (root / name).read_bytes()
             if digest(raw) != sha:
                 raise ContextError('PDF changed before durable capture')
-            originals[name] = engine.archive.put(raw, 'original', 'application/pdf')
-        source_refs = [{'name': source.name, **engine.archive.put(source.content, 'engine-rule-source', source.content_type)}
-                       for source in rule_sources]
+            original_items.append((raw, 'original', 'application/pdf'))
+        captured_refs = await asyncio.to_thread(engine.archive.put_many, original_items + [
+            (source.content, 'engine-rule-source', source.content_type) for source in rule_sources])
+        originals = dict(zip(documents, captured_refs[:len(documents)]))
+        source_refs = [{'name': source.name, **ref}
+                       for source, ref in zip(rule_sources, captured_refs[len(documents):])]
         run_input = {'schema_version': 'core-engine-run-input/1', 'request_key': request_key,
                      'request_sha256': request_sha, 'signature': signature, 'captured_at': captured_at,
                      'evaluation_date_policy': date_policy,
+                     'review_policy': {'enabled': enabled, 'disabled_output': 'evaluator'},
                      'originals': originals, 'rule_sources': source_refs,
                      'ruleset': engine.archive.put(ruleset_bytes, 'decision-source-ruleset', 'application/octet-stream')
                      if ruleset_bytes is not None else None,
                      'rule_generation': 'pinned' if ruleset_bytes is not None else 'pending'}
-        initial = engine._put_json(run_input, 'engine-run-input')
-        repo.set_run_input(request_key, request_sha, initial['artifact_id'])
+        rules_started = time.monotonic()
         if ruleset_bytes is None:
-            ruleset_bytes, audit = build_frozen_rules(loaded, profile_bytes, generated_at=captured_at)
-            _parse_ruleset(ruleset_bytes)
+            ruleset_bytes, audit, cached_rules, reused = await asyncio.to_thread(
+                reusable_rules, engine, loaded, profile_bytes, signature=rule_signature, sources=rule_sources)
             rule_sources = [*rule_sources, RuleSource('generation-audit.json', canonical_bytes(audit), 'application/json')]
-            run_input['rule_generation'] = engine._put_json(audit, 'engine-rule-generation')
-            run_input['ruleset'] = engine.archive.put(ruleset_bytes, 'decision-source-ruleset', 'application/octet-stream')
-        snapshots = capture_master_snapshots(str(sources_file), captured_at=captured_at, loaded=loaded)
-        snapshots['erp'] = capture_erp_snapshot(ErpClient(), captured_at=captured_at)
-        run_input['snapshots'] = _freeze_snapshots(engine, snapshots)
-        frozen = engine._put_json(run_input, 'engine-run-input', [initial['artifact_id']])
+            run_input['rule_generation'] = cached_rules['audit']
+            run_input['ruleset'] = cached_rules['ruleset']
+            run_input['rules_reused'] = reused
+        timings['rules_seconds'] = time.monotonic() - rules_started
+        snapshots, run_input['snapshots'], timings['snapshots_seconds'], erp_reused = await snapshots_task
+        run_input['erp_reused'] = erp_reused
+        frozen = engine._put_json(run_input, 'engine-run-input')
         repo.set_run_input(request_key, request_sha, frozen['artifact_id'])
         manifest = [{'relative_path': name, 'file_id': name, 'source_sha256': ref['sha256'],
                      'ordinal': i, 'error': None} for i, (name, ref) in enumerate(originals.items())]
         batch = repo.create_batch(manifest, config)
         repo.set_run_batch(request_key, request_sha, batch['id'])
-        for name, ref in originals.items():
-            repo.register_input(batch['id'], name, file_name=name, content_hash=ref['sha256'],
-                                object_key=ref['object_key'], size_bytes=ref['byte_size'])
+        for item in batch['manifest']:
+            name = item['relative_path']
+            ref = originals[name]
+            item['_registered_input'] = repo.register_input(
+                batch['id'], name, file_name=name, content_hash=ref['sha256'],
+                object_key=ref['object_key'], size_bytes=ref['byte_size'])
         pipeline = Pipeline(repo, engine.storage, contracts, config, secrets)
+        extraction_started = time.monotonic()
         await pipeline.run(batch)
+        timings['extraction_seconds'] = time.monotonic() - extraction_started
         rows_by_file = {}
         for row in repo.results(batch['id']):
             if row['file_name'] not in documents or row['interpreter'] != config['interpreter']:
                 raise ContextError('unexpected extraction result')
             rows_by_file.setdefault(row['file_name'], []).append(row)
         results = []
-        review_tasks = []
         review_slots = asyncio.Semaphore(3)
+        decisions_started = time.monotonic()
         for name in file_ids:
             result = {'file_id': name, 'evaluation_record_id': None, 'review_record_id': None,
                       'evaluation_date': None, 'error': None}
@@ -274,20 +323,28 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                         result['evaluation_date_fallback'] = True
                 result['evaluation_date'] = file_date
                 current = dict(snapshots)
-                current['processed'] = store.processed_history_snapshot(captured_at=captured_at, exclude_file_id=name)
-                evaluation = engine.evaluate(input_id=str(row['input_id']), interpreter=config['interpreter'],
+                current['processed'] = await asyncio.to_thread(
+                    store.processed_history_snapshot, captured_at=captured_at, exclude_file_id=name)
+                evaluation = await asyncio.to_thread(engine.evaluate, input_id=str(row['input_id']), interpreter=config['interpreter'],
                                              ruleset=ruleset_bytes, rule_sources=rule_sources, snapshots=current,
                                              evaluation_date=file_date, captured_at=captured_at)
                 result.update(evaluation_record_id=evaluation['record_id'], decision=evaluation['decision'])
 
+                if not enabled:
+                    result.update(review_status='DISABLED', attention_required=evaluation['decision'] == 'ESCALAR')
+                    results.append(result)
+                    continue
+
                 async def review_call(record_id=evaluation['record_id'],
                                       input_id=row['input_id']):
                     async with review_slots:
-                        return await engine.review(
+                        # Review persistence is synchronous. Isolate the whole
+                        # invocation so it cannot block other provider calls.
+                        return await asyncio.to_thread(lambda: asyncio.run(engine.review(
                             record_id, provider=provider,
                             request_key='run-' + digest(canonical_bytes(
                                 [request_key, str(input_id)])),
-                            reviewed_at=datetime.now(UTC).isoformat())
+                            reviewed_at=datetime.now(UTC).isoformat())))
 
                 review_tasks.append((result, asyncio.create_task(review_call())))
             except (ContextError, KeyError, ValueError) as exc:
@@ -296,7 +353,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
 
         async def fill_review(result, task):
             try:
-                review = await task
+                review = await asyncio.shield(task)
                 reviewed = engine._json(review['review'])
                 result.update(review_record_id=review['record_id'], review_status=reviewed['status'],
                               attention_required=reviewed['attention_required'], error=reviewed['error'])
@@ -305,18 +362,32 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
 
         await asyncio.gather(*(fill_review(result, task)
                                for result, task in review_tasks))
+        timings['evaluation_review_seconds'] = time.monotonic() - decisions_started
         failed = sum(bool(result['error']) for result in results)
         state = 'failed' if failed == len(results) else 'partial' if failed else 'completed'
         summary = {'request_key': request_key, 'batch_id': str(batch['id']), 'state': state,
-                   'revision_counts': {'stored': len(results) - failed, 'failed': failed}, 'files': results}
+                   'revision_counts': {'stored': len(results) - failed, 'failed': failed}, 'files': results,
+                   'review_enabled': enabled, 'rules_reused': run_input.get('rules_reused', True),
+                   'erp_reused': erp_reused,
+                   'timings': timings | {'before_summary_seconds': time.monotonic() - started}}
         ref = engine._put_json(summary, 'engine-run-result')
         repo.finish_run(request_key, request_sha, state, ref['artifact_id'])
+        emit('revision_completed', request_key=request_key, state=state,
+             latency_seconds=time.monotonic() - started, count=len(results))
         return summary
     except BaseException:
         if acquired:
             repo.unknown_run(request_key, request_sha)
         raise
     finally:
+        # A provider invocation in a worker thread cannot be cancelled safely.
+        # Finish already-started review tasks before closing their repository.
+        if review_tasks:
+            await asyncio.gather(*(task for _, task in review_tasks), return_exceptions=True)
+        if snapshots_task is not None:
+            await asyncio.gather(snapshots_task, return_exceptions=True)
+        session.close()
+        engine.storage.compact_json = previous_compact
         if owned:
             engine.close()
 

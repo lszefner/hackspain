@@ -1,9 +1,9 @@
 """Export per-invoice deliverable rows (JSONL) from the Postgres results store.
 
 One row per file: {"invoice", "output", "file_id", "result", "trace"}.
-The output policy is deliberate: an evaluator PAGAR is only delivered when a
-completed review leaves it unchallenged; review artifacts never authorize
-payment on their own, and an unreviewed PAGAR escalates.
+By default, an evaluator PAGAR requires an unchallenged completed review.
+A durably recorded disabled-review policy uses the evaluator result directly.
+Review artifacts and exported verdicts never execute a payment.
 """
 from __future__ import annotations
 
@@ -26,6 +26,9 @@ def decide_output(row: dict | None) -> tuple[str, str]:
     if decision != "PAGAR":
         return (decision if decision in ("NO_PAGAR", "ESCALAR") else "ESCALAR",
                 "evaluator")
+    policy = row.get('review_policy') or {}
+    if policy.get('enabled') is False and policy.get('disabled_output') == 'evaluator':
+        return 'PAGAR', 'evaluator_review_disabled'
     review = row.get("contextual_review") or {}
     status = row.get("review_status") or review.get("status")
     if status in ("COMPLETED", "INCOMPLETE"):

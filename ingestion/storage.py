@@ -15,10 +15,13 @@ import os
 import secrets
 import uuid
 from collections import OrderedDict
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import asdict, dataclass
 from threading import Lock
-from typing import Any, Callable, Iterable, Mapping
+from typing import Any
 from urllib.parse import quote
+
+from .artifact_cache import cached, remember
 
 try:  # psycopg is an installation dependency, but keep imports lazy for docs/tests.
     import psycopg
@@ -139,7 +142,8 @@ class SupabaseStorage:
         actual = downloaded.content
         actual_hash = sha256_bytes(actual)
         if actual_hash != digest or len(actual) != len(data):
-            raise IOError(f"immutable artifact verification failed for {object_key}")
+            raise OSError(f"immutable artifact verification failed for {object_key}")
+        remember(self, object_key, actual)
         ref = StorageRef(digest, object_key, len(data), content_type, safe_kind)
         with self._verified_lock:
             self._verified[object_key] = ref
@@ -174,9 +178,17 @@ class SupabaseStorage:
         return dict(payload)
 
     def get(self, object_key: str) -> bytes:
+        data = cached(self, object_key)
+        if data is not None:
+            return data
         response = self.client.get(self._url(object_key), headers=self._headers())
         response.raise_for_status()
-        return response.content
+        data = response.content
+        # Only content-addressed, verified bytes may enter the session cache.
+        parts = object_key.split('/')
+        if len(parts) == 4 and parts[0] == 'sha256' and sha256_bytes(data) == parts[2]:
+            remember(self, object_key, data)
+        return data
 
 
 class PostgresRepository:
@@ -548,6 +560,13 @@ class PostgresRepository:
 
         return self._run(op)
 
+    def artifacts_by_keys(self, keys):
+        def op(conn):
+            with conn.cursor(row_factory=dict_row) as cur:
+                cur.execute('SELECT * FROM ingestion.artifacts WHERE object_key = ANY(%s::text[])', (list(keys),))
+                return [dict(row) for row in cur.fetchall()]
+        return self._run(op)
+
     def complete(
         self,
         job_id: str | uuid.UUID,
@@ -565,38 +584,36 @@ class PostgresRepository:
         def op(conn: Any) -> dict[str, Any]:
             with conn.cursor(row_factory=dict_row) as cur:
                 cur.execute(
-                    "SELECT id, input_id, provider FROM ingestion.jobs WHERE id = %s AND lease_token = %s AND state = 'running' AND lease_expires_at > now()",
-                    (_uuid(job_id), _uuid(claim_token)),
-                )
-                job = self._one(cur)
-                if job is None:
-                    raise PermissionError("job is not owned by this lease")
-                cur.execute(
-                    "SELECT id FROM ingestion.artifacts WHERE id = %s AND verified_at IS NOT NULL",
-                    (_uuid(artifact_id),),
-                )
-                if self._one(cur) is None:
-                    raise ValueError("artifact does not exist or is not verified")
-                cur.execute(
-                    """UPDATE ingestion.jobs SET state = %s, artifact_id = %s, last_error = NULL, lease_owner = NULL,
-                      lease_token = NULL, lease_expires_at = NULL, updated_at = now()
-                      WHERE id = %s AND lease_token = %s
-                        AND state = 'running' AND lease_expires_at > now()
-                      RETURNING *""",
-                    (status, _uuid(artifact_id), _uuid(job_id), _uuid(claim_token)),
+                    """WITH completed AS (
+                      UPDATE ingestion.jobs SET state = %s, artifact_id = %s,
+                        last_error = NULL, lease_owner = NULL, lease_token = NULL,
+                        lease_expires_at = NULL, updated_at = now()
+                      WHERE id = %s AND lease_token = %s AND state = 'running'
+                        AND lease_expires_at > now()
+                        AND EXISTS (SELECT 1 FROM ingestion.artifacts
+                                    WHERE id = %s AND verified_at IS NOT NULL)
+                      RETURNING *
+                    ), finished_attempts AS (
+                      UPDATE ingestion.attempts a SET status = %s, finished_at = now(), error = %s::jsonb
+                      FROM completed j WHERE a.job_id = j.id
+                        AND (a.status = 'running' OR (a.status = 'unknown' AND a.attempt_number =
+                          (SELECT max(attempt_number) FROM ingestion.attempts WHERE job_id = j.id)))
+                      RETURNING a.id
+                    ) SELECT * FROM completed""",
+                    (status, _uuid(artifact_id), _uuid(job_id), _uuid(claim_token),
+                     _uuid(artifact_id), status, _json(error) if error else None),
                 )
                 result = self._one(cur)
                 if result is None:
-                    raise PermissionError("job lease expired before completion")
-                cur.execute(
-                    "UPDATE ingestion.attempts SET status = %s, finished_at = now(), error = %s::jsonb WHERE job_id = %s AND (status = 'running' OR (status = 'unknown' AND attempt_number = (SELECT max(attempt_number) FROM ingestion.attempts WHERE job_id = %s)))",
-                    (
-                        status,
-                        _json(error) if error else None,
-                        _uuid(job_id),
-                        _uuid(job_id),
-                    ),
-                )
+                    cur.execute(
+                        "SELECT id FROM ingestion.jobs WHERE id = %s AND lease_token = %s "
+                        "AND state = 'running' AND lease_expires_at > now()",
+                        (_uuid(job_id), _uuid(claim_token)),
+                    )
+                    if self._one(cur) is None:
+                        raise PermissionError("job is not owned by this lease")
+                    raise ValueError("artifact does not exist or is not verified")
+                job = result
                 if interpreter:
                     persisted_result_status = result_status or (
                         "completed" if status == "succeeded" else status

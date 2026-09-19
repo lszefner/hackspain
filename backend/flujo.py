@@ -82,7 +82,9 @@ def _ejecucion(engine, repo, row):
     ejecucion['evaluation_date_policy'] = frozen.get('evaluation_date_policy')
     generation = frozen.get('rule_generation')
     ejecucion['rule_generation'] = (
+        'reused' if frozen.get('rules_reused') else
         generation if generation in ('pinned', 'pending') else 'generated')
+    ejecucion['review_policy'] = frozen.get('review_policy')
     ejecucion['snapshots'] = {
         name: {key: _jsonable(value) for key, value in meta.items()
                if key != 'payload_artifact'}
@@ -149,6 +151,8 @@ def _evaluacion(engine, row):
 def _revision(engine, row):
     record_id = row.get('review_record_id')
     if not record_id:
+        if row.get('evaluation_record_id') and (row.get('review_policy') or {}).get('enabled') is False:
+            return {'record_id': None, 'status': 'DISABLED', 'reason': 'REVISION_REVIEW_ENABLED=false'}
         return None
     revision = {'record_id': record_id}
     packet, error = _load(lambda: engine.load(record_id))
@@ -218,6 +222,7 @@ def flujo(store, file_id: str, en_disco: bool = False) -> dict | None:
                ref=(row or {}).get('evaluation_record_id')),
         _etapa('revisada',
                'hecha' if review_status in ('COMPLETED', 'INCOMPLETE')
+               else 'desactivada' if review_status == 'DISABLED'
                else 'error' if review_status == 'FAILED' else 'pendiente',
                ref=(row or {}).get('review_record_id')),
         _etapa('emitida', 'hecha', ref=salida['verdict']),

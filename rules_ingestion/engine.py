@@ -6,8 +6,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from ingestion.artifact_cache import active_session, forget
 from ingestion.contextual_prompt import PROMPT_VERSION, SYSTEM_PROMPT
 from ingestion.contracts import canonical_bytes, digest
+from ingestion.json_storage import PostgresJsonStorage
 from ingestion.storage import SupabaseStorage
 
 from . import evaluator, execution_context
@@ -42,8 +44,9 @@ class RuleSource:
 
 class InvoiceDecisionEngine:
     def __init__(self, repository: EngineRepository, storage):
-        self.repository, self.storage = repository, storage
-        self.archive = EngineStore(repository, storage)
+        self.repository = repository
+        self.storage = PostgresJsonStorage(storage, repository)
+        self.archive = EngineStore(repository, self.storage)
 
     @classmethod
     def from_supabase(cls) -> InvoiceDecisionEngine:
@@ -77,13 +80,11 @@ class InvoiceDecisionEngine:
     def _extraction_graph(self, row, outcome, original_ref, outcome_ref):
         ids = {original_ref['artifact_id'], outcome_ref['artifact_id']}
         jobs = []
-        for job in self.repository.list_jobs(row['batch_id']):
-            if str(job['input_id']) != str(row['id']):
-                continue
+        for job in self.repository.extraction_trace(row['id']):
             if job.get('artifact_id'):
                 ids.add(str(job['artifact_id']))
             attempts = []
-            for attempt in self.repository.list_attempts(job['id']):
+            for attempt in job['attempts']:
                 ids.update(str(value) for value in attempt.get('raw_artifact_ids', []))
                 attempts.append({key: _jsonable(attempt.get(key)) for key in (
                     'id', 'attempt_number', 'provider_request_id', 'status', 'usage',
@@ -100,7 +101,7 @@ class InvoiceDecisionEngine:
             if artifact_id in refs:
                 continue
             refs[artifact_id] = self.archive.ref(artifact_id)
-            artifact = self.repository.get_artifact(artifact_id)
+            artifact = self.archive._row(artifact_id)
             ids.update(str(value) for value in artifact.get('parent_artifact_ids', []))
         return sorted(refs.values(), key=lambda r: r['artifact_id']), sorted(jobs, key=lambda j: j['id'])
 
@@ -121,16 +122,23 @@ class InvoiceDecisionEngine:
             raise ContextError('a completed durable extraction is required')
         if not row.get('object_key') or not row.get('content_hash') or not row.get('outcome_artifact_id'):
             raise ContextError('extraction lacks durable original or outcome')
-        original = self.repository.original(row['object_key'])
+        original = (row['original_artifact'] if active_session()
+                    else self.repository.original(row['object_key']))
         if original is None:
             raise ContextError('original PDF artifact is missing')
+        self.archive._remember_row(original)
+        if row['outcome_artifact'] is not None:
+            self.archive._remember_row(row['outcome_artifact'])
+        # Revalidate the durable extraction at the decision boundary, even when
+        # this request wrote it. Subsequent reads use this verified snapshot.
+        forget(self.storage, original['object_key'])
         original_ref = self.archive.ref(str(original['id']))
         if original_ref['sha256'] != row['content_hash'] or original_ref['byte_size'] != row['size_bytes']:
             raise ContextError('original PDF does not match input')
         outcome_ref = self.archive.ref(str(row['outcome_artifact_id']))
         if outcome_ref['kind'] != 'outcome':
             raise ContextError('extraction result is not an outcome artifact')
-        outcome = self._json(outcome_ref)
+        outcome = json.loads(self.archive.get(outcome_ref, fresh=True))
         file_id = row['file_name']
         if any((outcome if name is None else outcome.get(name) or {}).get('file_id') != file_id
                for name in (None, 'invoice', 'reading')):
@@ -140,22 +148,34 @@ class InvoiceDecisionEngine:
         bundle = execution_context.prepare_context(alignment)
         result = evaluator.evaluate(bundle).to_dict()
         refs, jobs = self._extraction_graph(row, outcome, original_ref, outcome_ref)
-        provenance = self._put_json({'input_id': str(row['id']), 'jobs': jobs, 'artifacts': refs},
-                                    'engine-extraction-provenance', [ref['artifact_id'] for ref in refs])
-        lineage = []
-        for source in sorted(rule_sources, key=lambda s: s.name):
-            ref = self.archive.put(source.content, 'engine-rule-source', source.content_type)
-            lineage.append({'name': source.name, **ref})
+        ordered_sources = sorted(rule_sources, key=lambda s: s.name)
+        context_sources = [(source_id, source) for source_id, source in bundle.context['sources'].items()
+                           if source['artifact_ref'] is not None]
+        json_values = {
+            'alignment_context': (alignment.context, 'engine-alignment-context'),
+            'evaluation': (result, 'engine-evaluation-result'),
+            'context_schema': (execution_context.load_schema(), 'engine-context-schema'),
+            'evaluation_schema': (evaluator.load_schema(), 'engine-evaluation-schema'),
+        }
+        stored = iter(self.archive.put_many(
+            [(s.content, 'engine-rule-source', s.content_type) for s in ordered_sources]
+            + [(bundle.artifacts[s['artifact_ref']], 'decision-source-' + s['kind'], 'application/octet-stream')
+               for _, s in context_sources]
+            + [(canonical_bytes(value), kind, 'application/json') for value, kind in json_values.values()]))
+        lineage = [{'name': source.name, **next(stored)} for source in ordered_sources]
         source_refs = {}
-        for source_id, source in bundle.context['sources'].items():
-            key = source['artifact_ref']
-            if key is None:
-                continue
-            ref = self.archive.put(bundle.artifacts[key], 'decision-source-' + source['kind'],
-                                   'application/octet-stream')
-            if ref['object_key'] != key or ref['sha256'] != source['sha256']:
+        for source_id, source in context_sources:
+            ref = next(stored)
+            if ref['object_key'] != source['artifact_ref'] or ref['sha256'] != source['sha256']:
                 raise ContextError('context source does not match archive')
             source_refs[source_id] = ref
+        json_refs = {name: next(stored) for name in json_values}
+        provenance, context_ref = self.archive.put_many([
+            (canonical_bytes({'input_id': str(row['id']), 'jobs': jobs, 'artifacts': refs}),
+             'engine-extraction-provenance', 'application/json', [ref['artifact_id'] for ref in refs]),
+            (canonical_bytes(bundle.context), 'engine-context', 'application/json',
+             [ref['artifact_id'] for ref in source_refs.values()]),
+        ])
         packet = {
             'schema_version': 'core-engine-record/1', 'kind': 'evaluation',
             'input_id': str(row['id']), 'batch_id': str(row['batch_id']), 'file_id': file_id,
@@ -165,11 +185,8 @@ class InvoiceDecisionEngine:
             'original': original_ref, 'outcome': outcome_ref,
             'extraction_provenance': provenance, 'extraction_artifacts': refs,
             'rule_source_lineage': {'basis': 'caller_attested', 'sources': lineage},
-            'alignment_context': self._put_json(alignment.context, 'engine-alignment-context'),
-            'context': self._put_json(bundle.context, 'engine-context', [ref['artifact_id'] for ref in source_refs.values()]),
-            'evaluation': self._put_json(result, 'engine-evaluation-result'),
-            'context_schema': self._put_json(execution_context.load_schema(), 'engine-context-schema'),
-            'evaluation_schema': self._put_json(evaluator.load_schema(), 'engine-evaluation-schema'),
+            **json_refs,
+            'context': context_ref,
             'sources': source_refs,
         }
         return self.archive.save_packet(packet)

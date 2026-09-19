@@ -2,9 +2,10 @@
 
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 _ALLOWED = {
+    "request_key",
     "batch_id",
     "input_id",
     "job_id",
@@ -29,7 +30,7 @@ _ALLOWED = {
 
 
 def emit(event: str, **fields):
-    record = {"event": event, "time": datetime.now(timezone.utc).isoformat()}
+    record = {"event": event, "time": datetime.now(UTC).isoformat()}
     record.update(
         {
             key: str(value) if key.endswith("_id") else value

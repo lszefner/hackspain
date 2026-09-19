@@ -19,6 +19,7 @@ from .deterministic import VERSION as DETERMINISTIC_VERSION
 from .deterministic import accept, extract, native_reading, strip_invisible
 from .events import emit
 from .export import export_bundle
+from .json_storage import PostgresJsonStorage
 from .manifest import discover
 from .normalization import normalize_invoice
 from .pdf import extract_text, render_pdf
@@ -48,7 +49,10 @@ class Pipeline:
 
     def artifact(self, value, kind, parents=()):
         ref = self.storage.put(canonical_bytes(value), kind, "application/json")
-        return self.repo.save_artifact(ref, payload=value, parent_artifact_ids=parents)
+        row = self.repo.save_artifact(ref, payload=value, parent_artifact_ids=parents)
+        if hasattr(self.storage, 'remember_persisted'):
+            self.storage.remember_persisted(row)
+        return row
 
     def bytes_artifact(self, value, kind, content_type):
         return self.repo.save_artifact(self.storage.put(value, kind, content_type))
@@ -61,6 +65,33 @@ class Pipeline:
         if digest(data) != artifact["sha256"]:
             raise StageError("artifact_hash_mismatch")
         return json.loads(data)
+
+    async def local_job(self, batch, entry, stage, source_hash, provider, model, operation, extra=None):
+        """Pure deterministic work needs a completed trace, not a paid-call lease."""
+        if not hasattr(self.repo, 'record_local_job'):
+            return await self.job(batch, entry, stage, source_hash, provider, model, operation, extra)
+        began = time.monotonic()
+        value = await operation({})
+        value.setdefault('latency_seconds', time.monotonic() - began)
+        value.setdefault('cost_usd', None)
+        value['attempts'] = 1
+
+        def persist():
+            artifact = self.artifact(value, stage)
+            job = self.repo.record_local_job(
+                batch_id=batch['id'], input_id=entry['id'], stage=stage,
+                source_hash=source_hash, provider=provider, model=model, config=self.config,
+                settings={'config': self.config, 'extra': extra or {}, 'input_id': str(entry['id'])},
+                artifact_id=artifact['id'], status='needs_review' if value.get('status') == 'needs_review' else 'succeeded',
+                latency_seconds=value['latency_seconds'])
+            return value if str(job['artifact_id']) == str(artifact['id']) else self.load_artifact(job['artifact_id'])
+        try:
+            result = await asyncio.to_thread(persist)
+        except Exception as exc:
+            raise StageError('local_stage_persistence_failed', unknown=True) from exc
+        emit('local_stage_completed', batch_id=batch['id'], input_id=entry['id'], stage=stage,
+             provider=provider, latency_seconds=value['latency_seconds'])
+        return result
 
     async def job(
         self, batch, entry, stage, source_hash, provider, model, operation, extra=None
@@ -255,7 +286,7 @@ class Pipeline:
             return await self._process_input(batch, item, reading_override)
 
     async def _process_input(self, batch, item, reading_override=None):
-        entry = self.repo.register_input(
+        entry = item.get('_registered_input') or self.repo.register_input(
             batch["id"],
             item["relative_path"],
             file_name=item["file_id"],
@@ -353,15 +384,12 @@ class Pipeline:
             original = Path(item["local_path"]).read_bytes()
         if digest(original) != item["source_sha256"]:
             raise StageError("source_hash_mismatch")
-        original_artifact = self.bytes_artifact(original, "original", "application/pdf")
-        entry = self.repo.register_input(
-            batch["id"],
-            item["relative_path"],
-            file_name=item["file_id"],
-            content_hash=item["source_sha256"],
-            object_key=original_artifact["object_key"],
-            size_bytes=len(original),
-        )
+        if not entry.get('object_key'):
+            original_artifact = self.bytes_artifact(original, "original", "application/pdf")
+            entry = self.repo.register_input(
+                batch["id"], item["relative_path"], file_name=item["file_id"],
+                content_hash=item["source_sha256"], object_key=original_artifact["object_key"],
+                size_bytes=len(original))
         try:
             page_texts = extract_text(original)
         except Exception:  # noqa: BLE001 - any parse failure means "no usable text layer"
@@ -398,29 +426,6 @@ class Pipeline:
                 },
             }
 
-        try:
-            reading_result = await self.job(
-                batch,
-                entry,
-                "reading",
-                item["source_sha256"],
-                "native-text",
-                "pdfium-text/1",
-                reading_op,
-                {"route": "deterministic"},
-            )
-        except StageError as exc:
-            return {
-                "extraction": {
-                    "route": "vision",
-                    "deterministic": {
-                        "attempted": True,
-                        "accepted": False,
-                        "gaps": [f"deterministic_error:{exc.code}"],
-                    },
-                }
-            }
-
         async def interpretation_op(attempt):
             extracted_gaps = []
             try:
@@ -455,16 +460,22 @@ class Pipeline:
             }
 
         try:
-            interpretation = await self.job(
-                batch,
-                entry,
-                "interpretation",
-                digest(canonical_bytes(reading)),
-                "deterministic",
-                DETERMINISTIC_VERSION,
-                interpretation_op,
+            # Both pure functions consume the already extracted text. Their
+            # independent persistence can overlap without moving any paid call.
+            completed = await asyncio.gather(
+                self.local_job(batch, entry, "reading", item["source_sha256"],
+                               "native-text", "pdfium-text/1", reading_op, {"route": "deterministic"}),
+                self.local_job(batch, entry, "interpretation", digest(canonical_bytes(reading)),
+                               "deterministic", DETERMINISTIC_VERSION, interpretation_op),
+                return_exceptions=True,
             )
+            for value in completed:
+                if isinstance(value, BaseException):
+                    raise value
+            reading_result, interpretation = completed
         except StageError as exc:
+            if exc.unknown:
+                raise  # Persistence uncertainty must not trigger a paid fallback.
             return {
                 "extraction": {
                     "route": "vision",
@@ -850,11 +861,11 @@ def runtime(config, contracts, *, needs_ocr=True, resources=None):
     repo = PostgresRepository(secrets["SUPABASE_DB_URL"])
     if resources is not None:
         resources.callback(repo.close)
-    storage = SupabaseStorage(
+    storage = PostgresJsonStorage(SupabaseStorage(
         secrets["SUPABASE_URL"],
         secrets["SUPABASE_SECRET_KEY"],
         os.getenv("SUPABASE_STORAGE_BUCKET", "invoice-ingestion-private"),
-    )
+    ), repo)
     if resources is not None:
         resources.callback(storage.client.close)
     return Pipeline(repo, storage, contracts, config, secrets)
@@ -925,9 +936,9 @@ async def _command(args, resources):
     # Use frozen schemas on resume/export; changing files cannot alter an accepted run.
     contracts = Contracts.from_snapshot(config["schemas"], config["schema_hashes"])
     if args.command == "export":
-        storage = SupabaseStorage(
+        storage = PostgresJsonStorage(SupabaseStorage(
             bucket=os.getenv("SUPABASE_STORAGE_BUCKET", "invoice-ingestion-private")
-        )
+        ), repo)
         resources.callback(storage.client.close)
         runner = Pipeline(repo, storage, contracts, config)
         result_map = {
