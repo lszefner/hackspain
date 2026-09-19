@@ -270,11 +270,11 @@ def test_backend_import_is_lazy_and_request_key_is_required(monkeypatch):
     from backend import server
 
     assert server.STORE is None
-    monkeypatch.setattr(server, '_procesando', False)
+    monkeypatch.setattr(server, '_processing', False)
     handler = object.__new__(server.Handler)
     with pytest.raises(ValueError, match='request_key'):
-        handler._lanzar({'objetivo': ['una'], 'file_id': ['invoice.pdf']})
-    assert server._procesando is False
+        handler._launch({'target': ['one'], 'file_id': ['invoice.pdf']})
+    assert server._processing is False
 
 
 @pytest.mark.asyncio
@@ -287,7 +287,7 @@ async def test_backend_read_api_uses_database_records(runtime, monkeypatch):
     handler = object.__new__(server.Handler)
     responses = []
     handler._json = lambda status, body: responses.append((status, body))
-    handler._factura('invoice.pdf')
+    handler._invoice('invoice.pdf')
     assert responses[0][0] == 200
     assert responses[0][1]['evaluation_record_id'] == result['files'][0]['evaluation_record_id']
     assert responses[0][1]['contextual_review']['payment_authorized'] is False

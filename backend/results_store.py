@@ -183,7 +183,7 @@ def _artifact_ref(ref):
     return {key: ref[key] for key in ("artifact_id", "sha256", "byte_size", "kind") if key in ref}
 
 
-def separar_estados(row):
+def separate_states(row):
     """The five axes of the contract, represented independently.
 
     Run execution, extraction, deterministic evaluation, contextual review and
