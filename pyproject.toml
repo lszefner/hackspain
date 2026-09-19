@@ -8,8 +8,12 @@ version = "0.1.0"
 description = "Evidence-linked invoice extraction with durable Supabase jobs"
 requires-python = ">=3.11"
 dependencies = [
-    "httpx>=0.28,<0.29",
     "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+worker = [
+    "httpx>=0.28,<0.29",
     "psycopg[binary,pool]>=3.2,<4",
     "pypdfium2>=4.30,<5",
     "python-dotenv>=1.0,<2",
@@ -24,6 +28,12 @@ dev = ["pytest>=8,<9", "pytest-asyncio>=0.25,<1", "ruff>=0.11,<1"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["ingestion"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"benchmark/schemas" = "ingestion/schemas"
+
+[tool.hatch.build.targets.sdist]
+include = ["ingestion", "benchmark/schemas", "pyproject.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

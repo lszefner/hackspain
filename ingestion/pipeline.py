@@ -7,6 +7,7 @@ import json
 import os
 import random
 import time
+from contextlib import ExitStack
 from pathlib import Path
 from urllib.parse import urlsplit
 
@@ -662,18 +663,27 @@ class Pipeline:
         return {"batch_id": str(batch["id"]), "counts": counts}
 
 
-def runtime(config, contracts, *, needs_ocr=True):
+def runtime(config, contracts, *, needs_ocr=True, resources=None):
     secrets = credentials(config, needs_ocr=needs_ocr)
     repo = PostgresRepository(secrets["SUPABASE_DB_URL"])
+    if resources is not None:
+        resources.callback(repo.close)
     storage = SupabaseStorage(
         secrets["SUPABASE_URL"],
         secrets["SUPABASE_SECRET_KEY"],
         os.getenv("SUPABASE_STORAGE_BUCKET", "invoice-ingestion-private"),
     )
+    if resources is not None:
+        resources.callback(storage.client.close)
     return Pipeline(repo, storage, contracts, config, secrets)
 
 
 async def command(args):
+    with ExitStack() as resources:
+        return await _command(args, resources)
+
+
+async def _command(args, resources):
     if args.command in ("ingest", "preflight"):
         contracts = Contracts(args.schema_dir)
         config = settings(
@@ -684,7 +694,7 @@ async def command(args):
         )
         config["schema_hashes"] = contracts.hashes
         config["schemas"] = contracts.schemas
-        runner = runtime(config, contracts)
+        runner = runtime(config, contracts, resources=resources)
         # A verified private storage write and DB read precede any paid work.
         runner.storage.preflight()
         runner.storage.put(
@@ -704,6 +714,7 @@ async def command(args):
         emit("batch_created", batch_id=batch["id"], count=len(manifest))
         return await runner.run(batch)
     repo = PostgresRepository(os.getenv("SUPABASE_DB_URL"))
+    resources.callback(repo.close)
     batch_id = args.reading_run if args.command == "interpret" else args.batch
     batch = repo.get_batch(batch_id)
     if not batch:
@@ -735,6 +746,7 @@ async def command(args):
         storage = SupabaseStorage(
             bucket=os.getenv("SUPABASE_STORAGE_BUCKET", "invoice-ingestion-private")
         )
+        resources.callback(storage.client.close)
         runner = Pipeline(repo, storage, contracts, config)
         result_map = {
             r["file_name"]: runner.load_artifact(r["artifact_id"])
@@ -773,7 +785,7 @@ async def command(args):
                     "Review must account for each batch input exactly once"
                 )
             next_config["reading_reviews"] = indexed
-        runner = runtime(next_config, contracts, needs_ocr=False)
+        runner = runtime(next_config, contracts, needs_ocr=False, resources=resources)
         await model_catalogue(next_config, runner.secrets)
         overrides = runner.reading_overrides(batch_id, batch["manifest"])
         next_batch = repo.create_batch(batch["manifest"], next_config)
@@ -786,7 +798,9 @@ async def command(args):
                 "Jev implementation changed; create a new interpret batch using --reading-run "
                 "to preserve the old run and reuse its completed readings"
             )
-    runner = runtime(config, contracts, needs_ocr=not config.get("reading_run"))
+    runner = runtime(
+        config, contracts, needs_ocr=not config.get("reading_run"), resources=resources
+    )
     repo.reconcile_expired(batch_id=batch_id)
     if args.command == "retry":
         repo.retry_jobs(batch_id, args.stage, include_unknown=args.include_unknown)

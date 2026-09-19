@@ -4,14 +4,12 @@ import argparse
 import asyncio
 import json
 
-from dotenv import load_dotenv
-
 
 def parser():
     p = argparse.ArgumentParser(
         prog="invoice-agent", description="Durable, evidence-linked invoice extraction"
     )
-    p.add_argument("--schema-dir", default="benchmark/schemas")
+    p.add_argument("--schema-dir", default=None)
     commands = p.add_subparsers(dest="command", required=True)
     ingest = commands.add_parser("ingest")
     source = ingest.add_mutually_exclusive_group(required=True)
@@ -131,14 +129,16 @@ def offline_fixture(schema_dir, output):
 
 def main(argv=None):
     args = parser().parse_args(argv)
-    load_dotenv(override=False)
     try:
         if args.command == "fixture":
             result = offline_fixture(args.schema_dir, args.output)
         else:
-            from .pipeline import command
+            from dotenv import load_dotenv
 
-            result = asyncio.run(command(args))
+            from .api import execute_command
+
+            load_dotenv(override=False)
+            result = asyncio.run(execute_command(args))
         print(json.dumps(result, ensure_ascii=False, default=str, allow_nan=False))
         return 0
     except (ValueError, OSError) as exc:
@@ -146,6 +146,18 @@ def main(argv=None):
         print(
             json.dumps(
                 {"error": {"code": "configuration_or_input", "message": str(exc)}}
+            )
+        )
+        return 2
+    except ImportError:
+        print(
+            json.dumps(
+                {
+                    "error": {
+                        "code": "worker_dependencies_missing",
+                        "message": "Install invoice-ingestion-agent[worker] to run worker commands",
+                    }
+                }
             )
         )
         return 2

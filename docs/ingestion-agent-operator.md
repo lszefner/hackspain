@@ -4,13 +4,22 @@ The worker preserves PDFs, renders every page, reads document regions through He
 
 ## Install and offline check
 
+The `ingestion` package is the module boundary. A base install
+(`pip install .`) provides `Contracts`, `blank_invoice`, and the offline
+`fixture` command; the immutable benchmark schemas are bundled into the
+distribution, so installed copies do not depend on the source checkout.
+Worker commands and the async API need the `worker` extra
+(`pip install '.[worker]'`), which pulls in the HTTP, Postgres, PDF, and
+dotenv dependencies. The package contains no benchmark evaluator,
+references, or reports, and no ERP/rules wiring.
+
 ```sh
-uv sync --locked
-uv run pytest -q
-uv run invoice-agent fixture --output /tmp/invoice-alpha-example
+uv sync --locked --extra worker
+uv run --extra worker pytest -q
+uv run --extra worker invoice-agent fixture --output /tmp/invoice-alpha-example
 ```
 
-`fixture` uses a synthetic reading and invoice. It exercises contract validation, evidence, and export without network calls or a database. It does not measure OCR or model accuracy.
+`fixture` uses a synthetic reading and invoice. It exercises contract validation, evidence, and export without network calls or a database. It does not measure OCR or model accuracy. It runs under the base install without the `worker` extra.
 
 ## Configure
 
@@ -30,7 +39,7 @@ Preserve existing `.env` entries. Add the empty names from `.env.example` and fi
 Apply the SQL file in `supabase/migrations/` using your backend database connection or your project's normal Supabase migration workflow. The SQL creates a private `ingestion` schema and, on Supabase, a private `invoice-ingestion-private` bucket. Use a backend database role with access to that schema; no anonymous/client grants are added. If choosing a custom bucket name, create that private bucket yourself.
 
 ```sh
-uv run invoice-agent preflight --interpreter deepseek
+uv run --extra worker invoice-agent preflight --interpreter deepseek
 ```
 
 Configuration errors print variable names only. The worker snapshots schemas/configuration and verifies Storage writes before submitting inference. Provider aliases without a pinned revision are explicitly marked non-reproducible across time. A successful infrastructure preflight does not prove the quality of an extraction.
@@ -46,20 +55,20 @@ Start with a folder containing the seven development PDFs listed in the alpha sp
 Paths are relative to the manifest. An optional `sha256` is checked. Filenames must be unique within an export. Identical bytes under distinct filenames remain separate inputs.
 
 ```sh
-uv run invoice-agent ingest --manifest docs/development-inputs.json --ocr helmcode-vision --interpreter deepseek --dpi 300
-uv run invoice-agent status --batch BATCH_UUID
-uv run invoice-agent resume --batch BATCH_UUID
-uv run invoice-agent export --batch BATCH_UUID --output /tmp/ingestion-BATCH_UUID
-uv run invoice-agent interpret --reading-run BATCH_UUID --interpreter jev
+uv run --extra worker invoice-agent ingest --manifest docs/development-inputs.json --ocr helmcode-vision --interpreter deepseek --dpi 300
+uv run --extra worker invoice-agent status --batch BATCH_UUID
+uv run --extra worker invoice-agent resume --batch BATCH_UUID
+uv run --extra worker invoice-agent export --batch BATCH_UUID --output /tmp/ingestion-BATCH_UUID
+uv run --extra worker invoice-agent interpret --reading-run BATCH_UUID --interpreter jev
 ```
 
-`interpret` creates a separate batch using the exact saved canonical readings. It does not read benchmark answers. `--schema-dir` is a global option before the command; the default is `benchmark/schemas`. Resume uses the accepted run's frozen schema snapshot.
+`interpret` creates a separate batch using the exact saved canonical readings. It does not read benchmark answers. `--schema-dir` is a global option before the command; by default the worker uses the schema copies bundled in the installed package (a source checkout falls back to the checked-in `benchmark/schemas`). Resume uses the accepted run's frozen schema snapshot.
 
 ## Failures and recovery
 
 ```sh
-uv run invoice-agent retry --batch BATCH_UUID --stage reading --failed-only
-uv run invoice-agent retry --batch BATCH_UUID --stage interpretation --include-unknown
+uv run --extra worker invoice-agent retry --batch BATCH_UUID --stage reading --failed-only
+uv run --extra worker invoice-agent retry --batch BATCH_UUID --stage interpretation --include-unknown
 ```
 
 Transient connection failures, HTTP 429, and 5xx receive bounded retries. Read/write timeouts after submission are unknown outcomes, not proof that no call happened. Saved fal request IDs permit result retrieval without a second submission. Irrecoverable unknown calls require `--include-unknown`, which explicitly accepts possible duplicate billing. Authentication errors stop that provider queue. Completed jobs are reused; attempts and raw artifacts are retained.
@@ -67,6 +76,43 @@ Transient connection failures, HTTP 429, and 5xx receive bounded retries. Read/w
 Keep output directories separate for different export snapshots. Exports refuse to replace differing files. `outcomes.jsonl` contains every manifest input with `completed`, `needs_review`, or `failed`, including structured errors and nullable artifact references. `stage2/` and `stage3/` contain benchmark-schema payloads; evidence, layout, checks, raw output, configuration, and schema snapshots remain separate. `records.jsonl` translates outcomes to the benchmark record vocabulary where the source hash is known. An unreadable source has no invented hash and remains in `outcomes.jsonl`.
 
 Operational stderr events contain batch/input/job/attempt IDs, stage, timing, state, and error codes, without invoice contents or keys. Private attempt artifacts hold requests and raw responses. Cost is `null` when it cannot be established; no zero-cost claim is made.
+
+## Embedding the module
+
+Applications can drive the same command runtime through the async facade
+instead of the CLI:
+
+```python
+from ingestion import InvoiceIngestion
+
+invoices = InvoiceIngestion()
+result = await invoices.ingest(input_dir="/path/to/invoices")
+status = await invoices.status(result["batch_id"])
+await invoices.export(result["batch_id"], "/path/to/export")
+```
+
+Call these methods from an application-owned durable worker, not from a web
+request waiting for completion. Each method returns only when the underlying
+command finishes; it is not a job-submission API. Work is offloaded to a
+thread so synchronous database/PDF calls do not block the caller's event
+loop, but this is responsiveness, not durable scheduling: cancelling the
+await does not stop the already-started worker thread. The application
+decides enqueueing, authentication, and tenant mapping; resume an existing
+batch through its durable batch ID instead of resubmitting calls whose
+outcome is unknown.
+
+The API performs no `.env` loading and starts no clients at import or
+construction — the host configures backend environment variables explicitly.
+Importing the package opens no network connections and runs no schema
+migrations. `Contracts()`/`blank_invoice` resolve the bundled schemas only
+when called. Each completed command closes the Postgres pools and HTTP
+clients it opened, including on failure.
+
+PDFium is not thread-safe, so page rendering is serialized through a
+module-level lock. That lock only covers ingestion-owned calls: if the host
+application uses its own PDFium (or other non-thread-safe PDF libraries),
+prefer running this module in a separate worker process rather than relying
+on an in-process lock the other library does not share.
 
 ## Alpha limits
 
@@ -134,9 +180,9 @@ Use the actual product outputs, not `benchmark run` (which executes historical
 experimental adapters). A full run over the frozen 50-file selection is:
 
 ```sh
-uv run invoice-agent ingest --manifest benchmark/manifest.json --interpreter jev --concurrency 8
-uv run invoice-agent export --batch BATCH_UUID --output /tmp/product-BATCH_UUID
-uv run python -m ingestion.benchmark_evidence --batch BATCH_UUID --export /tmp/product-BATCH_UUID
+uv run --extra worker invoice-agent ingest --manifest benchmark/manifest.json --interpreter jev --concurrency 8
+uv run --extra worker invoice-agent export --batch BATCH_UUID --output /tmp/product-BATCH_UUID
+uv run --extra worker python -m ingestion.benchmark_evidence --batch BATCH_UUID --export /tmp/product-BATCH_UUID
 benchmark/.venv/bin/python -m benchmark.import_product --export /tmp/product-BATCH_UUID --run-id product-jev-BASELINE
 ```
 
@@ -158,7 +204,7 @@ Background text is kept in separate annotations and is forbidden as evidence for
 For an explicitly reviewed reading, use:
 
 ```sh
-uv run invoice-agent interpret --reading-run BATCH_UUID --interpreter deepseek --reading-review REVIEW_JSON
+uv run --extra worker invoice-agent interpret --reading-run BATCH_UUID --interpreter deepseek --reading-review REVIEW_JSON
 ```
 
 The review file binds corrections to source and original-reading hashes, identifies the reviewer and inspected pages, and records a reason for every change. This creates a separate batch; it never overwrites the original automatic output. Review-assisted scores must be reported separately from automatic accuracy.

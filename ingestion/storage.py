@@ -247,8 +247,11 @@ class PostgresRepository:
                 conn.close()
 
     def close(self) -> None:
-        if self._pool is not None:
-            self._pool.close()
+        try:
+            if self._pool is not None:
+                self._pool.close()
+        finally:
+            atexit.unregister(self.close)
 
     @staticmethod
     def _one(cur: Any) -> dict[str, Any] | None:

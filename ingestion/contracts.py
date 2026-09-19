@@ -35,11 +35,22 @@ def digest(data: bytes | bytearray | memoryview) -> str:
     return hashlib.sha256(bytes(data)).hexdigest()
 
 
+def default_schema_dir() -> Path:
+    packaged = Path(__file__).resolve().parent / "schemas"
+    return (
+        packaged
+        if packaged.is_dir()
+        else Path(__file__).resolve().parents[1] / "benchmark" / "schemas"
+    )
+
+
 class Contracts:
     """Load versioned JSON Schemas from an explicit directory."""
 
-    def __init__(self, schema_dir: str | Path):
-        self.schema_dir = Path(schema_dir)
+    def __init__(self, schema_dir: str | Path | None = None):
+        self.schema_dir = (
+            Path(schema_dir) if schema_dir is not None else default_schema_dir()
+        )
         if not self.schema_dir.is_dir():
             raise FileNotFoundError(f"schema directory not found: {self.schema_dir}")
         self.schemas: dict[str, dict[str, Any]] = {}
@@ -179,9 +190,4 @@ def blank_invoice(file_id: str, schema_dir: str | Path | None = None) -> dict[st
     provider adapters and offline fixtures independent of a global singleton.
     """
 
-    path = (
-        Path(schema_dir)
-        if schema_dir is not None
-        else Path(__file__).resolve().parents[1] / "benchmark" / "schemas"
-    )
-    return Contracts(path).blank_invoice(file_id)
+    return Contracts(schema_dir).blank_invoice(file_id)

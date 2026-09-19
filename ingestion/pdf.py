@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from io import BytesIO
+from threading import Lock
 from typing import Any
+
+_PDFIUM_LOCK = Lock()
 
 
 def render_pdf(pdf_bytes: bytes, dpi: int = 200) -> list[dict[str, Any]]:
@@ -17,11 +20,12 @@ def render_pdf(pdf_bytes: bytes, dpi: int = 200) -> list[dict[str, Any]]:
         raise TypeError("pdf_bytes must be bytes")
     if not isinstance(dpi, int) or dpi <= 0:
         raise ValueError("dpi must be a positive integer")
-    try:
-        import pypdfium2 as pdfium
-    except ImportError as exc:
-        raise ImportError("render_pdf requires pypdfium2") from exc
-    return _render_pdfium(bytes(pdf_bytes), dpi, pdfium)
+    with _PDFIUM_LOCK:
+        try:
+            import pypdfium2 as pdfium
+        except ImportError as exc:
+            raise ImportError("render_pdf requires pypdfium2") from exc
+        return _render_pdfium(bytes(pdf_bytes), dpi, pdfium)
 
 
 def _render_pdfium(pdf_bytes: bytes, dpi: int, pdfium: Any) -> list[dict[str, Any]]:
