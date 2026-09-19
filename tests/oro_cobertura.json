@@ -2427,13 +2427,14 @@
   "campos": [
    "base",
    "fecha",
+   "iban",
    "iva_importe",
    "iva_pct",
    "nif_emisor",
    "pedido",
    "total"
   ],
-  "valores": "c156784d570c"
+  "valores": "b53e2a7de710"
  },
  "F26-3355_mensajería.pdf": {
   "campos": [
@@ -3194,7 +3195,7 @@
    "pedido",
    "total"
   ],
-  "valores": "abf0f1ea53fe"
+  "valores": "cdd5135a4558"
  },
  "FA-4634_seguridad.pdf": {
   "campos": [
@@ -4033,8 +4034,17 @@
   "valores": "71a05290243a"
  },
  "copia_2026_0518.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "522f9c845684"
  },
  "factura_0088.pdf": {
   "campos": [
@@ -6078,115 +6088,364 @@
   "valores": "d49ecf99ed6d"
  },
  "fax_2026_0411.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "83b28f874b25"
  },
  "reimpresion_0712.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "d735389ca5da"
  },
  "scan_001.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "debffdf90db3"
  },
  "scan_002.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "253aa42c12a4"
  },
  "scan_003.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "8df2a2b6acea"
  },
  "scan_004.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "ca9b256c9c78"
  },
  "scan_005.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "fd63ff6ba236"
  },
  "scan_006.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "a0c8257d2561"
  },
  "scan_007.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "88d826ca85c8"
  },
  "scan_008.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "285ef4946541"
  },
  "scan_009.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "8d571492e662"
  },
  "scan_010.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "8847b6afcde3"
  },
  "scan_011.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "63ac0219f16d"
  },
  "scan_012.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "0741b6bbbd95"
  },
  "scan_013.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "fd3e0ead36dd"
  },
  "scan_014.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "facf3051d48c"
  },
  "scan_015.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "1e93e7bc5ad6"
  },
  "scan_016.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "24fc614c11be"
  },
  "scan_017.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "pedido",
+   "total"
+  ],
+  "valores": "e18ac64d1abf"
  },
  "scan_018.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "0363dada8fa1"
  },
  "scan_021.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "pedido",
+   "total"
+  ],
+  "valores": "d946c43110a2"
  },
  "scan_022.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "81c9bc292257"
  },
  "scan_023.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "pedido",
+   "total"
+  ],
+  "valores": "028727a09570"
  },
  "scan_025.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "8a96aa5ecfa6"
  },
  "scan_026.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "991b6d7632e2"
  },
  "scan_027.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "86ecd9a299db"
  },
  "scan_028.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "52f1e6de7004"
  },
  "scan_029.pdf": {
-  "campos": [],
-  "valores": "e3b0c44298fc"
+  "campos": [
+   "base",
+   "fecha",
+   "iban",
+   "iva_importe",
+   "iva_pct",
+   "nif_emisor",
+   "pedido",
+   "total"
+  ],
+  "valores": "ee691b14884a"
  }
 }

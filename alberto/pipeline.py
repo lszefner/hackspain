@@ -69,15 +69,25 @@ def extraer(con: sqlite3.Connection, *, lote: str = "lote1", forzar: bool = Fals
         "SELECT * FROM documentos WHERE lote=?" + ("" if forzar else
         " AND doc_id NOT IN (SELECT doc_id FROM extracciones)") + filtro,
         (lote, *ids)).fetchall()
-    hechos = sin_texto = incompletos = 0
+    hechos = sin_texto = incompletos = ofuscados = 0
     for d in pendientes:
         t0 = time.monotonic()
         if d["tiene_texto"]:
             texto = texto_de_pdf(Path(d["ruta"]))
             campos = extraer_campos(texto)
             via, plantilla = "determinista", campos.pop("_plantilla", "")
+            # El artefacto guarda el texto TAL CUAL venia, ofuscacion incluida:
+            # es la capa de procedencia y no debe maquillar el original.
             sha = arte.guardar_texto(con, tipo="texto_pdf", texto=texto)
             arte.enlazar(con, d["doc_id"], INTENTO_DETERMINISTA, "texto_pdf", sha)
+            if campos.get("_invisibles"):
+                # Que el documento intente esconderse del parser es un hecho
+                # de la traza, no un motivo de decision: las reglas salen del
+                # YAML y el documento no las toca.
+                ofuscados += 1
+                log(con, "extraccion", "caracteres invisibles eliminados",
+                    nivel="warn", doc_id=d["doc_id"], file_id=d["file_id"],
+                    n=campos["_invisibles"])
         else:
             campos, via, plantilla = {}, "sin_texto", "imagen"
             sin_texto += 1
@@ -96,9 +106,9 @@ def extraer(con: sqlite3.Connection, *, lote: str = "lote1", forzar: bool = Fals
                      d["doc_id"]))
         hechos += 1
     log(con, "extraccion", f"{hechos} documentos", lote=lote,
-        sin_texto=sin_texto, incompletos=incompletos)
+        sin_texto=sin_texto, incompletos=incompletos, ofuscados=ofuscados)
     return {"extraidos": hechos, "sin_texto": sin_texto,
-            "incompletos": incompletos}
+            "incompletos": incompletos, "ofuscados": ofuscados}
 
 
 def _guardar_extraccion(con: sqlite3.Connection, f: FacturaExtraida, intento: int,
