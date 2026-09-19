@@ -13,8 +13,9 @@ from alberto.reglas import Motor, cargar_politica
 from alberto.reglas.autoria import exportar_norma, ingerir
 from alberto.reglas.autoria.exportador import MAPEO, SIN_EQUIVALENTE, escribir
 
-CAJA = Path("/Users/gian/Documents/test/hackspain/caja")
-EXCEL = CAJA / "FINAL_v7_DEFINITIVO_ahorasi.xlsx"
+# La Caja vive en la raiz del repo, no en una ruta absoluta de nadie.
+RAIZ = Path(__file__).resolve().parents[1]
+EXCEL = RAIZ / "FINAL_v7_DEFINITIVO_ahorasi.xlsx"
 
 necesita_caja = pytest.mark.skipif(
     not EXCEL.exists(), reason="necesita el Excel de La Caja")
