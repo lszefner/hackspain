@@ -10,6 +10,10 @@ __pycache__/
 .pytest_cache/
 benchmark/runs/
 benchmark/review/pages/
+.claude_erp.log
+
+# local review UI: sqlite db + cached OCR/interpretation artifacts
+webui/data/
 
 # pipeline run artifacts
 rules_ingestion/outcome/*/rules.discovered*.json
