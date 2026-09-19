@@ -1,29 +1,40 @@
-# Next.js invoice desk
+# Next.js invoice desk and audit journey
 
-The root route is now native React, translated from `desk/mock/index.html`. The mock remains the visual source of truth. No iframe, injected HTML, static invoice export or chat agent powers these pages.
+The root route is native React. The approved cream/brown palette, Inter typography and compact navigation derive from `desk/mock/index.html`. Invoice detail is now a full-page case history rather than a drawer or a JSON dump.
 
-- `/` and `/?view=invoices`: supplier groups, search, stage and recommendation filters, server pagination, invoice drawer.
-- `/?view=summary`: persisted invoice counts, recommendation totals separated by currency, links into processing stages.
-- `/?view=invoices&invoice=FILE`: addressable invoice detail. Existing `/facturas`, `/finanzas`, and `/expediente/FILE` redirects remain compatible. `/desk` and `/desk/index.html` redirect to React.
+- `/` and `/?view=invoices`: supplier groups, search, stage/recommendation filters and server pagination.
+- `/?view=summary`: persisted counts and totals separated by currency.
+- `/?view=invoices&invoice=FILE`: receipt, extraction route, individual attempts, evaluation and its reasons, contextual review, final recommendation, unrecorded resolution/payment. Evidence belongs to its event and expands in place. The original PDF opens separately on request.
+- Existing `/facturas`, `/finanzas`, `/expediente/FILE`, `/desk` and `/desk/index.html` links remain compatible.
 
-## Data and request cost
+The history covers the latest stored processing run, not every historical run. Missing timestamps remain explicit. Evidence capture time is never substituted for evaluation time. Supplemental detail timestamps/PDF availability are used only when both input and record version match the audit response. PAGAR is a recommendation; human resolution and payment are never inferred.
 
-Existing authenticated Next API routes proxy the backend configured by `ENGINE_API_BASE` (default `http://127.0.0.1:8010`). These changes do not change SQL, storage, payment policy or provider configuration.
+## Loading path
 
-Supplier groups use `/api/lanes` (25 groups per page). Opening a group fetches `/api/invoices` (25 invoices per page). Opening an invoice fetches `/api/dossier`. PDF bytes and the full `/api/engine/factura/FILE/flujo` audit load only after their respective buttons are pressed. Summary uses one `/api/summary` request.
+The frontend requests `/api/engine/factura/FILE/flujo` and `/api/dossier?file=FILE` concurrently. Native history replacement updates invoice selection without a server-component navigation first. SWR deduplicates requests for five seconds and avoids focus polling and automatic error retries. Refresh explicitly revalidates both records. Supplier groups/rows remain paginated at 25; search is debounced 250 ms.
 
-SWR deduplicates identical requests for five seconds, keeps keys separate across filters, and avoids focus polling and automatic error retries. Search is debounced 250 ms. Refresh explicitly revalidates records. Errors offer Retry; no mock fallback exists. Data is not cached in local storage.
+Collapsed evidence, rule inputs and technical JSON are mounted only when expanded. This avoids serializing/rendering the complete audit plus repeated nested copies on first paint. No visual layout change is involved.
 
-Amounts with no currency are never added to known-currency totals. Missing values stay explicit. PAGAR is displayed as a recommendation, not evidence of payment. Disabled review stays DISABLED. The default stage is Processed, matching the source HTML; select All recorded to include incomplete and failed processing.
+`backend.flujo.flujo` starts a fresh `artifact_session` for every request. It uses hash-verified canonical Postgres JSON where available, with existing Storage fallback, and deduplicates artifact metadata reads within that request only. It calls `archive.load_packet` to verify each record's identity and loads/verifies the artifacts displayed by the projection. It does **not** use `engine.load`, which performs a full forensic replay of all sources, originals and render bytes. The explicit core show/verification path retains full replay. Opening the UI therefore does not attest that every historical source byte was replayed.
 
-## Components and visual authority
+Jobs and attempts use the existing `extraction_trace(input_id)` query, rather than scanning every job in the batch and querying attempts separately for each matching job. No schema, migration, provider, decision policy or immutable result change is involved.
 
-`frontend/src/components/desk` owns React state and rendering. `frontend/src/app/desk.css` carries the reference's cream/brown palette, 228px sidebar, supplier lanes, compact mono figures, filters and right-side dossier, with responsive overrides and reduced motion. Inter and JetBrains Mono are loaded by Next. shadcn Button, Input and Dialog primitives preserve the source styling. The loading indicator is `thinking-orbs` from Libraries.dev. Chat and rules navigation are outside this implementation's scope.
+## Evidence and validation, 20 September 2026
 
-## Verification
+Read-only local baseline for one processed invoice, two sequential requests:
 
-`cd frontend && npm run test:desk` runs four mocked DOM interaction tests without API/database/provider access: lazy supplier loading and filtering, currency-safe summary, retry after failure, and disabled-review dossier with deferred PDF/audit loading. TypeScript and focused ESLint checks pass. A production build passed from a temporary source copy excluding all `.env*` files.
+| Endpoint | Request 1 | Request 2 |
+| --- | ---: | ---: |
+| Audit flow | 6.754 s | 5.530 s |
+| Detail | 0.336 s | 0.347 s |
 
-Read-only checks against the running local backend and Next proxy returned 30 persisted invoices and 25 suppliers on 2026-09-19; those counts are a point-in-time observation. No database writes or paid provider calls were performed.
+These are local running-server observations, not production p95/load-test figures. The running Python process predates the change and requires restart using its existing explicit environment. This shell has no backend credentials; `.env` was not read. Optimized live timings are pending that restart.
 
-Browser runtime discovery returned no connected browsers. Desktop/mobile rendering, exact visual fidelity, and real-browser keyboard/focus behaviour remain unverified. DOM interaction tests and a passing build do not substitute for that visual acceptance.
+Validation:
+
+- 53 backend/core/review tests passed using disposable local Postgres and mocked Storage/providers.
+- Focused audit regression verifies no full replay, no canonical-JSON Storage reads, unique metadata reads within a request, a fresh cache on the next request, and no batch-wide/per-job attempt queries.
+- Seven mocked React interaction tests cover supplier filtering, currency handling, retries, immediate audit loading, missing records/timestamps, retry ordering, and deferred rendering of evidence/rule tables.
+- TypeScript, focused ESLint, backend Ruff and production build passed. The build used an isolated copy excluding `.env*` files.
+
+No paid providers or database writes against shared systems were used. Browser discovery has no connected browser; automated visual/real-browser navigation validation remains unavailable. The user approved the journey's visual direction before the speed-only pass.

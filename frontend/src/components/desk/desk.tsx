@@ -1,19 +1,21 @@
 "use client";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { FileText, ChartNoAxesColumnIncreasing } from "lucide-react";
 import { InvoicePage } from "./invoices";
 import { SummaryPage } from "./summary";
 import { Dossier } from "./dossier";
 export function Desk() {
   const params = useSearchParams();
-  const router = useRouter();
   const view = params.get("view") === "summary" ? "summary" : "invoices";
   function selectInvoice(file: string | null) {
     const next = new URLSearchParams(params);
     if (file) next.set("invoice", file);
     else next.delete("invoice");
-    router.replace(`/?${next}`, { scroll: false });
+    // Invoice selection is client state: do not wait for a server-component
+    // navigation before starting the two invoice API reads. Next synchronises
+    // native history updates with useSearchParams.
+    window.history.replaceState(null, "", `/?${next}`);
   }
   const file = params.get("invoice");
   return (

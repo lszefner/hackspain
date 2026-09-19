@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { ChevronRight, ExternalLink } from "lucide-react";
 import {
   humanize,
@@ -19,13 +20,20 @@ export function Disclosure({
   children: React.ReactNode;
   open?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(open);
   return (
-    <details className="journey-disclosure" open={open}>
+    <details
+      className="journey-disclosure"
+      open={expanded}
+      onToggle={(event) => setExpanded(event.currentTarget.open)}
+    >
       <summary>
         <ChevronRight size={14} />
         {title}
       </summary>
-      <div className="journey-disclosure-body">{children}</div>
+      {expanded ? (
+        <div className="journey-disclosure-body">{children}</div>
+      ) : null}
     </details>
   );
 }
@@ -64,7 +72,9 @@ export function EvidenceRefs({ value }: { value: unknown }) {
           {ref.pointer != null ? (
             <code>{valueText(ref.pointer) || "/"}</code>
           ) : null}
-          {ref.excerpt ? <blockquote>{text(ref.excerpt)}</blockquote> : null}
+          {ref.quote || ref.excerpt ? (
+            <blockquote>{text(ref.quote ?? ref.excerpt)}</blockquote>
+          ) : null}
           <AuditRecord value={ref} label="Reference details" />
         </li>
       ))}
@@ -95,7 +105,7 @@ export function RuleResults({ value }: { value: unknown }) {
             className={
               status === "PASS"
                 ? "is-success"
-                : status === "FAIL"
+                : ["VIOLATED", "ERROR", "FAIL"].includes(status)
                   ? "is-danger"
                   : ""
             }
@@ -106,83 +116,7 @@ export function RuleResults({ value }: { value: unknown }) {
       </div>
       <div className="journey-rules">
         {rules.map((rule, index) => (
-          <details
-            className="journey-rule"
-            key={`${text(rule.rule_id)}:${index}`}
-          >
-            <summary>
-              <span
-                className={`journey-rule-dot ${rule.status === "PASS" ? "success" : rule.status === "FAIL" ? "danger" : "attention"}`}
-              />
-              <span className="journey-rule-name">{text(rule.rule_id)}</span>
-              <span className="journey-rule-state">
-                {humanize(text(rule.status))}
-              </span>
-              <ChevronRight size={14} />
-            </summary>
-            <div className="journey-rule-detail">
-              <p>
-                {text(
-                  rule.explanation,
-                  "No explanation was saved for this rule.",
-                )}
-              </p>
-              {rule.applied_consequence ? (
-                <p className="journey-consequence">
-                  Effect on the decision:{" "}
-                  <strong>{humanize(text(rule.applied_consequence))}</strong>
-                </p>
-              ) : null}
-              {records(rule.inputs).length ? (
-                <div className="journey-table-wrap">
-                  <table className="journey-table">
-                    <caption>Evidence used by this rule</caption>
-                    <thead>
-                      <tr>
-                        <th>Field</th>
-                        <th>Recorded value</th>
-                        <th>Evidence state</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {records(rule.inputs).map((input, i) => (
-                        <tr key={i}>
-                          <td>{text(input.field)}</td>
-                          <td>{valueText(input.value)}</td>
-                          <td>{humanize(text(input.state))}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : null}
-              <Disclosure title="Evidence references">
-                <EvidenceRefs value={rule.evidence_refs} />
-              </Disclosure>
-              {records(rule.trace).length ? (
-                <Disclosure title="How the rule reached this result">
-                  <ol className="journey-reasoning">
-                    {records(rule.trace).map((step, i) => (
-                      <li key={i}>
-                        <strong>
-                          {humanize(text(step.operation, "Rule check"))} ·{" "}
-                          {humanize(text(step.verdict, text(step.result)))}
-                        </strong>
-                        <p>
-                          {text(step.explanation, "No explanation recorded.")}
-                        </p>
-                        <AuditRecord
-                          value={step}
-                          label="Inputs and operation"
-                        />
-                      </li>
-                    ))}
-                  </ol>
-                </Disclosure>
-              ) : null}
-              <AuditRecord value={rule} />
-            </div>
-          </details>
+          <RuleResult key={`${text(rule.rule_id)}:${index}`} rule={rule} />
         ))}
       </div>
     </>
@@ -246,5 +180,83 @@ export function OriginalLink({ file }: { file: string }) {
       <ExternalLink size={14} />
       <span className="sr-only"> in a new tab</span>
     </a>
+  );
+}
+
+function RuleResult({ rule }: { rule: EvidenceRecord }) {
+  const [expanded, setExpanded] = useState(false);
+  return (
+    <details
+      className="journey-rule"
+      open={expanded}
+      onToggle={(event) => setExpanded(event.currentTarget.open)}
+    >
+      <summary>
+        <span
+          className={`journey-rule-dot ${rule.status === "PASS" ? "success" : ["VIOLATED", "ERROR", "FAIL"].includes(text(rule.status)) ? "danger" : "attention"}`}
+        />
+        <span className="journey-rule-name">{text(rule.rule_id)}</span>
+        <span className="journey-rule-state">
+          {humanize(text(rule.status))}
+        </span>
+        <ChevronRight size={14} />
+      </summary>
+      {expanded ? (
+        <div className="journey-rule-detail">
+          <p>
+            {text(rule.explanation, "No explanation was saved for this rule.")}
+          </p>
+          {rule.applied_consequence ? (
+            <p className="journey-consequence">
+              Effect on the decision:{" "}
+              <strong>{humanize(text(rule.applied_consequence))}</strong>
+            </p>
+          ) : null}
+          {records(rule.inputs).length ? (
+            <div className="journey-table-wrap">
+              <table className="journey-table">
+                <caption>Evidence used by this rule</caption>
+                <thead>
+                  <tr>
+                    <th>Field</th>
+                    <th>Recorded value</th>
+                    <th>Evidence state</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {records(rule.inputs).map((input, i) => (
+                    <tr key={i}>
+                      <td>{text(input.field)}</td>
+                      <td>{valueText(input.value)}</td>
+                      <td>{humanize(text(input.state))}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+          <Disclosure title="Evidence references">
+            <EvidenceRefs value={rule.evidence_refs} />
+          </Disclosure>
+          {records(rule.trace).length ? (
+            <Disclosure title="How the rule reached this result">
+              <ol className="journey-reasoning">
+                {records(rule.trace).map((step, i) => (
+                  <li key={i}>
+                    <strong>
+                      {humanize(text(step.operation, "Rule check"))} ·{" "}
+                      {humanize(text(step.verdict, text(step.result)))}
+                    </strong>
+                    <p>{text(step.explanation, "No explanation recorded.")}</p>
+                    <AuditRecord value={step} label="Inputs and operation" />
+                  </li>
+                ))}
+              </ol>
+            </Disclosure>
+          ) : null}
+          <AuditRecord value={rule} />
+        </div>
+      ) : null}
+    </details>
   );
 }

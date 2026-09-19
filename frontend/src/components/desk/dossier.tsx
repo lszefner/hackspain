@@ -303,7 +303,13 @@ function CaseHistory({
                   ? "Extraction could not be completed"
                   : extraction?.status === "completed"
                     ? "Invoice data extracted"
-                    : "Extracting the invoice"
+                    : extraction?.status === "needs_review"
+                      ? "Invoice extracted with gaps"
+                      : ["running", "processing"].includes(
+                            extraction?.status ?? "",
+                          )
+                        ? "Extracting the invoice"
+                        : "Extraction not recorded"
               }
               time={stageTime(flow, "extraida", detail)}
               tone={
@@ -712,7 +718,7 @@ function CaseHistory({
                 ["evaluation", "Rule decisions"],
                 ["review", "Contextual review"],
                 ["output", "Recommendation"],
-                ["payment", "Resolution & payment"],
+                ["resolution", "Resolution & payment"],
               ].map(([id, label]) => (
                 <a key={id} href={`#event-${id}`}>
                   {label}

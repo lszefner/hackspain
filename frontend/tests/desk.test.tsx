@@ -294,3 +294,46 @@ test("attempts are ordered by their saved timestamps and preserve retries and fa
   assert.equal(events[events.length - 1].attempt.attempt_number, 2);
   assert.equal(events.length, 3);
 });
+
+test("collapsed evidence and rule inputs are not rendered until expanded", async () => {
+  const {
+    Disclosure,
+    RuleResults,
+  } = require("../src/components/desk/journey-evidence");
+  let renders = 0;
+  function HeavyEvidence() {
+    renders++;
+    return <p>Large evidence payload</p>;
+  }
+  mount(
+    <>
+      <Disclosure title="Saved technical record">
+        <HeavyEvidence />
+      </Disclosure>
+      <RuleResults
+        value={[
+          {
+            rule_id: "R_TEST",
+            status: "VIOLATED",
+            explanation: "Fixture rule failed",
+            inputs: [{ field: "invoice.total", value: 99, state: "present" }],
+          },
+        ]}
+      />
+    </>,
+  );
+  assert.equal(renders, 0);
+  assert.equal(screen.queryByRole("table"), null);
+  const disclosure = screen
+    .getByText("Saved technical record")
+    .closest("details")!;
+  disclosure.open = true;
+  fireEvent(disclosure, new dom.window.Event("toggle"));
+  await screen.findByText("Large evidence payload");
+  assert.equal(renders, 1);
+  const rule = screen.getByText("R_TEST").closest("details")!;
+  assert.ok(rule.querySelector(".journey-rule-dot.danger"));
+  rule.open = true;
+  fireEvent(rule, new dom.window.Event("toggle"));
+  await screen.findByRole("table");
+});
