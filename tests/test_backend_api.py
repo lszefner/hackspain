@@ -100,14 +100,14 @@ def test_listado_pagina_y_filtra_sin_cargar_paquetes(api):
     rows = {f"f{n}.pdf": _row(f"f{n}.pdf", decision="PAGAR" if n % 2 else "ESCALAR") for n in range(5)}
     call = api(FakeStore(rows))
 
-    status, body = call("/api/facturas?limit=2&offset=0")
+    status, body = call("/api/invoices?limit=2&offset=0")
     assert status == 200
     assert body["total"] == 5 and body["limit"] == 2 and len(body["filas"]) == 2
 
-    _, page2 = call("/api/facturas?limit=2&offset=4")
+    _, page2 = call("/api/invoices?limit=2&offset=4")
     assert len(page2["filas"]) == 1
 
-    _, filtered = call("/api/facturas?decision=ESCALAR")
+    _, filtered = call("/api/invoices?decision=ESCALAR")
     assert filtered["total"] == 3
     assert {f["evaluation"]["preliminary_decision"] for f in filtered["filas"]} == {"ESCALAR"}
 
@@ -119,7 +119,7 @@ def test_listado_pagina_y_filtra_sin_cargar_paquetes(api):
 def test_listado_rechaza_paginacion_invalida(api):
     call = api(FakeStore({}))
     for bad in ("limit=0", "limit=500", "limit=abc", "offset=-1"):
-        status, body = call(f"/api/facturas?{bad}")
+        status, body = call(f"/api/invoices?{bad}")
         assert status == 422, bad
         assert body["error"] == "invalid_query"
     call.shutdown()
@@ -132,7 +132,7 @@ def test_pagar_con_revision_fallida_no_aparece_liquidada(api):
                           contextual_review={"status": "FAILED", "attention_required": True},
                           error="ReviewProviderError")}
     call = api(FakeStore(rows))
-    _, body = call("/api/facturas")
+    _, body = call("/api/invoices")
     fila = body["filas"][0]
 
     assert fila["evaluation"]["preliminary_decision"] == "PAGAR"
@@ -149,7 +149,7 @@ def test_ejes_se_reportan_por_separado(api):
     rows = {"y.pdf": _row("y.pdf", run_state="partial", run_error="BatchPartial",
                           extraction_status="needs_review")}
     call = api(FakeStore(rows))
-    _, body = call("/api/facturas")
+    _, body = call("/api/invoices")
     fila = body["filas"][0]
 
     assert fila["run"] == {"state": "partial", "error": "BatchPartial"}
@@ -162,7 +162,7 @@ def test_ejes_se_reportan_por_separado(api):
 def test_pdf_en_disco_sin_registro_es_pendiente(api, tmp_path):
     (tmp_path / "nueva.pdf").write_bytes(b"%PDF-1.4\n")
     call = api(FakeStore({}))
-    _, body = call("/api/facturas")
+    _, body = call("/api/invoices")
 
     fila = body["filas"][0]
     assert fila["file_id"] == "nueva.pdf" and fila["estado"] == "pendiente"
@@ -188,7 +188,7 @@ def test_detalle_expone_identidades_exactas(api):
     }
     call = api(FakeStore({"z.pdf": _row("z.pdf")}, detalle={"z.pdf": detalle}))
 
-    status, body = call("/api/factura/z.pdf")
+    status, body = call("/api/invoice/z.pdf")
     assert status == 200
     # A ruleset is pinned by hash, not by the name "v3".
     assert body["provenance"]["ruleset"]["sha256"] == "f" * 64
@@ -202,10 +202,10 @@ def test_detalle_expone_identidades_exactas(api):
 
 def test_detalle_rechaza_rutas_y_desconocidos(api):
     call = api(FakeStore({}))
-    status, body = call("/api/factura/..%2Fetc%2Fpasswd")
+    status, body = call("/api/invoice/..%2Fetc%2Fpasswd")
     assert status == 422 and body["error"] == "invalid_file_id"
 
-    status, _ = call("/api/factura/ausente.pdf")
+    status, _ = call("/api/invoice/ausente.pdf")
     assert status == 404
     call.shutdown()
 

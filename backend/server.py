@@ -108,7 +108,7 @@ def _entero(campos: dict[str, list[str]], nombre: str, defecto: int) -> int:
     return int(crudo)
 
 
-def _facturas_listado(campos: dict[str, list[str]]) -> dict:
+def _invoices_listado(campos: dict[str, list[str]]) -> dict:
     limite = _entero(campos, "limit", LISTADO_LIMITE)
     desplazamiento = _entero(campos, "offset", 0)
     if not 1 <= limite <= LISTADO_LIMITE_MAX:
@@ -164,17 +164,17 @@ class Handler(BaseHTTPRequestHandler):
         url = urlparse(self.path)
         if url.path == "/api/resumen":
             self._json(200, _resumen())
-        elif url.path.startswith("/api/factura/"):
-            self._factura(url.path[len("/api/factura/"):])
+        elif url.path.startswith("/api/invoice/"):
+            self._invoice(url.path[len("/api/invoice/"):])
         elif url.path.startswith('/api/ejecucion/'):
             key = unquote(url.path[len('/api/ejecucion/'):])
             try:
                 self._json(200, run_status(get_store().engine, key))
             except KeyError:
                 self._json(404, {'error': 'run_not_found'})
-        elif url.path == "/api/facturas":
+        elif url.path == "/api/invoices":
             try:
-                self._json(200, _facturas_listado(parse_qs(url.query)))
+                self._json(200, _invoices_listado(parse_qs(url.query)))
             except ValueError as exc:
                 self._json(422, {"error": "invalid_query", "campo": str(exc)})
         elif url.path == "/api/salud":
@@ -221,7 +221,7 @@ class Handler(BaseHTTPRequestHandler):
         threading.Thread(target=_lanzar_en_fondo, args=(file_ids, request_key), daemon=True).start()
         return True
 
-    def _factura(self, file_id: str):
+    def _invoice(self, file_id: str):
         file_id = unquote(file_id)
         if Path(file_id).name != file_id or '/' in file_id or '\\' in file_id:
             self._json(422, {'error': 'invalid_file_id'})
