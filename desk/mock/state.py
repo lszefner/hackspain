@@ -860,6 +860,7 @@ def lanes(q="", action=""):
             "id": vid, "name": items[0]["vendor"], "count": len(items),
             "pay_eur": total(items, "PAY"), "review_eur": total(items, "ESCALATE"),
             "nopay_eur": total(items, "DO NOT PAY"),
+            "pay_n": sum(1 for i in items if i["action"] == "PAY"),
             "review_n": sum(1 for i in items if i["action"] == "ESCALATE"),
             "nopay_n": sum(1 for i in items if i["action"] == "DO NOT PAY"),
             "terms": items[0]["terms"],

@@ -257,34 +257,36 @@ body.chatting .chips{justify-content:flex-start}
 
 /* ───────────────── invoices: one box per supplier */
 .lanes{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
-.lane{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
-  overflow:hidden;transition:border-color .18s var(--ease),box-shadow .25s var(--ease)}
-.lane:hover{border-color:var(--line2)}
-.lane.open{box-shadow:var(--shadow-lift)}
-.lane-head{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:14px;align-items:center;
-  width:100%;text-align:left;padding:14px 18px;transition:background .16s var(--ease)}
-.lane-head:hover{background:var(--chip)}
+.lane{background:var(--chip);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;transition:background .2s var(--ease),border-color .18s var(--ease),
+  box-shadow .25s var(--ease)}
+.lane:hover{background:var(--panel);border-color:var(--line2);box-shadow:var(--shadow)}
+.lane.open{background:var(--panel);border-color:var(--line2);box-shadow:var(--shadow-lift)}
+.lane-head{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:12px;align-items:center;
+  width:100%;text-align:left;padding:9px 15px}
 .lane .cv2{width:7px;height:7px;border-right:1.6px solid var(--line2);border-bottom:1.6px solid var(--line2);
   transform:rotate(-45deg);transition:transform .3s var(--ease);justify-self:center}
 .lane.open .cv2{transform:rotate(45deg)}
-.lane .nm2{display:block;font-size:15px;font-weight:600;letter-spacing:-.014em;overflow:hidden;
+.lane .nm2{font-size:14px;font-weight:600;letter-spacing:-.014em}
+.lane .sub2{font-size:11.5px;color:var(--faint);font-family:var(--mono);margin-left:9px}
+.lane .who3{display:flex;align-items:baseline;min-width:0;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}
-.lane .sub2{display:block;font-size:12px;color:var(--faint);font-family:var(--mono);margin-top:2px}
-.figs{display:grid;grid-template-columns:repeat(3,minmax(96px,auto));gap:26px;text-align:right}
-.fig .lbl2{display:block;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
-  font-weight:600;margin-bottom:3px}
-.fig .amt{display:block;font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(92px,auto));gap:22px;text-align:right}
+.fig .lbl2{display:block;font-size:8.5px;line-height:1;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);font-weight:600;margin-bottom:3px}
+.fig .amt{display:block;font-family:var(--mono);font-size:13px;line-height:1.25;
+  font-variant-numeric:tabular-nums}
 .fig .amt.zero{color:var(--faint)}
 .fig.pay .amt:not(.zero){color:var(--pay)}
 .fig.rev .amt:not(.zero){color:var(--esc)}
 .fig.stop .amt:not(.zero){color:var(--no)}
-.fig .n2{font-size:10.5px;color:var(--faint);font-family:var(--mono)}
+.fig .n2{display:block;font-size:10px;line-height:1.2;color:var(--faint);font-family:var(--mono)}
 
 .lane-body{display:grid;grid-template-rows:0fr;opacity:0;
   transition:grid-template-rows .44s var(--ease),opacity .3s var(--ease)}
 .lane.open .lane-body{grid-template-rows:1fr;opacity:1}
 .lane-body>.in2{overflow:hidden;min-height:0}
-.lane-body .pad{padding:2px 18px 14px;border-top:1px solid var(--line)}
+.lane-body .pad{padding:2px 15px 12px;border-top:1px solid var(--line)}
 
 /* ───────────────── invoices */
 .inv-head{display:flex;gap:9px;align-items:center;padding:14px 32px;border-bottom:1px solid var(--line);
@@ -980,10 +982,9 @@ const money = n => '€' + Number(n || 0).toLocaleString('en-GB',
   {minimumFractionDigits: 2, maximumFractionDigits: 2});
 
 function fig(kind, label, amount, n){
-  const zero = !amount ? ' zero' : '';
   return `<span class="fig ${kind}"><span class="lbl2">${esc(label)}</span>
-    <span class="amt${zero}">${esc(money(amount))}</span>
-    ${n != null ? `<span class="n2">${n} invoice${n === 1 ? '' : 's'}</span>` : ''}</span>`;
+    <span class="amt${amount ? '' : ' zero'}">${esc(money(amount))}</span>
+    <span class="n2">${n} invoice${n === 1 ? '' : 's'}</span></span>`;
 }
 
 function laneRows(rows){
@@ -1023,12 +1024,12 @@ async function loadInvoices(){
         return `<div class="lane${open ? ' open' : ''}" data-lane="${esc(l.id)}">
           <button class="lane-head" type="button">
             <span class="cv2"></span>
-            <span><span class="nm2">${esc(l.name)}</span>
-              <span class="sub2">${l.count} invoice${l.count === 1 ? '' : 's'}</span></span>
+            <span class="who3"><span class="nm2">${esc(l.name)}</span>
+              <span class="sub2">${l.count}</span></span>
             <span class="figs">
-              ${fig('pay', 'Pays itself', l.pay_eur)}
+              ${fig('pay', 'Pay', l.pay_eur, l.pay_n)}
               ${fig('rev', 'Needs you', l.review_eur, l.review_n)}
-              ${fig('stop', 'Stopped', l.nopay_eur, l.nopay_n)}
+              ${fig('stop', 'No pay', l.nopay_eur, l.nopay_n)}
             </span>
           </button>
           <div class="lane-body"><div class="in2">${open ? laneRows(l.rows) : ''}</div></div>
