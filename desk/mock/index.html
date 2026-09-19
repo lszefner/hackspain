@@ -255,6 +255,37 @@ body.chatting .chips{justify-content:flex-start}
 .hint.busy{color:var(--esc)}
 .hint.ready{color:var(--pay)}
 
+/* ───────────────── invoices: one box per supplier */
+.lanes{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
+.lane{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);
+  overflow:hidden;transition:border-color .18s var(--ease),box-shadow .25s var(--ease)}
+.lane:hover{border-color:var(--line2)}
+.lane.open{box-shadow:var(--shadow-lift)}
+.lane-head{display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:14px;align-items:center;
+  width:100%;text-align:left;padding:14px 18px;transition:background .16s var(--ease)}
+.lane-head:hover{background:var(--chip)}
+.lane .cv2{width:7px;height:7px;border-right:1.6px solid var(--line2);border-bottom:1.6px solid var(--line2);
+  transform:rotate(-45deg);transition:transform .3s var(--ease);justify-self:center}
+.lane.open .cv2{transform:rotate(45deg)}
+.lane .nm2{display:block;font-size:15px;font-weight:600;letter-spacing:-.014em;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.lane .sub2{display:block;font-size:12px;color:var(--faint);font-family:var(--mono);margin-top:2px}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(96px,auto));gap:26px;text-align:right}
+.fig .lbl2{display:block;font-size:9px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
+  font-weight:600;margin-bottom:3px}
+.fig .amt{display:block;font-family:var(--mono);font-size:13.5px;font-variant-numeric:tabular-nums}
+.fig .amt.zero{color:var(--faint)}
+.fig.pay .amt:not(.zero){color:var(--pay)}
+.fig.rev .amt:not(.zero){color:var(--esc)}
+.fig.stop .amt:not(.zero){color:var(--no)}
+.fig .n2{font-size:10.5px;color:var(--faint);font-family:var(--mono)}
+
+.lane-body{display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows .44s var(--ease),opacity .3s var(--ease)}
+.lane.open .lane-body{grid-template-rows:1fr;opacity:1}
+.lane-body>.in2{overflow:hidden;min-height:0}
+.lane-body .pad{padding:2px 18px 14px;border-top:1px solid var(--line)}
+
 /* ───────────────── invoices */
 .inv-head{display:flex;gap:9px;align-items:center;padding:14px 32px;border-bottom:1px solid var(--line);
   flex-wrap:wrap}
@@ -272,10 +303,10 @@ body.chatting .chips{justify-content:flex-start}
 
 .itbl{max-width:1040px;margin:0 auto}
 .ihead,.irow{display:grid;
-  grid-template-columns:minmax(0,1.5fr) minmax(0,1.4fr) minmax(0,.95fr) 62px 96px 92px minmax(0,1fr);
-  gap:14px;align-items:center;padding:9px 12px;border-radius:8px}
+  grid-template-columns:minmax(0,1.6fr) minmax(0,1.1fr) 62px 100px 92px minmax(0,1fr);
+  gap:14px;align-items:center;padding:9px 10px;border-radius:8px}
 .ihead{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:600;
-  border-bottom:1px solid var(--line2);position:sticky;top:0;background:var(--bg);z-index:2}
+  border-bottom:1px solid var(--line2)}
 .irow{font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--line);cursor:pointer;
   transition:background .14s var(--ease)}
 .irow:hover{background:var(--chip)}
@@ -427,7 +458,6 @@ body.chatting .chips{justify-content:flex-start}
       <div class="inv-head">
         <input type="search" id="inv-q" class="search" placeholder="Search a file, a supplier or an invoice number…">
         <div class="seg" id="inv-action"></div>
-        <select id="inv-vendor" class="sel"></select>
         <span class="inv-count" id="inv-count"></span>
       </div>
       <div class="scroll" id="inv-body"></div>
@@ -472,7 +502,7 @@ $('#nav').addEventListener('click', e => {
   const b = e.target.closest('.nav-item'); if (!b) return;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n === b));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
-  if (b.dataset.view === 'invoices' && !INV.rows.length) loadInvoices();
+  if (b.dataset.view === 'invoices' && !invReady) loadInvoices();
 });
 
 /* ───────────────── the dotted globe that turns while it thinks */
@@ -938,68 +968,100 @@ thread.addEventListener('click', async e => {
   if (row) row.closest('.exp').classList.toggle('open');
 });
 
-/* ───────────────── invoices: the archive, and one invoice up close */
-const INV = {q: '', action: '', vendor: '', offset: 0, limit: 60, rows: [], total: 0};
+/* ───────────────── invoices: one box per supplier, opened on demand */
+const INV = {q: '', action: '', open: new Set()};
 let invTimer = 0, invReady = false;
 
-const ACTS = [['', 'All'], ['PAY', 'Pay'], ['ESCALATE', 'Escalate'], ['DO NOT PAY', 'Do not pay']];
+const ACTS = [['', 'All'], ['PAY', 'Pay'], ['ESCALATE', 'Review'], ['DO NOT PAY', 'Do not pay']];
 $('#inv-action').innerHTML = ACTS.map(([v, l]) =>
   `<button data-a="${esc(v)}"${v === '' ? ' class="on"' : ''}>${esc(l)}</button>`).join('');
 
-async function loadInvoices(more){
-  if (!more) INV.offset = 0;
-  const p = new URLSearchParams({q: INV.q, action: INV.action, vendor: INV.vendor,
-                                 offset: INV.offset, limit: INV.limit});
-  const d = await (await fetch('/api/invoices?' + p)).json();
-  INV.rows = more ? INV.rows.concat(d.rows) : d.rows;
-  INV.total = d.total;
+const money = n => '€' + Number(n || 0).toLocaleString('en-GB',
+  {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+function fig(kind, label, amount, n){
+  const zero = !amount ? ' zero' : '';
+  return `<span class="fig ${kind}"><span class="lbl2">${esc(label)}</span>
+    <span class="amt${zero}">${esc(money(amount))}</span>
+    ${n != null ? `<span class="n2">${n} invoice${n === 1 ? '' : 's'}</span>` : ''}</span>`;
+}
+
+function laneRows(rows){
+  return `<div class="pad"><div class="itbl">
+    <div class="ihead"><span>File</span><span>Invoice</span><span>Issued</span>
+      <span style="text-align:right">Amount</span><span>Action</span><span>What blocked it</span></div>
+    ${rows.map(r => `<div class="irow" data-file="${esc(r.file)}">
+      <span class="f">${esc(r.file)}</span>
+      <span class="n">${esc(r.number)}</span>
+      <span class="d">${esc(r.date)}</span>
+      <span class="a">${esc(money(r.total))}</span>
+      <span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>
+      <span class="b">${esc(r.blocking.length ? r.blocking.join(', ').toLowerCase() : '—')}</span>
+    </div>`).join('')}</div></div>`;
+}
+
+async function loadInvoices(){
+  const p = new URLSearchParams({q: INV.q, action: INV.action});
+  const d = await (await fetch('/api/lanes?' + p)).json();
 
   if (!invReady){
-    $('#inv-vendor').innerHTML = `<option value="">Every supplier</option>` +
-      d.vendors.map(v => `<option value="${esc(v.id)}">${esc(v.name)} · ${v.n}</option>`).join('');
     $('#inv-action').querySelectorAll('button').forEach(b => {
       const k = b.dataset.a;
       if (k) b.textContent += ' · ' + (d.counts[k] ?? 0);
     });
     invReady = true;
   }
-  $('#inv-count').textContent = `${INV.total} of ${d.grand}`;
+  $('#inv-count').textContent = `${d.matched} of ${d.grand}`;
 
-  $('#inv-body').innerHTML = !INV.rows.length
+  // a filter narrows things down, so the boxes open themselves
+  const auto = Boolean(INV.q || INV.action);
+
+  $('#inv-body').innerHTML = !d.lanes.length
     ? `<div class="empty-note">Nothing matches that. Try a supplier name, or clear the filters.</div>`
-    : `<div class="itbl">
-        <div class="ihead"><span>File</span><span>Supplier</span><span>Invoice</span><span>Issued</span>
-          <span style="text-align:right">Amount</span><span>Action</span><span>What blocked it</span></div>
-        ${INV.rows.map(r => `<div class="irow" data-file="${esc(r.file)}">
-          <span class="f">${esc(r.file)}</span>
-          <span class="v">${esc(r.vendor)}</span>
-          <span class="n">${esc(r.number)}</span>
-          <span class="d">${esc(r.date)}</span>
-          <span class="a">${esc(money(r.total))}</span>
-          <span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>
-          <span class="b">${esc(r.blocking.length ? r.blocking.join(', ').toLowerCase() : '—')}</span>
-        </div>`).join('')}
-        ${INV.rows.length < INV.total
-          ? `<button class="more" id="inv-more">Show ${Math.min(INV.limit, INV.total - INV.rows.length)} more</button>`
-          : ''}
-      </div>`;
-}
+    : `<div class="lanes">${d.lanes.map(l => {
+        const open = auto || INV.open.has(l.id);
+        return `<div class="lane${open ? ' open' : ''}" data-lane="${esc(l.id)}">
+          <button class="lane-head" type="button">
+            <span class="cv2"></span>
+            <span><span class="nm2">${esc(l.name)}</span>
+              <span class="sub2">${l.count} invoice${l.count === 1 ? '' : 's'}</span></span>
+            <span class="figs">
+              ${fig('pay', 'Pays itself', l.pay_eur)}
+              ${fig('rev', 'Needs you', l.review_eur, l.review_n)}
+              ${fig('stop', 'Stopped', l.nopay_eur, l.nopay_n)}
+            </span>
+          </button>
+          <div class="lane-body"><div class="in2">${open ? laneRows(l.rows) : ''}</div></div>
+        </div>`;
+      }).join('')}</div>`;
 
-const money = n => '€' + Number(n).toLocaleString('en-GB',
-  {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  // keep the rows for lanes the user opens later
+  $('#inv-body').querySelectorAll('.lane').forEach(el => {
+    el._rows = d.lanes.find(l => l.id === el.dataset.lane).rows;
+  });
+}
 
 $('#inv-q').addEventListener('input', e => {
   INV.q = e.target.value;
-  clearTimeout(invTimer); invTimer = setTimeout(() => loadInvoices(), 180);
+  clearTimeout(invTimer); invTimer = setTimeout(() => loadInvoices(), 200);
 });
 $('#inv-action').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   $('#inv-action').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
   INV.action = b.dataset.a; loadInvoices();
 });
-$('#inv-vendor').addEventListener('change', e => { INV.vendor = e.target.value; loadInvoices(); });
 $('#view-invoices').addEventListener('click', e => {
-  if (e.target.id === 'inv-more'){ INV.offset += INV.limit; return loadInvoices(true); }
+  const head = e.target.closest('.lane-head');
+  if (head){
+    const lane = head.closest('.lane'), id = lane.dataset.lane;
+    const opening = !lane.classList.contains('open');
+    if (opening && !lane.querySelector('.itbl')){
+      lane.querySelector('.in2').innerHTML = laneRows(lane._rows);
+    }
+    lane.classList.toggle('open', opening);
+    INV.open[opening ? 'add' : 'delete'](id);
+    return;
+  }
   const row = e.target.closest('.irow');
   if (row) openDossier(row.dataset.file);
 });

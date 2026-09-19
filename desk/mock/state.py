@@ -834,3 +834,41 @@ def dossier(file):
             "timeline": [{"kind": k, "detail": d, "actor": a, "ms": m, "cost": c}
                          for k, d, a, m, c in tl],
             "cost": 0.0, "ms": sum(t[3] for t in tl), "ruleset": TOTALS["ruleset"]}
+
+
+def lanes(q="", action=""):
+    """One box per supplier. The three figures in the header are the whole
+    point: what clears on its own, what needs Alberto, and what is stopped."""
+    rows = archive()
+    if q:
+        n = q.lower()
+        rows = [r for r in rows if n in r["file"].lower() or n in r["vendor"].lower()
+                or n in r["number"].lower()]
+    if action:
+        rows = [r for r in rows if r["action"] == action]
+
+    by = {}
+    for r in rows:
+        by.setdefault(r["vendor_id"], []).append(r)
+
+    out = []
+    for vid, items in by.items():
+        def total(kind):
+            return round(sum(i["total"] for i in items if i["action"] == kind), 2)
+        review = total("ESCALATE")
+        out.append({
+            "id": vid, "name": items[0]["vendor"], "count": len(items),
+            "pay_eur": total("PAY"), "review_eur": review, "nopay_eur": total("DO NOT PAY"),
+            "review_n": sum(1 for i in items if i["action"] == "ESCALATE"),
+            "nopay_n": sum(1 for i in items if i["action"] == "DO NOT PAY"),
+            "terms": next((v[2] for k, v in VENDORS.items() if k == vid), "—") if "VENDORS" in globals() else "—",
+            "rows": [{k: i[k] for k in ("file", "number", "date", "total",
+                                        "action", "blocking", "found", "scanned")}
+                     for i in sorted(items, key=lambda x: (x["action"] != "ESCALATE", x["file"]))],
+        })
+    # the supplier that needs him most goes first
+    out.sort(key=lambda a: (-a["review_eur"], -a["nopay_eur"], -a["count"]))
+    every = archive()
+    return {"lanes": out, "matched": len(rows), "grand": len(every),
+            "counts": {a: sum(1 for r in every if r["action"] == a)
+                       for a in ("PAY", "ESCALATE", "DO NOT PAY")}}
