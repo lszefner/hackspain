@@ -18,12 +18,15 @@ export async function POST(request: NextRequest) {
     url.search = "";
     url.searchParams.set("next", safeNext);
     url.searchParams.set("error", "1");
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 303);
   }
 
   url.pathname = safeNext;
   url.search = "";
-  const response = NextResponse.redirect(url);
+  // 303, not the default 307: a 307 keeps the method, so the browser POSTed
+  // the form again at the destination. The front page is now a static file
+  // and answered 405. See Other turns it into the GET this always meant.
+  const response = NextResponse.redirect(url, 303);
   response.cookies.set(GATE_COOKIE, "granted", {
     httpOnly: true,
     sameSite: "lax",

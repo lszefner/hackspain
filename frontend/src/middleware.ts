@@ -21,6 +21,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Un fetch sin cookie seguiría el 302 hasta /access y luego res.json()
+  // reventaría con "Unexpected token '<'". En mitad de una llamada eso es
+  // indescifrable; un 401 con cuerpo JSON se lee de un vistazo.
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "sin_acceso" }, { status: 401 });
+  }
+
   const url = request.nextUrl.clone();
   url.pathname = "/access";
   url.search = "";
@@ -29,5 +36,9 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
+  // El audio de la centralita queda fuera: son una petición por frase, y no
+  // hay nada que decidir sobre ellas. Además, si la cookie caduca a mitad de
+  // llamada, el <audio> recibiría HTML en vez de un mp3 y la voz degradaría
+  // a la del navegador sin que nadie se entere de por qué.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|phone_calls/voz/).*)"],
 };

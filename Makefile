@@ -17,7 +17,7 @@ CON_ENV := set -a; [ -f .env ] && . ./.env; set +a;
 .DEFAULT_GOAL := help
 POLICY ?= balanced
 SCAN_INPUT ?= rules_ingestion/eval/fixtures
-.PHONY: help centralita export voces erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login api api-status rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
+.PHONY: help centralita web-centralita export voces erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login api api-status rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
 
 help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
@@ -44,6 +44,13 @@ centralita: ## Voice agent for supplier calls, on port 8011 (needs `make export`
 	@# igual y habla el navegador. Quedarse sin demo por eso seria absurdo.
 	-@$(CON_ENV) $(PYTHON) -m phone_calls.voz >/dev/null 2>&1
 	@$(CON_ENV) $(PYTHON) -m phone_calls.servidor --puerto 8011
+
+web-centralita: ## Freeze the centralita into frontend/ for Vercel (no network).
+	@test -f phone_calls/datos/maestro.json || { echo "falta el export: corre `make export`"; exit 1; }
+	@# NUNCA sintetiza: la clave de ElevenLabs tiene tope propio de 1.000
+	@# caracteres y ya se agoto una vez. Copia lo que `make voces` dejo en
+	@# .voz/ y avisa de lo que falte -- eso lo dira el navegador.
+	@$(CON_ENV) $(PYTHON) -m phone_calls.publicar_web
 
 erp: caja ## Start the local ERP on port 8009.
 	$(ERP)

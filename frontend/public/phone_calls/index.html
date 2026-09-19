@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Centralita de proveedores</title>
+<link rel="stylesheet" href="/estatico/estilo.css">
+</head>
+<body>
+
+<header>
+  <div class="marca">
+    <span class="punto" id="punto"></span>
+    <h1>Centralita de proveedores</h1>
+  </div>
+  <p class="fuente">
+    Sistema externo &middot; lee <code>alberto.db</code> en solo lectura
+    &middot; <span id="sello">sin consultar</span>
+  </p>
+</header>
+
+<main>
+
+  <section class="llamada">
+    <div class="barra">
+      <button id="descolgar" class="primario">Descolgar</button>
+      <button id="colgar" class="secundario" disabled>Colgar</button>
+      <span id="estadoVoz" class="estado">en espera</span>
+    </div>
+
+    <div id="conversacion" class="conversacion">
+      <p class="vacio">Pulsa <strong>Descolgar</strong> para empezar, o
+      reproduce una llamada grabada.</p>
+    </div>
+
+    <form id="formulario" class="entrada">
+      <input id="texto" type="text" autocomplete="off"
+             placeholder="Escribe lo que dice el proveedor&hellip;">
+      <button type="submit" class="secundario">Enviar</button>
+      <button type="button" id="micro" class="micro" title="Hablar">Hablar</button>
+    </form>
+
+    <div id="grabadas" class="grabadas"></div>
+    <p id="aviso" class="aviso" hidden></p>
+  </section>
+
+  <aside class="expediente">
+    <div id="silencio" class="silencio" hidden>
+      <h2>Lo que NO le he dicho</h2>
+      <dl id="retenido"></dl>
+      <p class="porque" id="porque"></p>
+    </div>
+
+    <div id="panel" class="panel" hidden>
+      <h2>Expediente</h2>
+      <dl class="cabecera">
+        <div><dt>Factura</dt><dd id="pFile"></dd></div>
+        <div><dt>Pedido</dt><dd id="pPedido"></dd></div>
+        <div><dt>Proveedor</dt><dd id="pProv"></dd></div>
+        <div><dt>Importe</dt><dd id="pTotal"></dd></div>
+      </dl>
+      <p class="veredicto"><span id="pResult"></span><em id="pMotivo"></em></p>
+      <ul id="pReglas" class="reglas"></ul>
+      <p class="notas" id="pNotas" hidden></p>
+      <p class="procedencia" id="pProc"></p>
+    </div>
+
+    <p id="sinPanel" class="sinPanel">
+      Aqu&iacute; aparece el expediente en cuanto el agente identifique el
+      pedido: la decisi&oacute;n, las cinco reglas con su evidencia y los
+      snapshots con los que se tom&oacute;. Es la misma fila que se entrega
+      en <code>outcomes.jsonl</code>.
+    </p>
+  </aside>
+
+</main>
+
+<script src="/estatico/llamada.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "functions": {
+    "api/centralita/turno.py": {
+      "maxDuration": 15,
+      "includeFiles": "centralita_py/**"
+    }
+  },
+  "headers": [
+    {
+      "source": "/phone_calls/voz/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }
+      ]
+    }
+  ]
+}

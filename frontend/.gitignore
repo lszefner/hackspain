@@ -40,3 +40,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# frozen by desk/mock/export_static.py on prebuild -- derived, never committed
+/src/desk-data/
+/public/desk/

@@ -169,6 +169,7 @@ es una promesa del README; falla en pytest si alguien la rompe.
 | `voz.py` | síntesis con `say`, caché por hash y precalentado |
 | `estatico/` | la pantalla y la Web Speech API |
 | `guiones_demo.json` | las llamadas grabadas — y el fixture de los tests |
+| `publicar_web.py` | congela todo esto dentro de `frontend/` para Vercel |
 
 **El servidor no guarda sesiones.** El estado va y vuelve en el cuerpo de cada
 petición, así que no hay cerrojos ni sesiones zombis, recargar no rompe nada y
@@ -187,6 +188,49 @@ el panel salen del servidor igual que en vivo, porque pasan por la misma
 función que el micrófono. Y están sucias a propósito (`"peo 2026 cero cuatro
 siete cinco"`, `"transporte guadaira"` en singular) para que ejerciten el
 parser tolerante en vez de esquivarlo.
+
+## En Vercel
+
+La centralita también vive en el despliegue, en `/phone_calls`. No es un
+puerto, es la misma página:
+
+```bash
+make web-centralita      # congela la centralita dentro de frontend/
+```
+
+| | En local (`make centralita`) | En Vercel (`/phone_calls`) |
+|---|---|---|
+| la página | la sirve `servidor.py` en `/` | estática en `public/`, la sirve el CDN |
+| el turno | `POST /api/turno` | `POST /api/centralita/turno`, una Function de Python |
+| el motor | `guion.py` | **el mismo `guion.py`**, copiado verbatim a `frontend/centralita_py/` |
+| la voz | ElevenLabs si hay clave, si no `say`, si no el navegador | precomputada; lo improvisado lo dice el navegador |
+| el micrófono | sólo desde `localhost` | desde cualquier dispositivo — HTTPS es contexto seguro |
+
+Eso último es la razón de hacerlo: en local el micrófono sólo funciona en la
+máquina que levantó el servidor. En HTTPS funciona desde el móvil.
+
+**En producción no hay ninguna llamada a ElevenLabs.** No es una promesa:
+`voz.py` —el único fichero que sabe hablar con `api.elevenlabs.io`— no se
+despliega, y `tests/test_publicacion_web.py` lo comprueba con un grep. El
+audio son los mp3 que `make voces` ya dejó en `.voz/`, copiados a
+`public/phone_calls/voz/` y servidos por el CDN con el hash en la URL. Las 9
+frases de las tres llamadas grabadas están al completo con Inés; lo que se
+improvise fuera del guion lo dirá la voz del navegador, que es el peldaño 3
+de siempre.
+
+`frontend/centralita_py/` y `frontend/public/phone_calls/` son **artefactos
+generados**. No se editan a mano: la siguiente publicación los pisa, y el test
+compara byte a byte contra el original. Si alguien toca `guion.py` y no corre
+`make web-centralita`, **pytest falla** — que es justo lo que queremos, porque
+si no la web seguiría demostrando una política que ya no es la nuestra, en
+silencio y con buena cara.
+
+Conducir la web entera con `curl`, igual que el 8011:
+
+```bash
+curl -s https://<dominio>/api/centralita/turno -b 'site-access=granted' \
+     -H 'content-type: application/json' -d '{"estado":{},"oye":[]}'
+```
 
 ## Límites, a propósito
 
@@ -231,6 +275,7 @@ parser tolerante en vez de esquivarlo.
       auriculares lo resuelven gratis
 - [ ] Hotspot del móvil probado
 - [ ] `alberto.db` con la run hecha, y el puerto 8011 libre
+- [ ] `make web-centralita` pasado y **commiteado** si se ha tocado `guion.py`, y `/phone_calls` abierto una vez en el móvil
 
 **Trampa al grabar en Mac**: QuickTime captura el micrófono pero no el audio
 del sistema sin BlackHole. Con auriculares, el sintetizador **no sale en el

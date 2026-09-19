@@ -249,8 +249,13 @@ def outcome(files):
         rejected.extend(f.get("inside_rejected", []))
         invoices.extend(f.get("invoices", []))
 
-    dupes = [i for i in invoices if i in state.ARCHIVE]
-    fresh = [i for i in invoices if i not in state.ARCHIVE]
+    # state.ARCHIVE is the handful of names the seeded queue uses; the box
+    # itself is the 500 in state.archive(). Checking only the former handed a
+    # real Caja invoice a freshly invented verdict, when the desk already held
+    # a decision for it.
+    seen = lambda i: i in state.ARCHIVE or state.dossier(i) is not None
+    dupes = [i for i in invoices if seen(i)]
+    fresh = [i for i in invoices if not seen(i)]
 
     pay = esc = no = 0
     pay_eur = esc_eur = no_eur = 0.0
@@ -410,7 +415,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(400)
         name = str(req.get("act") or "")
         out = (state.undo() if name == "undo"
-               else state.act(name, req.get("key"), req.get("reason")))
+               else state.act(name, req.get("key"), req.get("reason"),
+                              req.get("payload")))
         if out.get("refresh"):
             out["panels"] = {k: state.block(k) for k in ("queue", "payments", "report")}
         return self._json(out)
@@ -461,25 +467,51 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_error(400)
         said = str(req.get("text") or "").strip()[:1500]
         b = outcome(files)
-        panel = state.batch_block(b)
 
-        facts = json.dumps({**state.facts(), "the_batch_just_dropped": b}, ensure_ascii=False)
+        # A document the box already holds is not news, it is a lookup. Show the
+        # decision that was already taken on it -- the rules, how each one came
+        # out, the verdict -- instead of a "not run again" line that tells him
+        # nothing. Dropping an invoice off his own desk is how Alberto asks
+        # "what did you decide about this one?", and that answer is real: it
+        # comes from the archive, not from the demo verdicts a fresh file gets.
+        known = [f for f in b["dupes"] if state.dossier(f)]
+        seen = [blk for f in known[:3] if (blk := state.invoice_block(f))]
+        fresh = b["total"] - len(b["dupes"])
+
+        if seen and not fresh:
+            panels = seen
+            on_screen = ("the file he just dropped, as the desk already holds it: every rule "
+                         "that ran on it and how each came out")
+            note = ("\nThis one is NOT new. It is already in the box and already decided, so "
+                    "the verdict on screen is the real one, not demo data. Say what was decided "
+                    "and the single reason that settled it. Never say you just read the PDF.")
+            ask = f"What did you decide about {known[0]}?"
+        else:
+            panels = [state.batch_block(b), *seen]
+            on_screen = ("the result of the batch Alberto just dropped (counts, amounts, "
+                         "duplicates, files you could not read)"
+                         + (", then the ones already in the box, with their real verdicts"
+                            if seen else ""))
+            note = ("\nThe verdicts for the NEW files are demo data and the panel says so; do "
+                    "not claim you truly read those PDFs.")
+            ask = f"I just sent you {b['label']}. In one or two sentences, what would you do first with it?"
+
+        world = {**state.facts(), "the_batch_just_dropped": b}
+        if known:
+            world["already_in_the_box"] = {f: state.dossier(f) for f in known[:3]}
+        facts = json.dumps(world, ensure_ascii=False, default=str)
         msgs = [
             {"role": "system", "content": SYSTEM},
             {"role": "system", "content":
                 f"FACTS (the only source of truth):\n{facts}\n\n"
-                f"ON SCREEN under your sentence: the result of the batch Alberto just dropped "
-                f"(counts, amounts, duplicates, files you could not read). Do not restate it.\n"
-                f"The verdicts in this batch are demo data and the panel says so; do not claim "
-                f"you truly read the PDFs."
-                + ("\nAlberto sent the batch with a message; answer THAT, using the batch result."
+                f"ON SCREEN under your sentence: {on_screen}. Do not restate it."
+                + note
+                + ("\nAlberto sent the batch with a message; answer THAT, using what is above."
                    if said else "")},
-            {"role": "user", "content": (
-                said if said else
-                f"I just sent you {b['label']}. In one or two sentences, what would you do first with it?")},
+            {"role": "user", "content": said if said else ask},
         ]
         self._sse_open()
-        self._answer(msgs, [panel])
+        self._answer(msgs, panels)
 
     def end_headers(self):
         self.send_header("Cache-Control", "no-store")

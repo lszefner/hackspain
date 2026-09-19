@@ -1,0 +1,345 @@
+{
+ "pedido": "PO-2026-0475",
+ "file_id": "2026-17547_suministros.pdf",
+ "decision": "NO_PAGAR",
+ "evaluacion_completa": false,
+ "aprobable": false,
+ "motivos": [
+  {
+   "code": "ERP_ALREADY_PAID",
+   "consequence": "NO_PAGAR",
+   "explanation": "ERP marks the resolved order PAGADA.",
+   "refs": [
+    {
+     "pointer": "/rules/1",
+     "source": "ruleset"
+    },
+    {
+     "field": "invoice.order_reference"
+    },
+    {
+     "field": "order.id"
+    },
+    {
+     "field": "order.supplier_id"
+    },
+    {
+     "field": "supplier.id"
+    },
+    {
+     "field": "erp.order_payment_status"
+    }
+   ],
+   "rule_id": "R2"
+  }
+ ],
+ "reglas": [
+  {
+   "rule_id": "R1",
+   "status": "BLOCKED",
+   "consecuencia": "ESCALAR",
+   "reason_codes": [
+    "UNUSABLE_INPUT"
+   ],
+   "explicacion": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.active",
+   "entradas": [
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "invoice.supplier_tax_id",
+     "estado": "present",
+     "valor": "B46102331"
+    },
+    {
+     "campo": "invoice.iban",
+     "estado": "present",
+     "valor": "ES2100491500051234567890"
+    },
+    {
+     "campo": "supplier.tax_id",
+     "estado": "present",
+     "valor": "B46102331"
+    },
+    {
+     "campo": "supplier.iban",
+     "estado": "present",
+     "valor": "ES2100491500051234567890"
+    },
+    {
+     "campo": "supplier.active",
+     "estado": "missing",
+     "valor": null
+    }
+   ]
+  },
+  {
+   "rule_id": "R2",
+   "status": "VIOLATED",
+   "consecuencia": "NO_PAGAR",
+   "reason_codes": [
+    "ERP_ALREADY_PAID"
+   ],
+   "explicacion": "ERP marks the resolved order PAGADA.",
+   "entradas": [
+    {
+     "campo": "invoice.number",
+     "estado": "present",
+     "valor": "2026/17547"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "398.04"
+    },
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-05-24"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0475"
+    },
+    {
+     "campo": "order.id",
+     "estado": "present",
+     "valor": "PO-2026-0475"
+    },
+    {
+     "campo": "order.supplier_id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "erp.order_payment_status",
+     "estado": "present",
+     "valor": "PAGADA"
+    },
+    {
+     "campo": "invoice.currency",
+     "estado": "present",
+     "valor": "EUR"
+    }
+   ]
+  },
+  {
+   "rule_id": "R3",
+   "status": "PASS",
+   "consecuencia": "PAGAR",
+   "reason_codes": [
+    "AMOUNT_RECONCILED",
+    "REQUIREMENT_SATISFIED",
+    "VAT_AMOUNT_RECONCILED"
+   ],
+   "explicacion": "Requirement satisfied: invoice.currency; Stated VAT 69.08 EUR; expected 69.08 EUR from base 328.96 at 21% rounded half-up to cents; difference 0.00 EUR; tolerance 0.01 EUR. This verifies arithmetic, not legal rate eligibility.; Line sum versus taxable base: difference 0.00 EUR; tolerance 0.01 EUR.; Base plus VAT versus total: difference 0.00 EUR; tolerance 0.01 EUR.; Invoice versus order total: difference 0.00 EUR; tolerance 0.01 EUR.",
+   "entradas": [
+    {
+     "campo": "invoice.line_amounts",
+     "estado": "present",
+     "valor": [
+      "62.5",
+      "92.11",
+      "174.35"
+     ]
+    },
+    {
+     "campo": "invoice.taxable_base",
+     "estado": "present",
+     "valor": "328.96"
+    },
+    {
+     "campo": "invoice.vat_amount",
+     "estado": "present",
+     "valor": "69.08"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "398.04"
+    },
+    {
+     "campo": "invoice.currency",
+     "estado": "present",
+     "valor": "EUR"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0475"
+    },
+    {
+     "campo": "invoice.taxes.0.kind",
+     "estado": "present",
+     "valor": "vat"
+    },
+    {
+     "campo": "invoice.taxes.0.rate_percent",
+     "estado": "present",
+     "valor": "21"
+    },
+    {
+     "campo": "invoice.taxes.0.amount",
+     "estado": "present",
+     "valor": "69.08"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "order.supplier_id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "order.id",
+     "estado": "present",
+     "valor": "PO-2026-0475"
+    },
+    {
+     "campo": "order.total",
+     "estado": "present",
+     "valor": "398.04"
+    },
+    {
+     "campo": "order.currency",
+     "estado": "present",
+     "valor": "EUR"
+    }
+   ]
+  },
+  {
+   "rule_id": "R5",
+   "status": "NEEDS_REVIEW",
+   "consecuencia": "ESCALAR",
+   "reason_codes": [
+    "PAYMENT_TERMS_EXCEEDED"
+   ],
+   "explicacion": "Elapsed days since issue exceed the supplier's payment terms.",
+   "entradas": [
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-05-24"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P001"
+    },
+    {
+     "campo": "supplier.payment_terms_days",
+     "estado": "present",
+     "valor": 60
+    }
+   ]
+  },
+  {
+   "rule_id": "R6",
+   "status": "PASS",
+   "consecuencia": "PAGAR",
+   "reason_codes": [
+    "REQUIREMENT_SATISFIED"
+   ],
+   "explicacion": "Requirement satisfied: invoice.supplier_tax_id; Requirement satisfied: invoice.iban; Requirement satisfied: invoice.order_reference; Requirement satisfied: invoice.total; Requirement satisfied: invoice.vat_amount; Requirement satisfied: invoice.issue_date",
+   "entradas": [
+    {
+     "campo": "invoice.supplier_tax_id",
+     "estado": "present",
+     "valor": "B46102331"
+    },
+    {
+     "campo": "invoice.iban",
+     "estado": "present",
+     "valor": "ES2100491500051234567890"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0475"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "398.04"
+    },
+    {
+     "campo": "invoice.vat_amount",
+     "estado": "present",
+     "valor": "69.08"
+    },
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-05-24"
+    }
+   ]
+  }
+ ],
+ "factura": {
+  "number": "2026/17547",
+  "issue_date": "2026-05-24",
+  "supplier_tax_id": "B46102331",
+  "iban": "ES2100491500051234567890",
+  "total": "398.04",
+  "taxable_base": "328.96",
+  "vat_amount": "69.08",
+  "currency": "EUR"
+ },
+ "proveedor": {
+  "id": "P001",
+  "razon_social": "Suministros Levante S.L.",
+  "nif": "B46102331",
+  "iban": "ES2100491500051234567890",
+  "ciudad": "Valencia",
+  "condiciones": "60 dias"
+ },
+ "pedido_maestro": {
+  "pedido": "PO-2026-0475",
+  "proveedor_id": "P001",
+  "nif": "B46102331",
+  "importe_total": "398.04",
+  "estado_excel": "ABIERTO",
+  "fecha_pedido": "2026-05-24"
+ },
+ "asiento": {
+  "asiento_id": "AS-00475",
+  "fecha_registro": "2026-05-24",
+  "proveedor_id": "P001",
+  "nif": "B46102331",
+  "pedido": "PO-2026-0475",
+  "importe_esperado": "398.04",
+  "estado": "PAGADA"
+ },
+ "notas": {
+  "generales": [
+   "los de Guadaira siempre llaman los viernes",
+   "cafe 3a planta roto desde 2023",
+   "acordarse: NUNCA pagar sin cruzar con el ERP",
+   "preguntar a Sonia lo del IVA reducido (aplica??)"
+  ],
+  "en_revision": false
+ },
+ "procedencia": {
+  "context_id": "dc_b4bf421f490eda268b9e62f9d2d1f192a6f6ae17a263d114fd3fa6d0c3d22676",
+  "evaluation_id": "ev_c13eb7261cf2fe34abf8f6619793da664d178757627c370f637bdd7fdada1202",
+  "ruleset": {
+   "policy_id": "balanced",
+   "ruleset_version": "v3",
+   "sha256": "59f75fafe1c261ff0c6089554c6ddf5435cf45f8e0a327d267a05811bb985c2b",
+   "source": "ruleset"
+  },
+  "evaluation_date": "2026-09-19",
+  "capturado_at": "2026-09-19T10:00:00Z"
+ }
+}
