@@ -115,7 +115,7 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
-webui = [
+backend = [
     { name = "openpyxl" },
     { name = "pyyaml" },
 ]
@@ -138,14 +138,14 @@ dev = [
 requires-dist = [
     { name = "httpx", marker = "extra == 'worker'", specifier = ">=0.28,<0.29" },
     { name = "jsonschema", specifier = ">=4.23,<5" },
-    { name = "openpyxl", marker = "extra == 'webui'", specifier = ">=3.1,<4" },
+    { name = "openpyxl", marker = "extra == 'backend'", specifier = ">=3.1,<4" },
     { name = "pillow", marker = "extra == 'worker'", specifier = ">=11,<12" },
     { name = "psycopg", extras = ["binary", "pool"], marker = "extra == 'worker'", specifier = ">=3.2,<4" },
     { name = "pypdfium2", marker = "extra == 'worker'", specifier = ">=4.30,<5" },
     { name = "python-dotenv", marker = "extra == 'worker'", specifier = ">=1.0,<2" },
-    { name = "pyyaml", marker = "extra == 'webui'", specifier = ">=6.0,<7" },
+    { name = "pyyaml", marker = "extra == 'backend'", specifier = ">=6.0,<7" },
 ]
-provides-extras = ["worker", "webui"]
+provides-extras = ["worker", "backend"]
 
 [package.metadata.requires-dev]
 dev = [

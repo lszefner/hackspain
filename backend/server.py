@@ -3,7 +3,7 @@
 Lists the 500 facturas/*.pdf, lets you launch the real revision (Helmcode OCR
 + DeepSeek interpretation + rules_ingestion business checks) for a batch or a
 single file, and reports PASS/FAIL/NEEDS_REVIEW per rule with the reason.
-Stdlib only (no web framework). The presentation layer is webui/frontend/
+Stdlib only (no web framework). The presentation layer is frontend/
 (Next.js), which consumes this over CORS-enabled JSON.
 """
 from __future__ import annotations
@@ -15,11 +15,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-ROOT = Path(__file__).resolve().parent.parent.parent
+ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from webui.backend.results_store import ResultsStore  # noqa: E402
-from webui.backend.run_revision import DATA_DIR, FACTURAS_DIR, revisar_lote_sync  # noqa: E402
+from backend.results_store import ResultsStore  # noqa: E402
+from backend.run_revision import DATA_DIR, FACTURAS_DIR, revisar_lote_sync  # noqa: E402
 
 STORE = ResultsStore(DATA_DIR / "revisiones.db")
 LOTE_TAMANO = 20

@@ -13,7 +13,7 @@ benchmark/review/pages/
 .claude_erp.log
 
 # local review UI: sqlite db + cached OCR/interpretation artifacts
-webui/data/
+backend/data/
 
 # pipeline run artifacts
 rules_ingestion/outcome/*/rules.discovered*.json
