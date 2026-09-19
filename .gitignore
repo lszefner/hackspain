@@ -18,10 +18,7 @@ benchmark/review/pages/
 .claude_erp.log
 backend/data/
 
-# Estado y salidas: se regeneran con `alberto todo`
-alberto.db
-alberto.db-wal
-alberto.db-shm
+# Salidas del motor: se regeneran
 outcomes*.jsonl
 
 # El ejemplo que nos pasaron, conservado como referencia

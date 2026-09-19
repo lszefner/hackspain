@@ -325,9 +325,23 @@ async def test_backend_read_api_uses_database_records(runtime, monkeypatch):
 def test_backend_uses_latest_caja_resolver():
     import os
 
-    from alberto import caja
+    from backend import caja_paths
 
-    assert rr.FACTURAS_DIR == Path(os.environ.get('REVISION_INPUT_DIR') or caja.facturas())
+    assert rr.FACTURAS_DIR == Path(os.environ.get('REVISION_INPUT_DIR') or caja_paths.facturas())
+
+
+def test_engine_path_does_not_import_the_legacy_alberto_package():
+    # The engine must keep running once the alberto track is deleted.
+    import pathlib
+
+    root = pathlib.Path(__file__).resolve().parents[2]
+    offenders = [
+        str(path.relative_to(root))
+        for folder in ('backend', 'ingestion', 'rules_ingestion')
+        for path in (root / folder).rglob('*.py')
+        if 'from alberto' in path.read_text() or 'import alberto' in path.read_text()
+    ]
+    assert offenders == []
 
 
 def test_rule_builder_reuses_existing_ai_stages(monkeypatch):

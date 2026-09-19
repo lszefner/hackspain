@@ -88,7 +88,7 @@ async def test_actual_master_workbook_fits_bounded_review(tmp_path):
 
     import yaml
 
-    from alberto import caja
+    from backend import caja_paths as caja
     from backend.master_data import capture_master_snapshots
     from rules_ingestion.contextual_review import PROJECTION_LIMITATION, ReviewLimits
     from rules_ingestion.decision_context import build_context

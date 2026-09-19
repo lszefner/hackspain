@@ -15,27 +15,27 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-# La Caja ya no esta en la raiz: se resuelve (caja/ viva, o la instantanea
-# mas reciente de caja_de_alberto/). Ver alberto/caja.py.
-from alberto import caja as _caja  # noqa: E402
-from backend.master_data import (  # noqa: E402
+# La Caja se resuelve en backend/caja_paths.py (caja/ viva, o la instantanea
+# mas reciente de caja_de_alberto/). El motor no depende del paquete alberto.
+from backend import caja_paths as _caja
+from backend.master_data import (
     ErpClient,
     capture_erp_snapshot,
     capture_master_snapshots,
 )
-from backend.results_store import PostgresResultsStore  # noqa: E402
-from ingestion.config import credentials, settings  # noqa: E402
-from ingestion.contracts import Contracts, canonical_bytes, digest  # noqa: E402
-from ingestion.pipeline import Pipeline  # noqa: E402
-from rules_ingestion.decision_context import (  # noqa: E402
+from backend.results_store import PostgresResultsStore
+from ingestion.config import credentials, settings
+from ingestion.contracts import Contracts, canonical_bytes, digest
+from ingestion.pipeline import Pipeline
+from rules_ingestion.decision_context import (
     ContextError,
     SourceSnapshot,
     _parse_ruleset,
     build_context,
     evaluate_context,
 )
-from rules_ingestion.decision_storage import DecisionStore  # noqa: E402
-from rules_ingestion.engine import InvoiceDecisionEngine, RuleSource  # noqa: E402
+from rules_ingestion.decision_storage import DecisionStore
+from rules_ingestion.engine import InvoiceDecisionEngine, RuleSource
 
 FACTURAS_DIR = Path(os.environ.get('REVISION_INPUT_DIR') or _caja.facturas())
 DATA_DIR = Path(__file__).resolve().parent / "data"

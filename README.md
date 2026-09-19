@@ -23,21 +23,23 @@ Hay **dos cosas distintas** y conviene no confundirlas:
 | | Qué es | En git |
 |---|---|---|
 | `caja_de_alberto/vN/` | Instantáneas de lo que publica la organización, con `MANIFIESTO.sha256`. **No se editan** | Sí |
-| `caja/` | La copia **viva**: la que lee el pipeline y donde `alberto web` escribe los PDF subidos | No |
+| `caja/` | La copia **viva**: la que lee el motor por defecto | No |
 
-Están separadas porque la subida web guarda los ficheros dentro de la carpeta
-de facturas: con una sola copia, la primera subida invalidaba el manifiesto y
-la captura dejaba de servir como prueba de con qué datos se generó una entrega.
+Están separadas porque la copia viva es la que se siembra, se rehace y se
+ensucia: con una sola copia, cualquier cambio invalidaba el manifiesto y la
+captura dejaba de servir como prueba de con qué datos se generó una entrega.
 
-`alberto` la encuentra solo, en este orden: `ALBERTO_CAJA` si está puesta,
-luego `caja/`, y si no la instantánea más reciente (así un clon recién hecho
-puede ejecutar los comandos de solo lectura sin sembrar nada).
+`backend.caja_paths` la encuentra solo, en este orden: `ALBERTO_CAJA` si está
+puesta, luego `caja/`, y si no la instantánea más reciente (así un clon recién
+hecho puede ejecutar los comandos de solo lectura sin sembrar nada). Un
+`--input-dir` / `REVISION_INPUT_DIR` explícito o un `--sources` propio pisan
+estos defaults.
 
 ## Puesta en marcha
 
 ```bash
 # una vez
-python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
+uv sync --locked --extra worker --extra backend
 make caja      # siembra caja/ desde la instantánea más reciente
 ```
 
@@ -50,110 +52,49 @@ Para apuntar a otra captura o a un clon tuyo:
 export ALBERTO_CAJA=caja_de_alberto/v2
 ```
 
+## El motor
+
+El camino canónico de punta a punta:
+
+```bash
+uv run --locked --extra worker --extra backend python -m backend.run_revision \
+    invoice.pdf --request-key INTENT --evaluation-date YYYY-MM-DD \
+    --input-dir PDF_DIR --sources SOURCES_YAML
+```
+
+Requiere Supabase y configuración explícita por entorno (nunca dotenv): las
+credenciales de Supabase/ingestion más `REVIEW_ENDPOINT`, `REVIEW_MODEL` y
+`REVIEW_API_KEY`; la generación de reglas por defecto además pide `JEV_API_KEY`
+y `DEEPSEEK_API_KEY`. Construye las reglas con el pipeline de IA, ejecuta la
+extracción persistida, el evaluador v2 y la revisión contextual obligatoria.
+`--status-key INTENT` recupera una corrida durable sin los PDFs locales, y
+`python -m backend.server` sirve la API JSON sobre el mismo camino.
+
 ## Dos terminales
 
 ```bash
 # Terminal 1 — el bridge ERP de 2009. Se queda abierto.
 make erp                     # make erp-fast le quita la latencia artificial
 
-# Terminal 2 — el pipeline
-./venv/bin/python -m alberto.cli todo
+# Terminal 2 — la API del motor
+uv run --locked --extra worker --extra backend python -m backend.server
 ```
 
-`todo` encadena las cinco etapas y deja `outcomes.jsonl` listo. Tarda ~10 s.
+## Las reglas, por separado
 
-## Los verbos, por separado
-
-| Comando | Qué hace |
-|---|---|
-| `alberto ingesta` | Recorre `facturas/`, hashea, normaliza a NFC, registra estado |
-| `alberto snapshot` | Descarga los 516 asientos del ERP y los versiona |
-| `alberto maestro` | Carga el Excel: proveedores (deduplicados) y notas de Alberto |
-| `alberto extrae` | PDF → campos. `--forzar` para reextraer |
-| `alberto decide` | Aplica `reglas/norma_v3.yaml` + `politica.yaml` |
-| `alberto emite` | Escribe el JSONL y lo verifica antes de entregarlo |
-| `alberto estado` | En qué punto está cada documento |
-
-Cada uno acepta `--caja`, `--erp-url`, `--db`, `--lote`.
-
-## El sábado a las 18:00 (lote 2 y norma v4)
-
-Por diseño, esto **no debería tocar código**:
+Las normas compiladas las construye `rules_ingestion`:
 
 ```bash
-# 1. ERP actualizado
-cd caja && make erp-lote2
-
-# 2. las 40 facturas nuevas
-./venv/bin/python -m alberto.cli --lote lote2 --caja ruta/al/lote2 todo \
-    --salida outcomes_lote2.jsonl
-
-# 3. la norma nueva: se copia el YAML, se edita, y se reprocesa
-cp alberto/reglas/norma_v3.yaml alberto/reglas/norma_v4.yaml
-$EDITOR alberto/reglas/norma_v4.yaml
-./venv/bin/python -m alberto.cli decide --norma v4
-```
-
-Las decisiones v3 **no se borran**: la clave primaria es
-`(doc_id, norma_version, snapshot_erp, snapshot_maestro)`. Una sola consulta
-enseña qué cambió entre v3 y v4 y por qué — eso es el minuto 3 de la defensa.
-
-```sql
-SELECT a.file_id, a.result AS v3, b.result AS v4, b.motivo
-FROM decisiones a JOIN decisiones b USING (doc_id)
-WHERE a.norma_version='v3' AND b.norma_version='v4' AND a.result <> b.result;
+make rules            # outcome/<ver>/balanced/rules.json
+make rules-offline    # lo mismo, sin JEV ni LLM
 ```
 
 ## Cómo probar
 
-**Tests automáticos.** Los rápidos no necesitan nada:
-
 ```bash
-./venv/bin/python -m pytest tests -q -m "not lento"   # 39 tests, 0,1 s
-./venv/bin/python -m pytest tests -q                  # los 46, con ERP levantado
+uv run --locked --extra worker --extra backend python -m pytest -q tests
 ```
 
-Cubren el vocabulario (`RECHAZAR` es imposible), los dos formatos numéricos y
-los tres de fecha, cada regla con su fallo, la idempotencia de la ingesta y el
-reproceso, que los 9 pedidos ya pagados nunca se pagan, y que el JSONL es
-entregable.
-
-**Seguir UNA factura de principio a fin.** Es la herramienta de depuración y a
-la vez el minuto 4-8 de la defensa:
-
-```bash
-./venv/bin/python -m alberto.cli explica 2026-01-08_P001      # una que se paga
-./venv/bin/python -m alberto.cli explica 2026-07-08_P010      # IBAN que no cuadra
-./venv/bin/python -m alberto.cli explica 2026-0811-B_catering # total inflado
-```
-
-Acepta cualquier trozo del nombre. Muestra los campos extraídos, si la
-aritmética cierra, el veredicto de cada regla con su evidencia, la decisión con
-su motivo, y las notas de Alberto que apliquen.
-
-**Ver el reparto y hurgar en SQL:**
-
-```bash
-./venv/bin/python -m alberto.cli estado
-sqlite3 alberto.db "SELECT result, count(*) FROM decisiones GROUP BY result"
-sqlite3 alberto.db "SELECT file_id, motivo FROM decisiones JOIN documentos USING(doc_id) WHERE result='NO_PAGAR'"
-```
-
-## Antes de entregar
-
-`alberto emite` ya verifica JSON válido, vocabulario (`PAGAR`/`NO_PAGAR`/`ESCALAR`),
-`file_id` en NFC, sin duplicados y con el número de líneas esperado. Si sale
-`"ok": true`, el fichero se puede entregar.
-
-## Qué NO está hecho todavía
-
-- **Visión para las 29 facturas que son imagen.** Hoy se escalan con motivo.
-- La web de traza (seguir una decisión en pantalla) y la bandeja de escalados.
-- El modelo de coste medido.
-
-## `legacy/`
-
-El primer prototipo que circuló por el equipo. Se conserva como referencia pero
-**no se usa**: emitía `RECHAZAR` (que no es un resultado válido y suspende la
-validación binaria) y acertaba el pedido en 219 de 471 facturas. El porqué está
-en `docs/adr/ADR-001`.
+Los tests de Postgres levantan una instancia local desechable y se saltan si
+faltan los binarios. Los proveedores de pago van mockeados: ningún test llama
+a APIs de pago ni a bases compartidas.
