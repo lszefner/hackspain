@@ -61,15 +61,24 @@ def fold(s: str) -> str:
     return unicodedata.normalize("NFKD", str(s or "")).encode("ascii", "ignore").decode().lower()
 
 
+# Matched as substrings against the accent-folded text, so Spanish stems go in
+# clipped ("pag" catches pago/pagos/pagar). Alberto asks in Spanish; without
+# these, a plain "que pago hoy" scored nothing and the answer came back with no
+# list under it.
 INTENTS = [
-    ("payments",   ("pay", "payment", "sepa", "remesa", "transfer", "settle", "remittance")),
+    ("payments",   ("pay", "payment", "sepa", "remesa", "transfer", "settle", "remittance",
+                    "pag", "abonar", "girar")),
     ("queue",      ("review", "judgement", "judgment", "needs me", "need me", "escalat",
-                    "attention", "criterio", "decide", "approve", "pending")),
+                    "attention", "criterio", "decide", "approve", "pending",
+                    "escalad", "revis", "pendient", "aprob", "que tengo", "me toca")),
     ("report",     ("report", "inform", "informe", "close", "closing", "summary", "resumen",
-                    "brief", "how did it go", "how it went")),
-    ("duplicates", ("duplicate", "twice", "double", "repeated")),
-    ("rules",      ("rule", "ruleset", "norma", "policy")),
-    ("waiting",    ("waiting", "chase", "chasing", "owes us", "outstanding")),
+                    "brief", "how did it go", "how it went",
+                    "cierre", "como ha ido", "como fue", "balance")),
+    ("duplicates", ("duplicate", "twice", "double", "repeated",
+                    "duplicad", "repetid", "dos veces")),
+    ("rules",      ("rule", "ruleset", "norma", "policy", "regla", "politica")),
+    ("waiting",    ("waiting", "chase", "chasing", "owes us", "outstanding",
+                    "esperando", "reclamar", "nos deb")),
 ]
 
 
