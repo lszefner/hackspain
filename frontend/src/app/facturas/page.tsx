@@ -4,6 +4,7 @@ import type { Resultado } from "@/lib/types";
 import { eur, num } from "@/lib/format";
 import { Card } from "@/components/Card";
 import { ResultBadge } from "@/components/Badge";
+import { SubirFacturas } from "./subir";
 
 export const metadata = { title: "Facturas · tito.ai" };
 export const dynamic = "force-dynamic";
@@ -33,6 +34,8 @@ export default async function FacturasPage({
           Clic en cualquiera para seguir su decisión de punta a punta.
         </p>
       </div>
+
+      <SubirFacturas />
 
       {/* filtros */}
       <div className="flex flex-wrap items-center gap-3">
@@ -97,15 +100,21 @@ export default async function FacturasPage({
               {filas.map((f) => (
                 <tr key={f.file_id} className="border-t border-line hover:bg-soft/50">
                   <td className="px-4 py-2">
-                    <Link
-                      href={`/expediente/${encodeURIComponent(f.file_id)}?norma=${norma}`}
-                      className="font-mono text-accent underline underline-offset-2"
-                    >
-                      {f.file_id}
-                    </Link>
+                    {f.result ? (
+                      <Link
+                        href={`/expediente/${encodeURIComponent(f.file_id)}?norma=${norma}`}
+                        className="font-mono text-accent underline underline-offset-2"
+                      >
+                        {f.file_id}
+                      </Link>
+                    ) : (
+                      <span className="font-mono">{f.file_id}</span>
+                    )}
                   </td>
                   <td className="px-2 py-2">
-                    <span className="rounded-full bg-soft px-2 py-0.5 font-mono text-[10px] font-semibold text-muted">
+                    <span className={`rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold ${
+                      f.etapa === "ingerida" ? "bg-accent/10 text-accent" : "bg-soft text-muted"
+                    }`}>
                       {f.etapa}
                     </span>
                   </td>
@@ -116,7 +125,11 @@ export default async function FacturasPage({
                   <td className="px-2 py-2 font-mono">{f.nif ?? "—"}</td>
                   <td className="px-2 py-2 font-mono">{f.pedido ?? "—"}</td>
                   <td className="px-2 py-2 text-right font-mono">{eur(f.total_cent)}</td>
-                  <td className="px-2 py-2"><ResultBadge result={f.result} /></td>
+                  <td className="px-2 py-2">
+                    {f.result ? <ResultBadge result={f.result} /> : (
+                      <span className="font-mono text-[10px] font-semibold text-muted">PENDIENTE</span>
+                    )}
+                  </td>
                   <td className="max-w-64 truncate px-2 py-2 text-muted" title={f.motivo ?? undefined}>
                     {f.motivo ?? "—"}
                   </td>

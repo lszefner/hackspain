@@ -9,6 +9,7 @@ import type {
 } from "./types";
 import * as mock from "./mock/dataset";
 import * as normas from "./normas";
+import * as ingesta from "./ingesta";
 
 export interface Filtros {
   norma?: string;
@@ -88,7 +89,19 @@ const mockSource: DataSource = {
 
   async facturas(f) {
     const decs = decisiones(f.norma ?? normas.normaActiva());
-    return filtrados(f).map((d) => {
+    // las recién subidas van primero: aún sin extraer ni decidir
+    const pendientes: FacturaFila[] = f.result
+      ? []
+      : ingesta.docsIngeridos()
+          .filter((d) => !f.q || d.file_id.toLowerCase().includes(f.q.toLowerCase()))
+          .map((d) => ({
+            file_id: d.file_id, doc_id: d.doc_id, lote: d.lote,
+            etapa: "ingerida" as const, tiene_texto: true, via: null,
+            proveedor: null, nif: null, pedido: null, total_cent: null,
+            result: null, motivo: "pendiente de la próxima pasada",
+            latencia_ms: 0, coste_eur: 0, intentos: 0, decidida_at: null,
+          }));
+    return pendientes.concat(filtrados(f).map((d) => {
       const dec = decs.get(d.doc_id)!;
       const ext = mock.extracciones.get(d.doc_id)!;
       const nif = ext.campos.nif_emisor;
@@ -110,12 +123,13 @@ const mockSource: DataSource = {
         intentos: d.intentos,
         decidida_at: dec.creado_at,
       };
-    });
+    }));
   },
 
   async eventos(f) {
     const fileDe = new Map(mock.documentos.map((d) => [d.doc_id, d.file_id]));
-    let filas: EventoLog[] = mock.eventos.map((e) => ({
+    for (const d of ingesta.docsIngeridos()) fileDe.set(d.doc_id, d.file_id);
+    let filas: EventoLog[] = mock.eventos.concat(ingesta.eventosIngesta()).map((e) => ({
       ...e,
       file_id: e.doc_id ? fileDe.get(e.doc_id) ?? null : null,
     }));
