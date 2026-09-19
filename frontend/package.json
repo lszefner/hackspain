@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "python3 ../desk/mock/export_static.py",
     "dev": "next dev --turbopack",
+    "prebuild": "python3 ../desk/mock/export_static.py",
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint"

@@ -1058,6 +1058,9 @@ function actionsHTML(list){
     if (a.file) bits.push(`data-file="${esc(a.file)}"`);
     if (a.ask) bits.push(`data-ask="${esc(a.ask)}"`);
     if (a.ui) bits.push(`data-ui="${esc(a.ui)}"`);
+    // some actions are about something the server does not keep (the batch you
+    // just dropped), so the button carries it back itself
+    if (a.payload) bits.push(`data-payload="${esc(JSON.stringify(a.payload))}"`);
     if (a.href) return `<a class="btn${k}" href="${esc(a.href)}" download>${esc(a.label)}</a>`;
     return `<button ${bits.join(' ')}>${esc(a.label)}</button>`;
   }).join('');
@@ -1113,6 +1116,8 @@ function panelHTML(b){
 /* A button now moves real state. The answer is deterministic and instant --
    no model in the way of an action -- and most of them can be put back. */
 async function runAction(btn, act, key, reason){
+  let payload = null;
+  try { payload = btn.dataset.payload ? JSON.parse(btn.dataset.payload) : null; } catch { payload = null; }
   const row = btn.closest('.acts, .panel-foot');
   if (row) row.querySelectorAll('.btn').forEach(b => b.classList.add('done'));
   btn.classList.remove('done');
@@ -1122,7 +1127,7 @@ async function runAction(btn, act, key, reason){
   try {
     res = await (await fetch('/api/action', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({act, key, reason}),
+      body: JSON.stringify({act, key, reason, payload}),
     })).json();
   } catch (err){
     if (row) row.querySelectorAll('.btn').forEach(b => b.classList.remove('done'));

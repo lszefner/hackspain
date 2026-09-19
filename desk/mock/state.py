@@ -361,6 +361,12 @@ def batch_block(b):
                      "ask": "which invoices do I need to review"})
     # Both used to carry only a label: the click handler dispatches on
     # data-ask/-ui/-act, so a bare label rendered a button that did nothing.
+    if b["pay"]:
+        # the confirmation the supplier gets once the payment is set to run.
+        # The button carries the batch because the desk does not keep it.
+        acts.append({"label": f"Confirm payment to the suppliers of the {b['pay']}",
+                     "act": "notify",
+                     "payload": {"pay": b["pay"], "pay_eur": b["pay_eur"]}})
     acts += [{"label": "See the whole batch", "ui": "invoices"},
              {"label": "See the batch trace", "kind": "quiet",
               "ask": "how did it go"}]
@@ -421,7 +427,30 @@ def _stamp():
     return datetime.now(UTC).astimezone().strftime("%H:%M")
 
 
-def act(name, key=None, reason=None):
+def notify(payload):
+    """The payment confirmation a supplier gets once a batch clears.
+
+    Nothing is sent, and nothing here pretends otherwise. Two reasons, both
+    real: the verdicts in a dropped batch are demo data (the panel says so),
+    and La Caja carries no supplier address at all -- the master holds id,
+    NIF, IBAN, city and terms, and no way to reach anybody. So this drafts
+    the notice and says what it would take to post it.
+    """
+    payload = payload or {}
+    n = int(payload.get("pay") or 0)
+    eur = float(payload.get("pay_eur") or 0)
+    return {
+        "said": f"Drafted the payment confirmation for the {n} approved, {money(eur)}, "
+                f"one per supplier: what we owe, against which order, and the date it runs. "
+                f"Nothing left the building -- these verdicts are demo data, and La Caja "
+                f"carries no supplier address to send them to.",
+        "undo": False, "refresh": False,
+    }
+
+
+def act(name, key=None, reason=None, payload=None):
+    if name == "notify":
+        return notify(payload)
     if key and key.startswith("file:"):
         return decide(name, key[5:], reason)
     c = cluster(key) if key else None
