@@ -852,16 +852,17 @@ def lanes(q="", action=""):
         by.setdefault(r["vendor_id"], []).append(r)
 
     out = []
+    def total(items, kind):
+        return round(sum(i["total"] for i in items if i["action"] == kind), 2)
+
     for vid, items in by.items():
-        def total(kind):
-            return round(sum(i["total"] for i in items if i["action"] == kind), 2)
-        review = total("ESCALATE")
         out.append({
             "id": vid, "name": items[0]["vendor"], "count": len(items),
-            "pay_eur": total("PAY"), "review_eur": review, "nopay_eur": total("DO NOT PAY"),
+            "pay_eur": total(items, "PAY"), "review_eur": total(items, "ESCALATE"),
+            "nopay_eur": total(items, "DO NOT PAY"),
             "review_n": sum(1 for i in items if i["action"] == "ESCALATE"),
             "nopay_n": sum(1 for i in items if i["action"] == "DO NOT PAY"),
-            "terms": next((v[2] for k, v in VENDORS.items() if k == vid), "—") if "VENDORS" in globals() else "—",
+            "terms": items[0]["terms"],
             "rows": [{k: i[k] for k in ("file", "number", "date", "total",
                                         "action", "blocking", "found", "scanned")}
                      for i in sorted(items, key=lambda x: (x["action"] != "ESCALATE", x["file"]))],
