@@ -42,7 +42,7 @@ export default async function ManualPage({
         <div className="rounded-lg border border-ok/30 bg-ok/5 px-4 py-3 text-sm text-ok">
           Norma <b className="font-mono">{version}</b> publicada y reprocesada. Ahora es la versión
           activa; las decisiones anteriores siguen ahí —{" "}
-          <Link href="/operacion" className="underline underline-offset-2">el diff está en Operación</Link>.
+          <Link href="/finanzas" className="underline underline-offset-2">el diff está en Finanzas</Link>.
         </div>
       )}
 

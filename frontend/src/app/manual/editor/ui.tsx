@@ -143,7 +143,7 @@ export function Editor({ inicial, base }: { inicial: string; base: string }) {
                   {publicando ? "publicando y reprocesando…" : `Publicar ${ensayo.version} y reprocesar`}
                 </button>
                 <p className="mt-2 text-xs text-muted">
-                  Las decisiones con {ensayo.base} no se borran: quedan consultables y el diff sale en Operación.
+                  Las decisiones con {ensayo.base} no se borran: quedan consultables y el diff sale en Finanzas.
                 </p>
               </Card>
             </>

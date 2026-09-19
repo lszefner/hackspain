@@ -45,7 +45,7 @@ export default async function ExpedientePage({
     <div className="space-y-6">
       {/* cabecera */}
       <div className="flex flex-wrap items-center gap-4">
-        <Link href={`/?norma=${norma}`} className="text-sm text-muted hover:text-ink">← el muro</Link>
+        <Link href={`/facturas?norma=${norma}`} className="text-sm text-muted hover:text-ink">← facturas</Link>
         <h1 className="font-mono text-xl font-bold">{e.documento.file_id}</h1>
         <ResultBadge result={e.decision.result} grande />
         <nav className="ml-auto flex gap-2 font-mono text-sm">
