@@ -84,8 +84,11 @@ def test_contract_and_clean_trace():
     assert payload["completeness"]["approval_eligible"]
     assert bundle.context["alignment_context_id"] == parent.context["context_id"]
     assert bundle.context["context_id"] != parent.context["context_id"]
-    for key in ("fields", "sources", "findings", "evaluation_date"):
+    for key in ("sources", "findings", "evaluation_date"):
         assert bundle.context[key] == parent.context[key]
+    assert all(bundle.context["fields"][name] == fact for name, fact in parent.context["fields"].items())
+    assert bundle.context["fields"]["invoice.taxes.0.rate_percent"]["value"] == "21"
+    assert {"source": "invoice", "pointer": "/taxes/0/rate_percent"} in bundle.context["fields"]["invoice.taxes.0.rate_percent"]["inputs"]
     refs = payload["rule_results"][0]["evidence_refs"]
     assert {"source": "invoice", "pointer": "/payment/iban"} in refs
     assert {"source": "evidence", "pointer": "/~1payment~1iban"} in refs
@@ -130,7 +133,7 @@ def test_hard_history_rejects_even_partial(kind, availability):
 def test_erp_paid_survives_other_blockers_and_runs_all_rules():
     snapshots = fixtures.make_snapshots(erp={"records": [{"pedido": "PO-1", "estado": "PAGADA"}], "complete": True})
     snapshots["processed"] = history(rows=[], availability="partial", complete=False)
-    rules = [rule("DUPLICATES"), rule("VENDOR", {"check_nif_control_digit": True})]
+    rules = [rule("DUPLICATES"), rule("VENDOR", {"arbitrary": True})]
     _, result = run(rules, snapshots=snapshots)
     assert result["preliminary_decision"] == "NO_PAGAR"
     assert [r["status"] for r in result["rule_results"]] == ["VIOLATED", "UNSUPPORTED"]
@@ -183,7 +186,7 @@ def test_active_flag(active, status):
 
 
 @pytest.mark.parametrize("canonical,params", [
-    ("VENDOR", {"check_nif_control_digit": True}), ("AMOUNT", {"check_iva": True}),
+    ("VENDOR", {"check_nif_control_digit": "true"}), ("AMOUNT", {"check_iva": "true"}),
     ("VENDOR", {"require_active": "true"}), ("VENDOR", {"arbitrary": True}),
     ("AMOUNT", {"tolerance_eur": True}), ("AMOUNT", {"tolerance_eur": "NaN"}),
     ("AMOUNT", {"tolerance_eur": "-0.01"}), ("DUPLICATES", {"hard_key": ["amount"]}),
@@ -429,17 +432,26 @@ def test_authoritative_duplicate_with_missing_total_still_rejects():
     assert not result["completeness"]["evaluation_complete"]
 
 
-def test_no_provider_imports_or_network(monkeypatch):
+def test_no_provider_imports_or_network():
+    import subprocess
     import sys
-    import urllib.request
 
-    def forbidden(*args, **kwargs):
-        pytest.fail("deterministic execution attempted network access")
+    code = '''
+import sys
+import urllib.request
+from tests.test_rule_execution import run
 
-    monkeypatch.setattr(urllib.request, "urlopen", forbidden)
-    run()
-    assert "rules_ingestion.codegen" not in sys.modules
-    assert "rules_ingestion.classify" not in sys.modules
+def forbidden(*args, **kwargs):
+    raise AssertionError("deterministic execution attempted network access")
+
+urllib.request.urlopen = forbidden
+run()
+assert "rules_ingestion.codegen" not in sys.modules
+assert "rules_ingestion.classify" not in sys.modules
+'''
+    result = subprocess.run([sys.executable, '-c', code], cwd=Path(__file__).resolve().parents[1],
+                            capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
 
 
 def test_bad_evidence_cannot_justify_rejection():

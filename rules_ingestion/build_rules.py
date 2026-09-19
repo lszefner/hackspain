@@ -242,6 +242,25 @@ def _scan(args, say, version: str, policy: str) -> int:
     return 0
 
 
+def build_frozen_rules(loaded: loader.LoadResult, profile_bytes: bytes, *, generated_at: str) -> tuple[bytes, dict]:
+    import yaml
+
+    from ingestion.contracts import canonical_bytes
+
+    from .codegen import enrich_new_rules
+    from .merge import build_merged
+
+    classified = classify_lines(loaded.norma_lines, prefer_jev=True, use_llm=True)
+    profile = yaml.safe_load(profile_bytes)
+    document = store.build_ruleset(loaded, classified, profile, generated_at=generated_at)
+    merged = build_merged(document, None)
+    enrich_new_rules(merged, use_llm=True, gen_python=False)
+    audit = {'generated_at': generated_at,
+             'classifications': [{'source': line, 'result': result.to_dict()} for line, result in classified],
+             'discovery_cache_used': False}
+    return canonical_bytes(merged), audit
+
+
 def main(argv=None) -> int:
     p = argparse.ArgumentParser(description="Build Alberto's payment ruleset.")
     p.add_argument("--config", default=os.path.join(_HERE, "sources.yaml"))

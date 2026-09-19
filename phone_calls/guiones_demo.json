@@ -1,0 +1,120 @@
+{
+  "_comentario": [
+    "Solo transcripciones de ENTRADA. Ninguna respuesta.",
+    "El estado, la consulta al export y lo que se dice salen del servidor,",
+    "igual que en una llamada en vivo: esto no es un video, es la misma",
+    "conversacion con el microfono simulado.",
+    "",
+    "`oye` es una LISTA porque el reconocedor devuelve varias alternativas y",
+    "el parser las prueba todas. Si aqui se pasara una sola cadena limpia, el",
+    "modo reproduccion recorreria un camino que el modo en vivo nunca recorre.",
+    "",
+    "Las transcripciones estan SUCIAS a proposito: asi el respaldo ejercita el",
+    "parser tolerante en vez de esquivarlo."
+  ],
+  "llamadas": [
+    {
+      "id": "ya_pagada",
+      "titulo": "Suministros Levante · PO-2026-0475 · ya estaba pagada",
+      "pie": "La llamada mas frecuente de la vida real: ya se le pago y no se enteraron.",
+      "espera": {
+        "pedido": "PO-2026-0475",
+        "result": "NO_PAGAR"
+      },
+      "turnos": [
+        {
+          "oye": [
+            "Suministros Levante",
+            "suministro levante",
+            "suministros de levante"
+          ],
+          "pausa_ms": 900
+        },
+        {
+          "oye": [
+            "sí, correcto",
+            "si correcto",
+            "correcto"
+          ],
+          "pausa_ms": 700
+        },
+        {
+          "oye": [
+            "peo 2026 cero cuatro siete cinco",
+            "PO 2026 0475",
+            "2026 475"
+          ],
+          "pausa_ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "importe",
+      "titulo": "Electricidad Montcada · PO-2026-0493 · el importe no cuadra",
+      "pie": "Transposicion de digitos: 12.8‍74,40 facturado contra 12.8‍47,40 aprobado. El agente da el numero y que hacer con el.",
+      "espera": {
+        "pedido": "PO-2026-0493",
+        "result": "ESCALAR"
+      },
+      "turnos": [
+        {
+          "oye": [
+            "Electricidad Montcada",
+            "electricidad moncada",
+            "electricidad monteada"
+          ],
+          "pausa_ms": 900
+        },
+        {
+          "oye": [
+            "sí",
+            "si"
+          ],
+          "pausa_ms": 600
+        },
+        {
+          "oye": [
+            "el cuatro noventa y tres",
+            "el 493",
+            "PO 2026 0493"
+          ],
+          "pausa_ms": 1100
+        }
+      ]
+    },
+    {
+      "id": "iban",
+      "titulo": "Transportes Guadaira · PO-2026-0494 · lo que NO se cuenta",
+      "pie": "El agente sabe los dos IBAN y sabe cual es el bueno. No lo dice: quien llama no esta verificado y ese es el dato con el que se comete el fraude.",
+      "espera": {
+        "pedido": "PO-2026-0494",
+        "result": "ESCALAR"
+      },
+      "turnos": [
+        {
+          "oye": [
+            "Transportes Guadaira",
+            "transporte guadaira",
+            "transportes guadahira"
+          ],
+          "pausa_ms": 900
+        },
+        {
+          "oye": [
+            "sí, esos somos",
+            "si correcto"
+          ],
+          "pausa_ms": 700
+        },
+        {
+          "oye": [
+            "peo 2026 cero cuatro nueve cuatro",
+            "PO 2026 0494",
+            "2026 494"
+          ],
+          "pausa_ms": 1100
+        }
+      ]
+    }
+  ]
+}

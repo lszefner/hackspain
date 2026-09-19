@@ -577,21 +577,15 @@ def _revision_fixture(tmp_path, monkeypatch, file_ids=("f-run.pdf",)):
                 "sources_yaml": str(yaml_path)}
 
 
-def test_revisar_lote_full_path_local(tmp_path, monkeypatch):
+def test_revisar_lote_rejects_legacy_local_store(tmp_path, monkeypatch):
     rr, kwargs = _revision_fixture(tmp_path, monkeypatch)
     store = ResultsStore(tmp_path / "rev.db")
-    result = rr.revisar_lote_sync(["f-run.pdf"], store=store, **kwargs)
-    assert result["revision_counts"] == {"stored": 1, "failed": 0}
-    assert _FakePipeline.config["schemas"]
-    row = store.get("f-run.pdf")
-    assert row["estado"] == "hecha"
-    assert row["decision"] in ("PAGAR", "ESCALAR", "NO_PAGAR")
-    assert row["decision_context"] and row["context_receipt"]
-    contexts_dir = tmp_path / "data" / "decision-contexts" / "contexts"
-    assert len(list(contexts_dir.glob("*.json"))) == 1
+    with pytest.raises(ValueError, match='PostgresResultsStore'):
+        rr.revisar_lote_sync(["f-run.pdf"], store=store, **kwargs)
+    assert store.get('f-run.pdf') is None
 
 
-def test_revisar_lote_persistence_failure_retains_evidence(
+def test_revisar_lote_rejected_local_store_retains_old_evidence(
         tmp_path, monkeypatch):
     rr, kwargs = _revision_fixture(tmp_path, monkeypatch)
     store = ResultsStore(tmp_path / "rev.db")
@@ -600,22 +594,11 @@ def test_revisar_lote_persistence_failure_retains_evidence(
                     checks=[], context={"context_id": "dc_old"},
                     receipt={"backend": "local"})
 
-    class FailingStore:
-        repository = None
-
-        def save(self, bundle):
-            raise OSError("synthetic persistence failure")
-
-        def close(self):
-            pass
-
-    monkeypatch.setattr(rr, "create_decision_store",
-                        lambda *a, **kw: FailingStore())
-    result = rr.revisar_lote_sync(["f-run.pdf"], store=store, **kwargs)
-    assert result["revision_counts"] == {"stored": 0, "failed": 1}
+    with pytest.raises(ValueError, match='PostgresResultsStore'):
+        rr.revisar_lote_sync(["f-run.pdf"], store=store, **kwargs)
     row = store.get("f-run.pdf")
-    assert row["estado"] == "error"
-    assert row["decision"] is None
+    assert row["estado"] == "hecha"
+    assert row["decision"] == 'PAGAR'
     assert row["decision_context"] is not None
     snap = store.processed_history_snapshot(captured_at=CAPTURED)
     assert any(r["file_id"] == "f-run.pdf" for r in snap.payload["records"])
@@ -628,7 +611,7 @@ def test_revisar_lote_file_id_validation_before_work(
     def _no_store(*a, **kw):
         raise AssertionError("store must not be created")
 
-    monkeypatch.setattr(rr, "create_decision_store", _no_store)
+    monkeypatch.setattr(rr.InvoiceDecisionEngine, "from_supabase", _no_store)
     store = ResultsStore(tmp_path / "rev.db")
     for bad in ("../evil.pdf", "a/b.pdf", "a\\b.pdf", "/abs.pdf",
                 "noext", "x.PDF.exe"):
@@ -649,7 +632,7 @@ def test_revisar_lote_malformed_ruleset_before_pipeline(
     monkeypatch.setattr(rr, "settings",
                         lambda *a, **kw: (_ for _ in ()).throw(
                             AssertionError("settings must not run")))
-    monkeypatch.setattr(rr, "create_decision_store",
+    monkeypatch.setattr(rr.InvoiceDecisionEngine, "from_supabase",
                         lambda *a, **kw: (_ for _ in ()).throw(
                             AssertionError("store must not run")))
     from rules_ingestion.decision_context import ContextError
@@ -703,41 +686,6 @@ def test_erp_snapshot_refresh_empty_token_stops(monkeypatch):
     assert result["complete"] is False
     assert result["error_code"] == "invalid_response"
     assert result["pages"] == []
-
-
-def test_revisar_lote_row_accounting(tmp_path, monkeypatch):
-    rr, kwargs = _revision_fixture(
-        tmp_path, monkeypatch, file_ids=("f-a.pdf", "f-b.pdf"))
-    monkeypatch.setattr(_FakePipeline, "rows",
-                        {"f-a.pdf": ["ok", "ok"], "f-b.pdf": []})
-    monkeypatch.setattr(_FakePipeline, "extra_rows", ["ghost.pdf"])
-    store = ResultsStore(tmp_path / "rev.db")
-    result = rr.revisar_lote_sync(["f-a.pdf", "f-b.pdf"], store=store,
-                                  **kwargs)
-    assert result["revision_counts"] == {"stored": 0, "failed": 2}
-    assert store.get("f-a.pdf")["estado"] == "error"
-    assert store.get("f-b.pdf")["estado"] == "error"
-    assert store.get("f-a.pdf")["decision"] is None
-    contexts_dir = tmp_path / "data" / "decision-contexts" / "contexts"
-    assert not contexts_dir.exists() or not list(contexts_dir.glob("*.json"))
-
-
-def test_revisar_lote_corrupt_artifact_and_mismatch(tmp_path, monkeypatch):
-    rr, kwargs = _revision_fixture(tmp_path, monkeypatch)
-    monkeypatch.setattr(_FakePipeline, "corrupt_artifacts", True)
-    store = ResultsStore(tmp_path / "rev.db")
-    result = rr.revisar_lote_sync(["f-run.pdf"], store=store, **kwargs)
-    assert result["revision_counts"] == {"stored": 0, "failed": 1}
-    assert store.get("f-run.pdf")["estado"] == "error"
-    contexts_dir = tmp_path / "data" / "decision-contexts" / "contexts"
-    assert not contexts_dir.exists() or not list(contexts_dir.glob("*.json"))
-
-    monkeypatch.setattr(_FakePipeline, "corrupt_artifacts", False)
-    monkeypatch.setattr(_FakePipeline, "mismatch_invoice_file_id", True)
-    store2 = ResultsStore(tmp_path / "rev2.db")
-    result = rr.revisar_lote_sync(["f-run.pdf"], store=store2, **kwargs)
-    assert result["revision_counts"] == {"stored": 0, "failed": 1}
-    assert store2.get("f-run.pdf")["estado"] == "error"
 
 
 def test_decision_cli_checked_in_examples(tmp_path):

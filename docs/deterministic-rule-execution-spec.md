@@ -31,7 +31,7 @@ Non-goals: live source acquisition inside checks, PDF/raw-text interpretation as
 | `docs/deterministic-rule-execution-spec.md` | This implemented specification |
 | `docs/decision-context-integration.md` | Cross-link distinguishing this opt-in path from legacy integration |
 
-The original decision context, registry, checks, storage, backend, frontend, and `alberto/` code are unchanged. Existing registries supply aliases, field types, canonical function names, parameter allowlists, and dependencies; the new capability version adds execution behavior rather than redefining field meanings. No dependency manifest or lockfile change is required.
+The original v1 decision context, registry, checks, and v1 storage behavior remain unchanged. The canonical backend calls this evaluator through `rules_ingestion.engine`; frontend integration remains a separate follow-up. Existing registries supply aliases, canonical function names, parameter allowlists, and dependencies. The execution adapter adds evidence-linked tax-rate facts without changing v1 field meanings. No dependency manifest or lockfile change is required.
 
 ## 3. Public API and versions
 
@@ -39,11 +39,11 @@ The original decision context, registry, checks, storage, backend, frontend, and
 | --- | --- |
 | Aligned parent context | `decision-context/1` |
 | Execution context | `decision-context/2` |
-| Execution adapter | `decision-adapter/2` |
+| Execution adapter | `decision-adapter/3` |
 | Field registry | `decision-fields/1` (unchanged meanings) |
-| Capabilities | `decision-capabilities/2` |
+| Capabilities | `decision-capabilities/3` |
 | Structured conditions | `condition/1` |
-| Evaluator | `rule-evaluator/1` |
+| Evaluator | `rule-evaluator/2` |
 | Result | `evaluation-result/1` |
 | Frozen ruleset container | `2.0` |
 
@@ -74,6 +74,7 @@ Preparation validates the original v1 bundle, preserves its fields, sources, fin
 - `alignment_context_id`: the original v1 content identity.
 - `capability_version`: the supported execution contract.
 - `input_guards`: field-scoped unusable-evidence findings propagated through field lineage.
+- `invoice.taxes.<index>.rate_percent` facts from the explicit frozen invoice fields, with evidence/uncertainty handling. Rates are not inferred from labels. These execution-only fields are removed when reconstructing the v1 parent, then regenerated and integrity-checked.
 - `history_observations`: separate hard/soft matches and coverage for processed, approved, and paid history.
 - Rebuilt bindings with dependency `phase` (`applicability`, `compliance`, `unconditional`) and `required` flags.
 - Recomputed preflight and a new content-derived context ID.
@@ -102,9 +103,9 @@ Explicit `input_fields` are unconditional requirements. Other dependencies come 
 
 | Canonical | Implemented behavior and defaults |
 | --- | --- |
-| `VENDOR` | Require resolved supplier; compare invoice/master tax IDs and IBANs by default. `require_active` defaults false; when true, require an authoritative usable boolean and fail if inactive. `check_nif_control_digit: true` is unsupported. |
+| `VENDOR` | Require resolved supplier; compare invoice/master tax IDs and IBANs by default. `require_active` defaults false; when true, require an authoritative usable boolean and fail if inactive. `check_nif_control_digit: true` validates Spanish DNI/NIE/CIF control characters, including an optional ES prefix and K/L/M special NIFs. It does not verify registration or replace supplier matching. Invalid format/checksum follows `on_fail`; unusable evidence blocks. Legacy advisory normalization behavior and policy flags remain unchanged. |
 | `DUPLICATES` | ERP-pending check defaults true. Hard history key is invoice number plus resolved supplier ID. Soft key is amount/date with mandatory matching currency. Only those key meanings and `soft_duplicate_verdict: NEEDS_REVIEW` are supported. |
-| `AMOUNT` | Line sum versus taxable base; base plus VAT versus total; and invoice versus same-supplier order amount default on. Absolute difference equal to the default EUR `0.01` tolerance passes. Optional nonempty currency allowlist. Monetary arithmetic requires EUR; no implicit conversion. Empty line lists do not prove reconciliation. `check_iva: true` and non-VAT/unknown tax reconciliation are unsupported. |
+| `AMOUNT` | Line sum versus taxable base; base plus VAT versus total; and invoice versus same-supplier order amount default on. Absolute difference equal to the default EUR `0.01` tolerance passes. Optional nonempty currency allowlist. Monetary arithmetic requires EUR; no implicit conversion. Empty line lists do not prove reconciliation. `check_iva: true` verifies one explicit VAT row as taxable base × stated rate / 100, rounded half-up to cents and compared using the configured inclusive tolerance. It requires usable base/rate/amount/EUR evidence, accepts rates 0 through 100 without assuming a legal rate, and fails an out-of-range rate. Multiple tax rows or missing rate/base allocation block; rates are never guessed from labels. Non-VAT/unknown total reconciliation remains unsupported. |
 | `AUTHORIZATION` | Usable EUR total strictly above `escalate_above_eur` (default `10000`) requires review. Equality passes. Missing currency is not EUR. |
 | `DATES` | Future dates fail by default (`allow_future: false`). Payment-term enforcement defaults true: elapsed days greater than authoritative supplier terms require review; equality passes. Uses the frozen evaluation date and records elapsed days. |
 | `MISSING` | Defaults to the existing registry's NIF, IBAN, order, amount, VAT, and date aliases. Required-field lists must be nonempty. Known missing values fail presence requirements; unavailable, invalid, ambiguous, unlinked, or uncertain evidence blocks. Present zero and false are not missing. |
@@ -213,7 +214,7 @@ The implementation digest covers the explicit semantic source/schema allowlist i
 
 `validate_evaluation` checks schema, identity, result digest, exact active-rule accounting/order, policy consequences, input values/states and pointers, evidence/trace references, preserved findings, aggregation, and decisive reasons. It does not independently re-execute every business predicate or cryptographically authenticate an untrusted author. A matching digest is not a signature or proof of source truth.
 
-Retain the original evaluator release/runtime for historical re-execution. Hashing code detects drift; it does not archive executable code. Existing v1 persistence/replay stays unchanged. V2/result persistence and multiple-evaluator historical storage are not implemented, and the new path must not be substituted into the old store implicitly.
+Retain the original evaluator release/runtime for historical re-execution. Hashing code detects drift; it does not archive executable code. Existing v1 persistence/replay stays unchanged. `rules_ingestion.engine` persists v2 contexts/results separately from the v1 store. Capability/adapter/evaluator upgrades create new identities; old evaluations must not be silently reinterpreted or relabeled as results of the new implementation.
 
 ## 11. Task-3 handoff packet
 
@@ -295,8 +296,8 @@ Acceptance coverage includes clean approval; bank `on_fail` variants; processed/
 
 ## 14. Remaining limits and integration work
 
-- General VAT correctness, NIF-control-digit checks, mixed withholding reconciliation, arbitrary duplicate keys, regex/dynamic rule code, and unregistered business facts remain unsupported.
+- Legal VAT-rate eligibility, multi-row VAT base allocation, mixed withholding reconciliation, arbitrary duplicate keys, regex/dynamic rule code, and unregistered business facts remain outside the implemented capabilities. NIF checksum validation is not a registry lookup; synthetic Caja identifiers can legitimately fail it.
 - The current master mapping does not supply authoritative supplier-active status or order currency. Requiring those values blocks; the evaluator does not disable rules or invent defaults to create approval.
 - Source coverage and authority are frozen assertions from trusted integration configuration, not guarantees of freshness or truth. No additional freshness policy is invented here.
 - Current annotations conservatively require review. Human transcription verification and business authorization remain distinct.
-- No backend/UI switch, live source connector change, v2 persistence, payment execution, or agentic reviewer is included. Integration must opt into `prepare_context` and `evaluate`, retain v1 compatibility, and route the packet to task 3 explicitly.
+- The canonical backend now routes through the persisted engine and contextual review. Frontend compatibility and full-engine benchmark work are tracked in `frontend-engine-contract-next-pr.md` and `full-engine-benchmark-next-pr.md`. Payment execution is not implemented, and live database migration/provider validation remains a separate owner-managed gate.

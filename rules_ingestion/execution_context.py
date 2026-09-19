@@ -16,7 +16,7 @@ from .conditions import ConditionError, decimal, execution_fields, usable
 from .execution_rules import CAPABILITY_VERSION, bind_rule, enabled_rules
 
 SCHEMA_VERSION = "decision-context/2"
-ADAPTER_VERSION = "decision-adapter/2"
+ADAPTER_VERSION = "decision-adapter/3"
 
 
 def load_schema() -> dict:
@@ -24,6 +24,7 @@ def load_schema() -> dict:
     schema["title"] = "Traceable rule execution context"
     schema["properties"]["schema_version"] = {"const": SCHEMA_VERSION}
     schema["properties"]["adapter_version"] = {"const": ADAPTER_VERSION}
+    schema["properties"]["fields"]["patternProperties"][r"^invoice\.taxes\.(0|[1-9][0-9]*)\.rate_percent$"] = {"$ref": "#/$defs/decimalFact"}
     schema["required"] += ["alignment_context_id", "capability_version", "history_observations", "input_guards"]
     schema["properties"]["input_guards"] = {"type": "object", "additionalProperties": {"type": "array", "minItems": 1, "uniqueItems": True, "items": {"type": "string"}}}
     schema["properties"]["alignment_context_id"] = {"type": "string", "pattern": "^dc_[a-f0-9]{64}$"}
@@ -58,6 +59,29 @@ def rules_document(bundle: alignment.ContextBundle) -> dict:
     for index, rule in enumerate(document["rules"]):
         rule["_index"] = index
     return document
+
+
+def _tax_rate_fields(bundle: alignment.ContextBundle) -> dict:
+    context = bundle.context
+    invoice = alignment._load_source_document(context, bundle.artifacts, "invoice")
+    reading = alignment._load_source_document(context, bundle.artifacts, "reading")
+    evidence = alignment._load_source_document(context, bundle.artifacts, "evidence")
+    raw_links = evidence.get("pointers", evidence) if isinstance(evidence, dict) else {}
+    links = {key: [entry for entry in (value if isinstance(value, list) else [value]) if isinstance(entry, dict)]
+             for key, value in raw_links.items()} if isinstance(raw_links, dict) else {}
+    uncertain_refs = set()
+    if isinstance(reading, dict):
+        for page in reading.get("pages", []):
+            for block in page.get("blocks", []):
+                if not block.get("uncertainties"):
+                    continue
+                uncertain_refs.add(block.get("id"))
+                for row in block.get("rows", []):
+                    uncertain_refs.add(row.get("id"))
+                    uncertain_refs.update(cell.get("id") for cell in row.get("cells", []))
+    return {f"invoice.taxes.{index}.rate_percent": alignment._invoice_scalar(
+                invoice, f"/taxes/{index}/rate_percent", tax.get("rate_percent"), "decimal", links, uncertain_refs)
+            for index, tax in enumerate(invoice.get("taxes") or [])}
 
 
 def _input_guards(bundle: alignment.ContextBundle) -> dict:
@@ -159,10 +183,11 @@ def _preflight(context: dict) -> dict:
 
 def _promote(bundle: alignment.ContextBundle) -> alignment.ContextBundle:
     context = copy.deepcopy(bundle.context)
+    context["fields"].update(_tax_rate_fields(bundle))
     context.update({"schema_version": SCHEMA_VERSION, "adapter_version": ADAPTER_VERSION,
-                    "alignment_context_id": bundle.context["context_id"], "capability_version": CAPABILITY_VERSION,
-                    "input_guards": _input_guards(bundle)})
+                    "alignment_context_id": bundle.context["context_id"], "capability_version": CAPABILITY_VERSION})
     guarded_bundle = alignment.ContextBundle(context=context, artifacts=bundle.artifacts)
+    context["input_guards"] = _input_guards(guarded_bundle)
     context["history_observations"] = {name: _history_observation(name, guarded_bundle) for name in ("processed", "approved", "paid")}
     context["rule_bindings"] = [bind_rule(rule, context) for rule in enabled_rules(rules_document(bundle))]
     context["preflight"] = _preflight(context)
@@ -188,6 +213,8 @@ def validate_execution_context(bundle: alignment.ContextBundle) -> None:
     parent.pop("capability_version")
     parent.pop("history_observations")
     parent.pop("input_guards")
+    parent["fields"] = {name: fact for name, fact in parent["fields"].items()
+                        if not re.fullmatch(r"invoice\.taxes\.[0-9]+\.rate_percent", name)}
     parent["schema_version"] = alignment.SCHEMA_VERSION
     parent["adapter_version"] = alignment.registry.ADAPTER_VERSION
     parent["rule_bindings"], _ = alignment._bind_rules(rules_document(bundle), parent["fields"])

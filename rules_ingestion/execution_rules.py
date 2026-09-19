@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from datetime import date
-from decimal import Context, Decimal, localcontext
+from decimal import ROUND_HALF_UP, Context, Decimal, localcontext
 
 from . import decision_registry as registry
 from .conditions import (
@@ -14,8 +14,10 @@ from .conditions import (
     usable,
     validate_condition,
 )
+from .normalize import nif_control_ok, norm_nif
 
-CAPABILITY_VERSION = "decision-capabilities/2"
+CAPABILITY_VERSION = "decision-capabilities/3"
+IMPLEMENTED_FLAGS = {"VENDOR": {"require_active", "check_nif_control_digit"}, "AMOUNT": {"check_iva"}}
 DEFAULTS = {
     "VENDOR": {"require_nif_in_master": True, "require_iban_match": True, "require_active": False, "check_nif_control_digit": False},
     "DUPLICATES": {"require_erp_pending": True, "hard_key": ["invoice_number", "vendor_id"], "soft_key": ["amount", "date"], "soft_duplicate_verdict": "NEEDS_REVIEW"},
@@ -82,7 +84,7 @@ def plan_rule(rule: dict, context: dict) -> dict:
             if flag in effective and type(effective[flag]) is not bool:
                 errors.append("INVALID_FLAG")
         for flag in registry.UNIMPLEMENTED_FLAGS.get(canonical, ()):
-            if flag != "require_active" and effective.get(flag) is True:
+            if flag not in IMPLEMENTED_FLAGS.get(canonical, set()) and effective.get(flag) is True:
                 errors.append("UNIMPLEMENTED_FLAG")
         for key in ("tolerance_eur", "escalate_above_eur"):
             if key in effective:
@@ -119,6 +121,9 @@ def plan_rule(rule: dict, context: dict) -> dict:
         for flag, (_, names) in registry.FLAG_DEPENDENCIES[canonical].items():
             if effective.get(flag) is True:
                 depend(names)
+        if canonical == "AMOUNT" and effective.get("check_iva") is True:
+            depend(("invoice.taxable_base", "invoice.currency"))
+            depend(sorted(name for name in fields if re.fullmatch(r"invoice\.taxes\.[0-9]+\.(kind|amount|rate_percent)", name)))
         if canonical == "AMOUNT" and effective.get("check_total_is_base_plus_iva") is True:
             kinds = [f for key, f in fields.items() if re.fullmatch(r"invoice\.taxes\.[0-9]+\.kind", key)]
             if any(f["value"] in ("withholding", "other", "unknown") or f["state"] != "present" for f in kinds):
@@ -245,7 +250,7 @@ class RuleFrame:
         for ref in refs:
             if ref not in unique_refs:
                 unique_refs.append(ref)
-        capability = "condition/1" if self.plan["kind"] == "structured" else f"canonical/{self.plan['canonical']}/2"
+        capability = "condition/1" if self.plan["kind"] == "structured" else f"canonical/{self.plan['canonical']}/3"
         return {"rule_id": self.rule["id"], "rule_ref": {"source": self.context["ruleset"]["source"], "pointer": self.pointer},
                 "capability_id": None if status == "UNSUPPORTED" else capability,
                 "status": status, "applicability": applicability, "compliance": compliance,
@@ -254,6 +259,49 @@ class RuleFrame:
                 "inputs": [{"field": name, "fact_pointer": "/fields/" + name.replace("~", "~0").replace("/", "~1"),
                             "state": self.fields[name]["state"], "value": self.fields[name]["value"]} for name in self.names],
                 "evidence_refs": unique_refs, "trace": self.traces}
+
+
+def _nif_checksum(value):
+    nif = (norm_nif(value) or "").removeprefix("ES")
+    if not re.fullmatch(r"(?:[0-9]{8}[A-Z]|[XYZKLM][0-9]{7}[A-Z]|[ABCDEFGHJNPQRSUVW][0-9]{7}[0-9A-J])", nif):
+        return False
+    if nif[0] in "KLM":
+        return nif[-1] == "TRWAGMYFPDXBNJZSQVHLCKE"[int(nif[1:8]) % 23]
+    return nif_control_ok(nif)
+
+
+def _vat(frame):
+    kind_names = sorted(name for name in frame.fields if re.fullmatch(r"invoice\.taxes\.[0-9]+\.kind", name))
+    kinds = [frame.value(name) for name in kind_names]
+    if len(kind_names) != 1 or kinds != ["vat"]:
+        frame.add("BLOCKED", "VAT_BASE_ALLOCATION_UNAVAILABLE",
+                  "VAT arithmetic requires one unambiguous VAT row; per-rate bases and allocation/rounding rules are not available for other tax shapes.",
+                  kind_names, "vat_arithmetic", kinds, refs=[{"source": "invoice", "pointer": "/taxes"}])
+        return
+    prefix = kind_names[0].removesuffix(".kind")
+    names = ["invoice.taxable_base", prefix + ".rate_percent", prefix + ".amount", "invoice.currency"]
+    values = [frame.value(name) for name in names]
+    if any(value is None for value in values):
+        code = "EVIDENCE_LINK_UNUSABLE" if any(name in frame.context.get("input_guards", {}) for name in names) else "VAT_INPUT_UNUSABLE"
+        frame.add("BLOCKED", code, "VAT arithmetic requires an evidenced taxable base, stated rate, tax amount and currency.", names, "vat_arithmetic", values)
+        return
+    base, rate, amount, currency = values
+    if currency != "EUR":
+        frame.add("BLOCKED", "UNSUPPORTED_CURRENCY_COMPARISON", "VAT arithmetic currently requires explicit EUR amounts; no currency conversion was performed.", names, "vat_arithmetic", values)
+        return
+    parsed_rate = decimal(rate)
+    if not Decimal(0) <= parsed_rate <= Decimal(100):
+        frame.add("FAIL", "VAT_RATE_INVALID", "The stated VAT percentage is outside 0 through 100.", names, "vat_rate_range", values)
+        return
+    with localcontext(Context(prec=500)):
+        expected = (decimal(base) * parsed_rate / Decimal(100)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        difference = abs(decimal(amount) - expected)
+    tolerance = decimal(frame.plan["params"]["tolerance_eur"])
+    passed = difference <= tolerance
+    frame.add("PASS" if passed else "FAIL", "VAT_AMOUNT_RECONCILED" if passed else "VAT_AMOUNT_MISMATCH",
+              f"Stated VAT {amount} EUR; expected {format(expected, 'f')} EUR from base {base} at {rate}% rounded half-up to cents; difference {format(difference, 'f')} EUR; tolerance {format(tolerance, 'f')} EUR. This verifies arithmetic, not legal rate eligibility.",
+              names, "vat_absolute_difference_lte", values, format(difference, "f"))
+    frame.traces[-1]["tolerance"] = format(tolerance, "f")
 
 
 def _monetary(frame, names, calculate, code, description):
@@ -351,6 +399,10 @@ def execute_rule(rule: dict, plan: dict, context: dict) -> dict:
         frame.check(["supplier.id"], lambda value: bool(value), "SUPPLIER_UNRESOLVED", "The supplier could not be resolved.", "resolved_supplier")
         if params["require_nif_in_master"]:
             frame.check(["invoice.supplier_tax_id", "supplier.tax_id"], lambda a, b: a == b, "TAX_ID_MISMATCH", "The invoice supplier tax ID differs from the master.")
+        if params["check_nif_control_digit"]:
+            frame.check(["invoice.supplier_tax_id"], _nif_checksum, "NIF_CONTROL_MISMATCH",
+                        "The Spanish tax ID has an invalid format or control character; this is not a registry lookup.",
+                        "spanish_tax_id_checksum")
         if params["require_iban_match"]:
             frame.check(["invoice.iban", "supplier.iban"], lambda a, b: a == b, "IBAN_MISMATCH", "The invoice account differs from the registered supplier account; no payment destination was selected.")
         if params["require_active"]:
@@ -360,6 +412,8 @@ def execute_rule(rule: dict, plan: dict, context: dict) -> dict:
     elif canonical == "AMOUNT":
         if params.get("allowed_currencies"):
             frame.check(["invoice.currency"], lambda value: value in params["allowed_currencies"], "CURRENCY_NOT_ALLOWED", "The invoice currency is outside the configured allowlist.", "in")
+        if params["check_iva"]:
+            _vat(frame)
         if params["check_line_items_sum"]:
             _monetary(frame, ["invoice.line_amounts", "invoice.taxable_base"], lambda lines, base: sum(lines, Decimal(0)) - base, "LINE_SUM_MISMATCH", "Line sum versus taxable base")
         if params["check_total_is_base_plus_iva"]:

@@ -1,0 +1,429 @@
+{
+ "pedido": "PO-2026-0728",
+ "file_id": "scan_025.pdf",
+ "decision": "ESCALAR",
+ "evaluacion_completa": false,
+ "aprobable": false,
+ "motivos": [
+  {
+   "code": "NIF_CONTROL_MISMATCH",
+   "consequence": "ESCALAR",
+   "explanation": "The Spanish tax ID has an invalid format or control character; this is not a registry lookup.",
+   "refs": [
+    {
+     "pointer": "/rules/0",
+     "source": "ruleset"
+    },
+    {
+     "field": "invoice.supplier_tax_id"
+    }
+   ],
+   "rule_id": "R1"
+  },
+  {
+   "code": "UNUSABLE_INPUT",
+   "consequence": "ESCALAR",
+   "explanation": "Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.active",
+   "refs": [
+    {
+     "pointer": "/rules/0",
+     "source": "ruleset"
+    },
+    {
+     "field": "supplier.active"
+    }
+   ],
+   "rule_id": "R1"
+  },
+  {
+   "code": "PAYMENT_TERMS_EXCEEDED",
+   "consequence": "ESCALAR",
+   "explanation": "Elapsed days since issue exceed the supplier's payment terms.",
+   "refs": [
+    {
+     "pointer": "/rules/4",
+     "source": "ruleset"
+    },
+    {
+     "field": "invoice.issue_date"
+    },
+    {
+     "field": "supplier.payment_terms_days"
+    }
+   ],
+   "rule_id": "R5"
+  },
+  {
+   "code": "UNREVIEWED_ANNOTATION",
+   "consequence": "ESCALAR",
+   "explanation": "An invoice annotation requires contextual review; its text is not business authorization.",
+   "refs": [
+    {
+     "pointer": "/annotations/0",
+     "source": "invoice"
+    },
+    {
+     "pointer": "",
+     "source": "invoice"
+    }
+   ],
+   "rule_id": null
+  },
+  {
+   "code": "UNREVIEWED_ANNOTATION",
+   "consequence": "ESCALAR",
+   "explanation": "An invoice annotation requires contextual review; its text is not business authorization.",
+   "refs": [
+    {
+     "pointer": "/annotations/1",
+     "source": "invoice"
+    },
+    {
+     "pointer": "",
+     "source": "invoice"
+    }
+   ],
+   "rule_id": null
+  },
+  {
+   "code": "UNUSABLE_INPUT",
+   "consequence": "ESCALAR",
+   "explanation": "Unresolved evidence or execution finding requires review: UNUSABLE_INPUT",
+   "refs": [
+    {
+     "field": "supplier.id"
+    },
+    {
+     "field": "invoice.supplier_tax_id"
+    },
+    {
+     "field": "invoice.iban"
+    },
+    {
+     "field": "supplier.tax_id"
+    },
+    {
+     "field": "supplier.iban"
+    },
+    {
+     "field": "supplier.active"
+    },
+    {
+     "pointer": "/rules/0",
+     "source": "ruleset"
+    }
+   ],
+   "rule_id": "R1"
+  }
+ ],
+ "reglas": [
+  {
+   "rule_id": "R1",
+   "status": "VIOLATED",
+   "consecuencia": "ESCALAR",
+   "reason_codes": [
+    "NIF_CONTROL_MISMATCH",
+    "UNUSABLE_INPUT"
+   ],
+   "explicacion": "The Spanish tax ID has an invalid format or control character; this is not a registry lookup.; Required evidence is missing, unavailable, invalid, ambiguous, or unverified: supplier.active",
+   "entradas": [
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "invoice.supplier_tax_id",
+     "estado": "present",
+     "valor": "B98120774"
+    },
+    {
+     "campo": "invoice.iban",
+     "estado": "present",
+     "valor": "ES4414650100951704302211"
+    },
+    {
+     "campo": "supplier.tax_id",
+     "estado": "present",
+     "valor": "B98120774"
+    },
+    {
+     "campo": "supplier.iban",
+     "estado": "present",
+     "valor": "ES4414650100951704302211"
+    },
+    {
+     "campo": "supplier.active",
+     "estado": "missing",
+     "valor": null
+    }
+   ]
+  },
+  {
+   "rule_id": "R2",
+   "status": "PASS",
+   "consecuencia": "PAGAR",
+   "reason_codes": [
+    "ERP_PENDING",
+    "NO_HISTORY_DUPLICATE"
+   ],
+   "explicacion": "The resolved order is PENDIENTE; its existence is not a duplicate.; No hard or soft match in complete processed history.; No hard or soft match in complete approved history.; No hard or soft match in complete paid history.",
+   "entradas": [
+    {
+     "campo": "invoice.number",
+     "estado": "present",
+     "valor": "2026/27401"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "774.4"
+    },
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-03-22"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0728"
+    },
+    {
+     "campo": "order.id",
+     "estado": "present",
+     "valor": "PO-2026-0728"
+    },
+    {
+     "campo": "order.supplier_id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "erp.order_payment_status",
+     "estado": "present",
+     "valor": "PENDIENTE"
+    },
+    {
+     "campo": "invoice.currency",
+     "estado": "present",
+     "valor": "EUR"
+    }
+   ]
+  },
+  {
+   "rule_id": "R3",
+   "status": "PASS",
+   "consecuencia": "PAGAR",
+   "reason_codes": [
+    "AMOUNT_RECONCILED",
+    "REQUIREMENT_SATISFIED",
+    "VAT_AMOUNT_RECONCILED"
+   ],
+   "explicacion": "Requirement satisfied: invoice.currency; Stated VAT 134.4 EUR; expected 134.40 EUR from base 640 at 21% rounded half-up to cents; difference 0.00 EUR; tolerance 0.01 EUR. This verifies arithmetic, not legal rate eligibility.; Line sum versus taxable base: difference 0 EUR; tolerance 0.01 EUR.; Base plus VAT versus total: difference 0.0 EUR; tolerance 0.01 EUR.; Invoice versus order total: difference 0.0 EUR; tolerance 0.01 EUR.",
+   "entradas": [
+    {
+     "campo": "invoice.line_amounts",
+     "estado": "present",
+     "valor": [
+      "320",
+      "320"
+     ]
+    },
+    {
+     "campo": "invoice.taxable_base",
+     "estado": "present",
+     "valor": "640"
+    },
+    {
+     "campo": "invoice.vat_amount",
+     "estado": "present",
+     "valor": "134.4"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "774.4"
+    },
+    {
+     "campo": "invoice.currency",
+     "estado": "present",
+     "valor": "EUR"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0728"
+    },
+    {
+     "campo": "invoice.taxes.0.kind",
+     "estado": "present",
+     "valor": "vat"
+    },
+    {
+     "campo": "invoice.taxes.0.rate_percent",
+     "estado": "present",
+     "valor": "21"
+    },
+    {
+     "campo": "invoice.taxes.0.amount",
+     "estado": "present",
+     "valor": "134.4"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "order.supplier_id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "order.id",
+     "estado": "present",
+     "valor": "PO-2026-0728"
+    },
+    {
+     "campo": "order.total",
+     "estado": "present",
+     "valor": "774.4"
+    },
+    {
+     "campo": "order.currency",
+     "estado": "present",
+     "valor": "EUR"
+    }
+   ]
+  },
+  {
+   "rule_id": "R5",
+   "status": "NEEDS_REVIEW",
+   "consecuencia": "ESCALAR",
+   "reason_codes": [
+    "PAYMENT_TERMS_EXCEEDED"
+   ],
+   "explicacion": "Elapsed days since issue exceed the supplier's payment terms.",
+   "entradas": [
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-03-22"
+    },
+    {
+     "campo": "supplier.id",
+     "estado": "present",
+     "valor": "P004"
+    },
+    {
+     "campo": "supplier.payment_terms_days",
+     "estado": "present",
+     "valor": 45
+    }
+   ]
+  },
+  {
+   "rule_id": "R6",
+   "status": "PASS",
+   "consecuencia": "PAGAR",
+   "reason_codes": [
+    "REQUIREMENT_SATISFIED"
+   ],
+   "explicacion": "Requirement satisfied: invoice.supplier_tax_id; Requirement satisfied: invoice.iban; Requirement satisfied: invoice.order_reference; Requirement satisfied: invoice.total; Requirement satisfied: invoice.vat_amount; Requirement satisfied: invoice.issue_date",
+   "entradas": [
+    {
+     "campo": "invoice.supplier_tax_id",
+     "estado": "present",
+     "valor": "B98120774"
+    },
+    {
+     "campo": "invoice.iban",
+     "estado": "present",
+     "valor": "ES4414650100951704302211"
+    },
+    {
+     "campo": "invoice.order_reference",
+     "estado": "present",
+     "valor": "PO-2026-0728"
+    },
+    {
+     "campo": "invoice.total",
+     "estado": "present",
+     "valor": "774.4"
+    },
+    {
+     "campo": "invoice.vat_amount",
+     "estado": "present",
+     "valor": "134.4"
+    },
+    {
+     "campo": "invoice.issue_date",
+     "estado": "present",
+     "valor": "2026-03-22"
+    }
+   ]
+  }
+ ],
+ "factura": {
+  "number": "2026/27401",
+  "issue_date": "2026-03-22",
+  "supplier_tax_id": "B98120774",
+  "iban": "ES4414650100951704302211",
+  "total": "774.4",
+  "taxable_base": "640",
+  "vat_amount": "134.4",
+  "currency": "EUR"
+ },
+ "proveedor": {
+  "id": "P004",
+  "razon_social": "Limpiezas Turia S.L.",
+  "nif": "B98120774",
+  "iban": "ES4414650100951704302211",
+  "ciudad": "Valencia",
+  "condiciones": "45 dias"
+ },
+ "pedido_maestro": {
+  "pedido": "PO-2026-0728",
+  "proveedor_id": "P004",
+  "nif": "B98120774",
+  "importe_total": "774.4",
+  "estado_excel": "ABIERTO",
+  "fecha_pedido": "2026-03-22"
+ },
+ "asiento": {
+  "asiento_id": "AS-73002",
+  "fecha_registro": "2026-03-22",
+  "proveedor_id": "P004",
+  "nif": "B98120774",
+  "pedido": "PO-2026-0728",
+  "importe_esperado": "774.40",
+  "estado": "PENDIENTE"
+ },
+ "notas": {
+  "generales": [
+   "los de Guadaira siempre llaman los viernes",
+   "cafe 3a planta roto desde 2023",
+   "acordarse: NUNCA pagar sin cruzar con el ERP",
+   "preguntar a Sonia lo del IVA reducido (aplica??)"
+  ],
+  "en_revision": false
+ },
+ "procedencia": {
+  "context_id": "dc_2b876e49ca1a31e99d7beb96e343e9b9a3973c62e06addefeda8fa279823c7ba",
+  "evaluation_id": "ev_e947398b42dc5f6ede3701ac8e92251ad5a412580677cf8a3696e6cf86af2f4b",
+  "ruleset": {
+   "policy_id": "balanced",
+   "ruleset_version": "v3",
+   "sha256": "59f75fafe1c261ff0c6089554c6ddf5435cf45f8e0a327d267a05811bb985c2b",
+   "source": "ruleset"
+  },
+  "evaluation_date": "2026-09-19",
+  "capturado_at": "2026-09-19T10:00:00Z"
+ }
+}
