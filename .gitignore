@@ -11,6 +11,12 @@ __pycache__/
 .pytest_cache/
 .DS_Store
 
+# Artefactos de las herramientas de main
+benchmark/runs/
+benchmark/review/pages/
+.claude_erp.log
+backend/data/
+
 # Estado y salidas: se regeneran con `alberto todo`
 alberto.db
 alberto.db-wal
