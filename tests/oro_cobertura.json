@@ -1,0 +1,4692 @@
+{
+ "2026-01-08_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-11_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-12_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-12_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-14_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-15_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-16_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-17_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-18_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-22_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-23_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-24_P009.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-25_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-26_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-26_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-27_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-28_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-28_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-30_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-30_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-01-31_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-04_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-05_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-05_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-05_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-07_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-07_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-09_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-12_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-15_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-19_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-22_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-22_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-23_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-25_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-25_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-02-27_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-0233-A_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-01_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-01_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-03_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-03_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-05_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-07_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-08_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-09_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-10_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-11_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-11_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-16_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-16_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-17_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-17_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-19_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-19_P008.pdf": [
+  "base",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-20_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-20_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-21_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-21_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-21_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-24_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-26_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-28_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-03-28_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-03_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-06_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-06_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-07_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-08_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-08_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-10_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-10_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-11_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-12_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-15_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-21_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-22_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-23_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-27_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-27_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-27_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-27_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-28_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-29_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-30_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-04-30_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-03_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-03_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-03_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-04_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-04_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-09_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-09_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-12_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-13_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-14_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-14_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-15_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-16_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-17_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-18_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-20_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-20_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-21_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-22_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-22_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-24_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-24_P009.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-26_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-28_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-28_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-05-30_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-01_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-04_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-04_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-05_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-06_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-06_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-07_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-08_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-10_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-12_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-13_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-16_P009.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-21_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-22_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-22_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-23_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-24_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-24_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-25_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-26_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-27_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-28_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-28_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-29_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-29_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-06-30_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-01_P009.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-02_P006.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-04_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-06_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-07_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-07_P007.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-08_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-09_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-10_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-12_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-13_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-14_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-14_P003.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-15_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-16_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-17_P010.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-20_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-22_P002.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-23_P001.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-28_P008.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-29_P004.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-29_P011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-07-31_P005.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-0811-B_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-14406_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-14500-C_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-15144_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-17547_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-22807_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-23904_construcciones.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-23919_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-24626_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-25603_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-37816_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-47946_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-51245_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-51936_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-54710_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-71213_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-79712_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-83338_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-85839_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-87003_construcciones.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-89511_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-91934_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-94906_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "2026-96909_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-2163_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-2201_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-2478_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-3011_suministros.pdf": [
+  "base",
+  "fecha",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-3355_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-4013_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-5240_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-5522_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-5989_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-6702_limpiezas.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-6964_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-7261_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-7263_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-7728_limpiezas2.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-8497_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-8801_suministros.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-8812_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-8905_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9007_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9012_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9180_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9252_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9300_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9628_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9655_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9865_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "F26-9887_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1016_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1080_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1088_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1120_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1123_construcciones.pdf": [
+  "base",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1191_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1289_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1291_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1352_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1926_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-1943_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2116_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2195_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2212_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2332_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2434_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2477_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2508_consultoría.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2670_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2892_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2965_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-2967_seguridad.pdf": [
+  "base",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3096_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3118_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3388_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3497_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3527_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3784_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3788_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-3939_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4125_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4290_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4294_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4349_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4385_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4488_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4634_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4666_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4673_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4813_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4816_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4819_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-4962_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5044_mensajería2.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5077_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5197_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5377_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5418_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5590_ofimática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5633_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5712_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5753_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-5855_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6007_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6187_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6321_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6350_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6734_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6886_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-6909_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7218_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7263_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7311_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7344_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7432_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7441_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7514_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7634_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7712_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7792_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7878_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-7983_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8018_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8046_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8091_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8163_mensajería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8245_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8437_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8488_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8496_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8528_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8613_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8627_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8635_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8694_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8720_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8728_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8766_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8929_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8954_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8987_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-8996_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9034_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9104_electricidad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9145_papelería.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9322_informática.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9455_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9459_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9507_catering.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9517_transportes.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "FA-9810_seguridad.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "copia_2026_0518.pdf": [],
+ "factura_0088.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0102.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0279.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0287.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0292.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0323.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0341.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0381.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0396.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0524.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0722.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0776.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0893.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_0998.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1045.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1162.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1217.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1298.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1457.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1529.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1556.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1582.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_15828.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1607.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1693.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1697.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1796.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_1936.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2018.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2026.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2052.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2053.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2067.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2087.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2088.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2166.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_22612.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2450.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2647.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2792.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2875.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2886.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_2952.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3095.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3164.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3184.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3223.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3421.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3561.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3570.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3602.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_36166.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_3888.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4024.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4067.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_41082.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4124.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4185.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4210.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4218.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4273.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4427.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4485.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4522.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4619.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4635.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4698.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4784.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_4845.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5011.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_50310.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5206.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5231.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5269.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5277.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_52876.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5311.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5347.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5349.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5391.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5401.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5402.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5512.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5518.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5604.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5659.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5705.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5819.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5856.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5888.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5911.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_5986.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6016.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6021.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6041.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6105.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6146.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6179.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6197.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6209.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6297.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6313.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6374.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6407.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6436.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_65982.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6612.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6663.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6707.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6721.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6734.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_6806.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7023.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7034.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7087.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7120.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7209.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7265.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7294.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7295.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7341.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7381.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7394.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7397.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7474.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7500.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7521.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7583.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7624.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7789.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7799.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7827.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_7835.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8043.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8101.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8130.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8225.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8322.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8358.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8429.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8508.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8515.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8764.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8785.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8801.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8848.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_8928.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9031.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9052.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_91242.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9286.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9473.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9527.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9534.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9539.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9590.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_9696.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "factura_97183.pdf": [
+  "base",
+  "fecha",
+  "iban",
+  "iva_importe",
+  "iva_pct",
+  "nif_emisor",
+  "pedido",
+  "total"
+ ],
+ "fax_2026_0411.pdf": [],
+ "reimpresion_0712.pdf": [],
+ "scan_001.pdf": [],
+ "scan_002.pdf": [],
+ "scan_003.pdf": [],
+ "scan_004.pdf": [],
+ "scan_005.pdf": [],
+ "scan_006.pdf": [],
+ "scan_007.pdf": [],
+ "scan_008.pdf": [],
+ "scan_009.pdf": [],
+ "scan_010.pdf": [],
+ "scan_011.pdf": [],
+ "scan_012.pdf": [],
+ "scan_013.pdf": [],
+ "scan_014.pdf": [],
+ "scan_015.pdf": [],
+ "scan_016.pdf": [],
+ "scan_017.pdf": [],
+ "scan_018.pdf": [],
+ "scan_021.pdf": [],
+ "scan_022.pdf": [],
+ "scan_023.pdf": [],
+ "scan_025.pdf": [],
+ "scan_026.pdf": [],
+ "scan_027.pdf": [],
+ "scan_028.pdf": [],
+ "scan_029.pdf": []
+}

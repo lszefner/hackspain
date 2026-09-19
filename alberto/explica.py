@@ -18,7 +18,7 @@ def _fila(con: sqlite3.Connection, patron: str) -> sqlite3.Row | None:
     return con.execute(
         "SELECT d.*, x.campos_json, x.plantilla, x.via, x.campos_faltantes,"
         "       x.cuadra_interna, x.latencia_ms AS ms_extraccion"
-        " FROM documentos d LEFT JOIN extracciones x USING(doc_id)"
+        " FROM documentos d LEFT JOIN extraccion_vigente x USING(doc_id)"
         " WHERE d.file_id = ? OR d.file_id LIKE ? OR d.doc_id LIKE ?"
         " ORDER BY length(d.file_id) LIMIT 1",
         (patron, f"%{patron}%", f"{patron}%")).fetchone()
@@ -54,6 +54,8 @@ def explicar(con: sqlite3.Connection, patron: str, *, norma: str = "v3") -> int:
               f"{GRIS}(base + IVA == total){FIN}")
         if doc["campos_faltantes"]:
             print(f"     {ROJO}faltan: {doc['campos_faltantes']}{FIN}")
+
+    _vision(con, doc)
 
     dec = con.execute(
         "SELECT * FROM decisiones WHERE doc_id=? AND norma_version=?"
@@ -92,3 +94,36 @@ def explicar(con: sqlite3.Connection, patron: str, *, norma: str = "v3") -> int:
             print(f"     {GRIS}· {n['texto']}{FIN}")
     print()
     return 0
+
+
+def _vision(con: sqlite3.Connection, doc: sqlite3.Row) -> None:
+    """Seccion 1b: que hizo la fase 2, si se llego a ejecutar."""
+    from alberto.extraccion.cascada import INTENTO_VISION
+
+    fila = con.execute(
+        "SELECT * FROM extracciones WHERE doc_id=? AND intento=?",
+        (doc["doc_id"], INTENTO_VISION)).fetchone()
+    if fila is None:
+        return
+
+    estado = (f"{VERDE}aceptada{FIN}" if fila["aceptada"]
+              else f"{ROJO}rechazada{FIN} ({fila['motivo_rechazo']})")
+    print(f"\n{AZUL}1b · VISION{FIN}  {estado}  {GRIS}modelo={fila['modelo']} · "
+          f"{fila['n_llamadas']} llamadas · {fila['tokens_entrada']}+"
+          f"{fila['tokens_salida']} tokens · {fila['coste_eur']} EUR · "
+          f"{fila['latencia_ms']} ms{FIN}")
+
+    origen = (json.loads(fila["campos_json"]) or {}).get("_origen") or {}
+    if origen:
+        de_vision = [c for c, v in origen.items() if v == "vision"]
+        print(f"     {GRIS}campos que aporto:{FIN} "
+              f"{', '.join(de_vision) if de_vision else GRIS + 'ninguno' + FIN}")
+        print(f"     {GRIS}el resto lo leyo la regex y la vision NO puede pisarlo{FIN}")
+
+    arts = con.execute(
+        "SELECT rol, count(*) n, sum(a.bytes) b FROM extraccion_artefactos ea"
+        " JOIN artefactos a USING(sha256) WHERE ea.doc_id=? AND ea.intento=?"
+        " GROUP BY rol", (doc["doc_id"], INTENTO_VISION)).fetchall()
+    if arts:
+        print(f"     {GRIS}raw: " + " · ".join(
+            f"{r['rol']} x{r['n']} ({r['b']:,} B)" for r in arts) + FIN)

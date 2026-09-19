@@ -15,6 +15,11 @@ from alberto.erp import snapshot as snap
 from alberto.ingesta import registrar
 
 
+def _cfg_vision(verificar: bool) -> dict:
+    from alberto.extraccion.vision.ajustes import ajustes
+    return ajustes(verificar=verificar)
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser("alberto", description="Pipeline de decision de pago")
     p.add_argument("--db", type=Path, default=RUTA_DB)
@@ -38,8 +43,22 @@ def main(argv: list[str] | None = None) -> int:
     x = sub.add_parser("explica", help="sigue UNA decision de principio a fin")
     x.add_argument("fichero"); x.add_argument("--norma", default="v3")
     sub.add_parser("estado")
+    v = sub.add_parser("vision", help="fase 2: lee con el modelo lo que la fase 1 dejo incompleto")
+    v.add_argument("--limite", type=int, help="procesa solo los N primeros")
+    v.add_argument("--concurrencia", type=int, default=4)
+    v.add_argument("--dpi", type=int, choices=[200, 300], default=200)
+    v.add_argument("--en-seco", action="store_true",
+                   help="rasteriza y persiste los PNG, sin llamar al modelo")
+    v.add_argument("--verificar", action="store_true",
+                   help="segunda pasada del modelo: mas caro, hasta 7 llamadas/pagina")
+    v.add_argument("--max-intentos", type=int, default=2)
+    v.add_argument("--raw", type=Path, default=Path("raw"))
+    w = sub.add_parser("valida", help="¿entrega el extractor los campos que piden las reglas?")
+    w.add_argument("--norma", default="v3")
+    w.add_argument("--congelar", action="store_true",
+                   help="fija la cobertura actual como referencia de no regresion")
     a = args = p.parse_args(argv)
-    if not a.caja.is_dir():
+    if a.cmd not in ("valida", "vision", "explica", "estado") and not a.caja.is_dir():
         p.error(f"no encuentro la Caja en {a.caja}. Clonala y pasa --caja RUTA "
                 f"o exporta ALBERTO_CAJA=RUTA")
     con = conectar(args.db)
@@ -71,6 +90,25 @@ def main(argv: list[str] | None = None) -> int:
                                   norma=getattr(a, "norma", "v3"),
                                   con_traza=getattr(a, "traza", False))
         ver(r | {"verificacion": salida.verificar(a.salida, r["escritos"])})
+    if a.cmd == "vision":
+        from alberto.extraccion.vision.ajustes import ProveedorNoConfigurado
+        try:
+            ver(pipeline.extraer_con_vision(
+                con, lote=a.lote, concurrencia=a.concurrencia, dpi=a.dpi,
+                limite=a.limite, max_intentos=a.max_intentos,
+                en_seco=a.en_seco, dir_raw=a.raw,
+                cfg=None if a.en_seco else _cfg_vision(a.verificar)))
+        except ProveedorNoConfigurado as exc:
+            p.error(f"{exc}\n         "
+                    f"(`alberto vision --en-seco` no necesita credenciales)")
+        return 0
+    if a.cmd == "valida":
+        from alberto import validacion
+        if a.congelar:
+            n = validacion.congelar(con, lote=a.lote)
+            ver({"congelado": n, "ruta": str(validacion.RUTA_ORO)})
+            return 0
+        return validacion.informe(con, lote=a.lote, norma=a.norma)
     if a.cmd == "explica":
         return mod_explica.explicar(con, a.fichero, norma=a.norma)
     if a.cmd == "estado":

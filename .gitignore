@@ -17,3 +17,9 @@ outcomes*.jsonl
 
 # El ejemplo que nos pasaron, conservado como referencia
 legacy/
+
+# Paginas rasterizadas de la fase 2 (capa raw). Se regeneran.
+raw/
+.env
+
+nueva.db
