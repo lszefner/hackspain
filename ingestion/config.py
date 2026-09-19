@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from urllib.parse import urlsplit
 
-VERSION = "alpha-4"
+VERSION = "alpha-5"
 
 
 def settings(
@@ -23,9 +23,7 @@ def settings(
         "version": VERSION,
         "ocr": ocr,
         "vision_model": os.getenv("HELMCODE_VISION_MODEL", "gemma4"),
-        "vision_layout_model": os.getenv("HELMCODE_LAYOUT_MODEL", "qwen3.6"),
-        "vision_reader_version": "vision-regions-2",
-        "vision_verify": True,
+        "vision_reader_version": "vision-single-pass-3",
         "vision_stage_timeout": 600,
         "interpreter": interpreter,
         "dpi": dpi,
