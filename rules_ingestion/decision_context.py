@@ -769,7 +769,8 @@ def _resolve_history(fields: dict, invoice: dict, source_id: str,
         if not isinstance(record, dict):
             malformed = True
             continue
-        if source_id == "processed" and record.get("file_id") == file_id:
+        if (source_id == "processed" and record.get("file_id") == file_id
+                and payload.get("same_file_policy") != "include"):
             continue
         rec_number = record.get("invoice_number")
         rec_supplier = record.get("supplier_id")

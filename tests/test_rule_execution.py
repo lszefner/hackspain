@@ -142,7 +142,7 @@ def test_erp_paid_survives_other_blockers_and_runs_all_rules():
     assert not result["completeness"]["evaluation_complete"]
 
 
-def test_pending_is_not_a_duplicate_and_self_exclusion():
+def test_legacy_history_preserves_self_exclusion_for_replay():
     snapshots = fixtures.make_snapshots()
     snapshots["processed"] = history(rows=[record(file_id="f-clean")])
     _, result = run([rule("DUPLICATES")], snapshots=snapshots)
@@ -150,6 +150,23 @@ def test_pending_is_not_a_duplicate_and_self_exclusion():
     snapshots["paid"] = history("paid", rows=[record(file_id="f-clean")])
     _, result = run([rule("DUPLICATES")], snapshots=snapshots)
     assert result["preliminary_decision"] == "NO_PAGAR"
+
+
+@pytest.mark.parametrize('same_invoice', [True, False])
+def test_new_history_matches_invoice_identity_not_filename(same_invoice):
+    from dataclasses import replace
+
+    snapshots = fixtures.make_snapshots()
+    prior = record(file_id='f-clean', invoice_number='INV-1' if same_invoice else 'OTHER')
+    source = history(rows=[prior])
+    snapshots['processed'] = replace(source, payload={**source.payload, 'same_file_policy': 'include'})
+    bundle, result = run([rule('DUPLICATES')], snapshots=snapshots)
+    assert result['preliminary_decision'] == ('NO_PAGAR' if same_invoice else 'ESCALAR')
+    assert bool(bundle.context['history_observations']['processed']['hard_matches']) is same_invoice
+    codes = {reason['code'] for reason in result['decision_reasons']}
+    assert ('DUPLICATE_SUBMISSION' in codes) is same_invoice
+    if same_invoice:
+        assert all('paid' not in reason['explanation'].lower() for reason in result['decision_reasons'])
 
 
 @pytest.mark.parametrize("kind", ["processed", "paid"])
@@ -450,7 +467,7 @@ assert "rules_ingestion.codegen" not in sys.modules
 assert "rules_ingestion.classify" not in sys.modules
 '''
     result = subprocess.run([sys.executable, '-c', code], cwd=Path(__file__).resolve().parents[1],
-                            capture_output=True, text=True, timeout=30)
+                            capture_output=True, text=True, timeout=30, check=False)
     assert result.returncode == 0, result.stderr
 
 

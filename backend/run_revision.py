@@ -319,7 +319,7 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                 result['evaluation_date'] = file_date
                 current = dict(snapshots)
                 current['processed'] = await asyncio.to_thread(
-                    store.processed_history_snapshot, captured_at=captured_at, exclude_file_id=name)
+                    store.processed_history_snapshot, captured_at=captured_at)
                 evaluation = await asyncio.to_thread(engine.evaluate, input_id=str(row['input_id']), interpreter=config['interpreter'],
                                              ruleset=ruleset_bytes, rule_sources=rule_sources, snapshots=current,
                                              evaluation_date=file_date, captured_at=captured_at)

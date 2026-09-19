@@ -85,6 +85,46 @@ def runtime(db, tmp_path, monkeypatch):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize('second_name', ['invoice.pdf', 'renamed.pdf'])
+async def test_resubmission_rejected_even_with_same_filename(runtime, monkeypatch, second_name):
+    from test_decision_context import make_snapshots
+
+    from tests.test_rule_execution import rule
+
+    engine, kwargs, calls, rules, _ = runtime
+    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
+    # Supply an unambiguous supplier and complete ERP history so the first
+    # submission can pass and the second fails specifically as a duplicate.
+    monkeypatch.setattr(rr, 'capture_master_snapshots', lambda *a, **k: make_snapshots(histories=False))
+    monkeypatch.setattr(rr.ErpClient, 'snapshot', lambda self: {
+        'records': [{'pedido': 'PO-1', 'estado': 'PENDIENTE'}], 'pages': [], 'complete': True})
+    rules.write_bytes(canonical_bytes(make_ruleset([rule('DUPLICATES')])))
+    kwargs.update(ruleset_path=str(rules), rule_sources=[RuleSource('rules.csv', b'original,rule\n')])
+    first = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert first['files'][0]['decision'] == 'PAGAR'
+    first_id = first['files'][0]['evaluation_record_id']
+    original_packet = engine.load(first_id)
+    original_evaluation = engine._json(original_packet['evaluation'])
+    # Same intent is a read of the saved run, not a new submission.
+    assert await rr.revisar_lote(['invoice.pdf'], **kwargs) == first
+    assert calls['interpret'] == 1
+    Path(kwargs['input_dir'], second_name).write_bytes(b'%PDF-test')
+    kwargs['request_key'] = 'resubmission'
+    second = await rr.revisar_lote([second_name], **kwargs)
+    assert second['state'] == 'completed'
+    assert second['files'][0]['decision'] == 'NO_PAGAR'
+    stored = PostgresResultsStore(engine).get(second_name)
+    assert {r['code'] for r in stored['evaluation_result']['decision_reasons']} == {'DUPLICATE_SUBMISSION'}
+    context = json.loads(stored['decision_context'])
+    assert context['history_observations']['processed']['hard_matches']
+    packet = engine.load(second['files'][0]['evaluation_record_id'])
+    history = engine._json(packet['sources']['processed'])
+    assert history['same_file_policy'] == 'include'
+    assert history['records'][0]['context_id'] == engine._json(original_packet['context'])['context_id']
+    assert engine._json(engine.load(first_id)['evaluation']) == original_evaluation
+
+
+@pytest.mark.asyncio
 async def test_existing_backend_runs_full_latest_engine(runtime):
     engine, kwargs, calls, _rules, workbook = runtime
     result = await rr.revisar_lote(['invoice.pdf'], **kwargs)

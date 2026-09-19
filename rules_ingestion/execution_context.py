@@ -149,7 +149,10 @@ def _history_observation(name: str, bundle: alignment.ContextBundle) -> dict:
         if not isinstance(row, dict):
             complete = False
             continue
-        if name == "processed" and row.get("file_id") == context["file_id"]:
+        # Absent policy preserves historical audits; new backend snapshots
+        # include all submissions, even when the filename is unchanged.
+        if (name == "processed" and row.get("file_id") == context["file_id"]
+                and payload.get("same_file_policy") != "include"):
             continue
         number, supplier = row.get("invoice_number"), row.get("supplier_id")
         key_valid = isinstance(number, str) and bool(number) and isinstance(supplier, str) and bool(supplier)

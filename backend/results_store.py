@@ -271,7 +271,8 @@ class PostgresResultsStore:
 
         records = [dict(self._history_record(row['record_id']))
                    for row in self.engine.repository.processed_records(exclude_file_id)]
-        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True},
+        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True,
+                                                      'same_file_policy': 'include'},
                               captured_at=captured_at, asserted_by='core-engine-postgres',
                               authoritative_for=('history.processed',), availability='available',
                               scope='Every invoice La Caja submits is evaluated by this engine; '

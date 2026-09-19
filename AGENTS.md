@@ -7,6 +7,7 @@
 - Lint new review code with `uv run --locked --extra worker --extra backend ruff check ingestion/contextual_prompt.py rules_ingestion/contextual*.py tests/test_contextual_review.py tests/test_contextual_provider.py`.
 - Tests must not call paid APIs or shared databases. Scripted review fixtures are contract tests, not measured LLM accuracy.
 - Keep `evaluation-result/1` immutable. Confirmed submitted/processed database duplicates reject; do not call them paid without payment evidence. Review artifacts never authorize payment.
+- New backend processed-history snapshots include same-filename submissions and freeze `same_file_policy: include`. Unmarked historical snapshots retain legacy exclusion for immutable replay. See `docs/duplicate-submission-policy.md`; filenames are not duplicate identity keys.
 - `rules_ingestion` is a repository API, not included in the ingestion wheel. Task 3 is not wired into the frontend.
 - `benchmark/schemas` is the extraction schema source of truth; packaged wheels carry copies under `ingestion/schemas`. Do not edit benchmark code/references/reports, existing provider prompts, or pipeline/config settings unless the task requires it.
 - For packaging-only changes, refresh the lockfile with `uv lock --offline` without upgrading dependencies.
