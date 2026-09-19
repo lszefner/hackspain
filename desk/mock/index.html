@@ -36,7 +36,7 @@ button{font:inherit;color:inherit;cursor:pointer;background:none;border:0;paddin
 .brand{display:grid;grid-template-columns:32px 1fr;align-items:center;gap:10px;
   padding:5px 7px;margin-bottom:14px;border-radius:10px;transition:background .15s var(--ease)}
 .brand:hover{background:var(--chip)}
-.tile{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;position:relative;
+.brand .tile{width:32px;height:32px;border-radius:8px;background:var(--accent);color:#fff;position:relative;
   display:grid;place-items:center;font:600 13px/1 var(--sans);letter-spacing:-.02em}
 .brand .who2{min-width:0;line-height:1.25}
 .brand .k{display:block;font-size:11px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -254,6 +254,64 @@ body.chatting .chips{justify-content:flex-start}
   padding:1px 5px;background:var(--panel)}
 .hint.busy{color:var(--esc)}
 .hint.ready{color:var(--pay)}
+
+/* ───────────────── summary */
+.wide{max-width:1060px;margin:0 auto}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;
+  box-shadow:var(--shadow)}
+.stat .k5{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.stat .v5{font-family:var(--mono);font-size:22px;letter-spacing:-.02em;margin-top:7px;
+  font-variant-numeric:tabular-nums}
+.stat .s5{font-size:12px;color:var(--mut);margin-top:5px}
+.stat.pay .v5{color:var(--pay)} .stat.rev .v5{color:var(--esc)} .stat.stop .v5{color:var(--no)}
+
+.card2{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px 18px;
+  box-shadow:var(--shadow);margin-bottom:12px}
+.card2 h3{margin:0;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--mut);font-weight:600}
+.card2 .lede2{margin:5px 0 15px;font-size:13px;color:var(--faint);max-width:64ch}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+
+/* a ring for share of spend, columns for volume. Inline SVG and CSS, no library. */
+.ring-wrap{display:grid;grid-template-columns:186px minmax(0,1fr);gap:20px;align-items:center}
+.ring{width:186px;height:186px;display:block}
+.ring circle{transition:opacity .18s var(--ease);transform-origin:50% 50%}
+.ring-wrap.dim circle.sl{opacity:.26}
+.ring-wrap.dim circle.sl.up{opacity:1}
+.ring-mid{font-family:var(--mono);text-anchor:middle}
+.ring-mid .big{font-size:17px;fill:var(--ink)}
+.ring-mid .sml{font-size:8.5px;fill:var(--faint)}
+.key{display:flex;flex-direction:column;gap:1px;min-width:0}
+.key .kr{display:grid;grid-template-columns:9px minmax(0,1fr) auto auto;gap:9px;align-items:center;
+  padding:3.5px 6px;border-radius:6px;font-size:12px;cursor:default;
+  transition:background .14s var(--ease)}
+.key .kr:hover{background:var(--chip)}
+.key .sw{width:9px;height:9px;border-radius:3px}
+.key .kn{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--mut)}
+.key .kv{font-family:var(--mono);font-size:11.5px;text-align:right}
+.key .kp{font-family:var(--mono);font-size:11px;color:var(--faint);width:40px;text-align:right}
+
+.cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;align-items:end;
+  height:190px;padding-top:6px}
+.col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px;min-width:0}
+.col .stk{display:flex;flex-direction:column;justify-content:flex-end;border-radius:5px 5px 0 0;
+  overflow:hidden;animation:rise2 .6s var(--ease) both}
+@keyframes rise2{from{transform:scaleY(0);transform-origin:bottom}to{transform:scaleY(1)}}
+.col .pa{flex:1;background:var(--accent);opacity:.82;transition:opacity .16s var(--ease)}
+.col:hover .pa{opacity:1}
+.col .cn{font-family:var(--mono);font-size:10px;color:var(--ink);text-align:center}
+.col .cl{font-size:9px;color:var(--faint);text-align:center;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.spark{width:100%;height:150px;display:block;overflow:visible}
+.spark .ln{fill:none;stroke:var(--accent);stroke-width:1.6}
+.spark .ar{fill:url(#sg)}
+.spark .dt2{fill:var(--accent)}
+.xax{display:grid;margin-top:7px;font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.xax span{text-align:center}
+@media (max-width:1000px){
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .duo{grid-template-columns:1fr}
+}
 
 /* ───────────────── invoices: one box per supplier */
 .lanes{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:10px}
@@ -498,11 +556,7 @@ body.chatting .chips{justify-content:flex-start}
       <div class="scroll" id="inv-body"></div>
     </section>
 
-    <section class="view" id="view-summary"><div class="scroll"><div class="page">
-      <h2>Summary</h2>
-      <p class="lede">One row per supplier: invoice count, amount, the mix of pay, escalate and do not pay, and the incident that costs the most time with each of them.</p>
-      <div class="soon">Next phase.</div>
-    </div></div></section>
+    <section class="view" id="view-summary"><div class="scroll"><div class="wide" id="sum-body"></div></div></section>
 
     <section class="view" id="view-rules"><div class="scroll"><div class="page" id="rules-page"></div></div></section>
   </main>
@@ -538,6 +592,7 @@ $('#nav').addEventListener('click', e => {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n === b));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('on', v.id === 'view-' + b.dataset.view));
   if (b.dataset.view === 'invoices' && !invReady) loadInvoices();
+  if (b.dataset.view === 'summary' && !sumReady) loadSummary();
 });
 
 /* ───────────────── the dotted globe that turns while it thinks */
@@ -1193,6 +1248,121 @@ $('#dos-side').addEventListener('click', async e => {
 $('#dos-x').addEventListener('click', closeDossier);
 $('#scrim').addEventListener('click', closeDossier);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDossier(); });
+
+/* ───────────────── summary: folded from the same 500 invoices */
+let sumReady = false;
+
+/* one hue, twelve steps: share reads by size, not by colour-guessing */
+function ramp(i, n){
+  const a = [74, 51, 36], b = [201, 190, 176];
+  const t = n < 2 ? 0 : i / (n - 1);
+  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',')})`;
+}
+
+function ring(items, spend, count){
+  const R = 66, SW = 26, C = 2 * Math.PI * R;
+  let off = 0;
+  const segs = items.map((it, i) => {
+    const len = spend ? (it.eur / spend) * C : 0;
+    const seg = `<circle class="sl" data-i="${i}" r="${R}" cx="93" cy="93" fill="none"
+      stroke="${ramp(i, items.length)}" stroke-width="${SW}"
+      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}"
+      stroke-dashoffset="${(-off).toFixed(2)}"></circle>`;
+    off += len;
+    return seg;
+  }).join('');
+  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
+  const short = n => n >= 1e6 ? '€' + (n / 1e6).toFixed(2) + 'M' : eur0(n);
+  return `<div class="ring-wrap">
+    <svg class="ring" viewBox="0 0 186 186" role="img" aria-label="Share of spend by supplier">
+      <g transform="rotate(-90 93 93)">${segs}</g>
+      <text class="ring-mid" x="93" y="90"><tspan class="big">${esc(short(spend))}</tspan></text>
+      <text class="ring-mid" x="93" y="104"><tspan class="sml">${count} invoices</tspan></text>
+    </svg>
+    <div class="key">${items.map((it, i) => `<div class="kr" data-i="${i}">
+      <span class="sw" style="background:${ramp(i, items.length)}"></span>
+      <span class="kn">${esc(it.name)}</span>
+      <span class="kv">${esc(eur0(it.eur))}</span>
+      <span class="kp">${spend ? (it.eur / spend * 100).toFixed(1) : 0}%</span>
+    </div>`).join('')}</div></div>`;
+}
+
+function columns(items){
+  const max = Math.max(...items.map(r => r.n), 1);
+  return `<div class="cols">${items.map(r => `
+    <div class="col" title="${esc(r.name)} — ${r.n} invoices">
+      <span class="cn">${r.n}</span>
+      <span class="stk" style="height:${((r.n / max) * 100).toFixed(1)}%"><i class="pa"></i></span>
+      <span class="cl">${esc(r.name.split(' ')[0])}</span></div>`).join('')}</div>`;
+}
+
+function spark(trend){
+  if (trend.length < 2) return '';
+  const w = 1000, h = 150, pad = 6;
+  const max = Math.max(...trend.map(t => t.eur), 1);
+  const pts = trend.map((t, i) => [
+    (i / (trend.length - 1)) * (w - pad * 2) + pad,
+    h - (t.eur / max) * (h - 16) - 4,
+  ]);
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+  const area = `${line} L${pts.at(-1)[0].toFixed(1)},${h} L${pts[0][0].toFixed(1)},${h} Z`;
+  const nice = m => new Date(m + '-02').toLocaleDateString('en-GB', {month: 'short'});
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".16"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+      <path class="ar" d="${area}"/><path class="ln" d="${line}"/>
+      ${pts.map(p => `<circle class="dt2" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5"/>`).join('')}
+    </svg>
+    <div class="xax" style="grid-template-columns:repeat(${trend.length},1fr)">
+      ${trend.map(t => `<span>${esc(nice(t.month))} · ${t.n}</span>`).join('')}</div>`;
+}
+
+async function loadSummary(){
+  const d = await (await fetch('/api/summary')).json();
+  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
+
+  $('#sum-body').innerHTML = `
+    <div class="stats">
+      <div class="stat pay"><span class="k5">Pay</span><div class="v5">${esc(eur0(d.pay.eur))}</div>
+        <div class="s5">${d.pay.n} invoices, clean on all five</div></div>
+      <div class="stat rev"><span class="k5">Needs you</span><div class="v5">${esc(eur0(d.review.eur))}</div>
+        <div class="s5">${d.review.n} invoices waiting on a person</div></div>
+      <div class="stat stop"><span class="k5">No pay</span><div class="v5">${esc(eur0(d.stop.eur))}</div>
+        <div class="s5">${d.stop.n} stopped by a rule</div></div>
+      <div class="stat"><span class="k5">Suppliers</span><div class="v5">${d.suppliers}</div>
+        <div class="s5">${esc(eur0(d.spend))} across ${d.total} invoices</div></div>
+    </div>
+
+    <div class="duo">
+      <div class="card2"><h3>Where the money goes</h3>
+        <p class="lede2">Share of everything invoiced, biggest first.</p>
+        ${ring(d.by_money, d.spend, d.total)}
+      </div>
+      <div class="card2"><h3>Invoices per supplier</h3>
+        <p class="lede2">How much paper each one sends.</p>
+        ${columns(d.by_count)}
+      </div>
+    </div>
+
+    <div class="card2">
+      <h3>Spend by month</h3>
+      <p class="lede2">Read off the issue dates on the pages. The count under each month is the volume.</p>
+      ${spark(d.trend)}
+    </div>`;
+  const wrap = $('#sum-body').querySelector('.ring-wrap');
+  if (wrap){
+    wrap.querySelectorAll('.kr').forEach(r => {
+      r.onmouseenter = () => {
+        wrap.classList.add('dim');
+        wrap.querySelectorAll('.sl').forEach(c =>
+          c.classList.toggle('up', c.dataset.i === r.dataset.i));
+      };
+      r.onmouseleave = () => wrap.classList.remove('dim');
+    });
+  }
+  sumReady = true;
+}
 
 /* ───────────────── rules view */
 const RULES = [
