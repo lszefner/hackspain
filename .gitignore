@@ -29,6 +29,11 @@ legacy/
 
 # Paginas rasterizadas de la fase 2 (capa raw). Se regeneran.
 raw/
+
+# Las normas compiladas: las construye `make rules`. El README de la carpeta
+# si se versiona; el JSON generado no, que cambia con cada perfil y con cada
+# barrido y no es la fuente de nada.
+rules_ingestion/outcome/**/rules.json
 .env
 
 nueva.db
