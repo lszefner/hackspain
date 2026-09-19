@@ -15,6 +15,15 @@ from alberto.erp import snapshot as snap
 from alberto.ingesta import registrar
 
 
+def _caja_por_defecto() -> Path:
+    entorno = os.environ.get("ALBERTO_CAJA")
+    if entorno:
+        return Path(entorno)
+    if Path("caja/facturas").is_dir():
+        return Path("caja")
+    return Path(".")
+
+
 def _cfg_vision(verificar: bool) -> dict:
     from alberto.extraccion.vision.ajustes import ajustes
     return ajustes(verificar=verificar)
@@ -23,9 +32,10 @@ def _cfg_vision(verificar: bool) -> dict:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser("alberto", description="Pipeline de decision de pago")
     p.add_argument("--db", type=Path, default=RUTA_DB)
-    # Cada uno tiene la Caja donde quiere: ALBERTO_CAJA lo resuelve sin editar nada.
-    p.add_argument("--caja", type=Path,
-                   default=Path(os.environ.get("ALBERTO_CAJA", "caja")))
+    # La Caja vive en la raiz del repo (consistencia con main), pero se
+    # respeta a quien la tenga clonada aparte: ALBERTO_CAJA primero, luego
+    # ./caja si existe, y si no la raiz, que es donde esta facturas/.
+    p.add_argument("--caja", type=Path, default=_caja_por_defecto())
     p.add_argument("--erp-url",
                    default=os.environ.get("ALBERTO_ERP", "http://127.0.0.1:8009"))
     p.add_argument("--lote", default="lote1")

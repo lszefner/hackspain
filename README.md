@@ -3,30 +3,32 @@
 Track Maisa, HackSpain '26. Decide `PAGAR` / `NO_PAGAR` / `ESCALAR` sobre las
 facturas de La Caja, con traza completa de cada decisión.
 
-## Son TRES repos, no dos
+## Son DOS repos
 
 | Repo | Qué es | Quién lo toca |
 |---|---|---|
-| **`500-sombras-de-alberto`** (La Caja) | Entrada de solo lectura: las 500 facturas, el Excel y `alberto_erp.py` (el bridge de 2009). Lo publica la organización. | **Nadie.** Se clona y se deja quieto |
-| **este repo** | Nuestra solución. Lee los ficheros de La Caja del disco y habla con el ERP por HTTP | Los 4, todo el fin de semana |
+| **este repo** | Nuestra solución **y La Caja**: las 500 facturas, el Excel y `alberto_erp.py` (el bridge de 2009) viven en la raíz | Los 4, todo el fin de semana |
 | **`la-caja-outcomes`** | La entrega. Público, con **exactamente 3 ficheros** en la raíz: `outcomes.jsonl`, `outcomes_lote2.jsonl`, `albertitos_plan.pdf` | Se crea el domingo por la mañana |
 
-El tercero es el que se entrega. **Nunca subimos ahí nuestro código**: las bases
+El segundo es el que se entrega. **Nunca subimos ahí nuestro código**: las bases
 del reto lo prohíben explícitamente (`no subáis vuestra solución, credenciales ni
-una aplicación ejecutable`).
+una aplicación ejecutable`). Esa prohibición es sobre el repo de entrega, no
+sobre este: aquí La Caja está commiteada, igual que en `main`, para que el repo
+sea autosuficiente y nadie tenga que configurar rutas.
 
-La Caja **no se commitea en este repo**: está en `.gitignore`. Cada uno la clona
-donde quiera.
+Por eso `alberto` encuentra La Caja solo: si existe `ALBERTO_CAJA` la usa, si
+tienes un clon en `caja/` lo usa, y si no tira de la raíz del repo, que es donde
+están `facturas/` y el Excel.
 
 ## Puesta en marcha
 
 ```bash
 # una vez
-git clone https://github.com/ikurotime/500-sombras-de-alberto.git caja
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt
 ```
 
-Si tienes La Caja en otro sitio, no edites nada:
+La Caja ya está en el repo, así que no hay nada que clonar ni que configurar.
+Si prefieres usar tu propio clon:
 
 ```bash
 export ALBERTO_CAJA=~/HackSpain/500-sombras-de-alberto
@@ -36,7 +38,7 @@ export ALBERTO_CAJA=~/HackSpain/500-sombras-de-alberto
 
 ```bash
 # Terminal 1 — el bridge ERP de 2009. Se queda abierto.
-cd caja && make erp          # make erp-fast le quita la latencia artificial
+make erp                     # make erp-fast le quita la latencia artificial
 
 # Terminal 2 — el pipeline
 ./venv/bin/python -m alberto.cli todo

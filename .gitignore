@@ -1,4 +1,6 @@
-# La Caja es de la organizacion: se clona aparte, NUNCA se commitea aqui.
+# La Caja SI esta commiteada en la raiz (facturas/, el Excel, alberto_erp.py),
+# por consistencia con main y para que el repo sea autosuficiente. Lo que se
+# ignora es un clon local aparte, por si alguien prefiere trabajar asi.
 caja/
 500-sombras-de-alberto/
 
