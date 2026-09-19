@@ -168,6 +168,32 @@ export interface Escalado {
   resolucion: Resolucion | null;
 }
 
+/** Una fila del listado crudo de facturas: dónde está y todo lo relevante. */
+export interface FacturaFila {
+  file_id: string;
+  doc_id: string;
+  lote: string;
+  /** el punto del pipeline en el que está el documento */
+  etapa: "ingerida" | "extraida" | "decidida" | "resuelta";
+  tiene_texto: boolean;
+  via: Via | null;
+  proveedor: string | null;
+  nif: string | null;
+  pedido: string | null;
+  total_cent: number | null;
+  result: Resultado;
+  motivo: string | null;
+  latencia_ms: number;
+  coste_eur: number;
+  intentos: number;
+  decidida_at: string;
+}
+
+/** Un evento del registro, con la factura resuelta para poder enlazarla. */
+export interface EventoLog extends Evento {
+  file_id: string | null;
+}
+
 export interface CosteRuta {
   via: Via;
   docs: number;

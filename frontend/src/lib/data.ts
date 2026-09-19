@@ -4,8 +4,8 @@
  * DataSource (better-sqlite3 o fetch al FastAPI) sin tocar ninguna vista.
  */
 import type {
-  Baldosa, CambioNorma, Coste, Escalado, Expediente, Kpis, ParteTrabajo,
-  Resultado, Salud,
+  Baldosa, CambioNorma, Coste, Escalado, EventoLog, Expediente, FacturaFila,
+  Kpis, ParteTrabajo, Resultado, Salud,
 } from "./types";
 import * as mock from "./mock/dataset";
 import * as normas from "./normas";
@@ -23,6 +23,10 @@ export interface DataSource {
   normaActiva(): string;
   kpis(norma: string): Promise<Kpis>;
   baldosas(f: Filtros): Promise<Baldosa[]>;
+  /** el listado crudo: dónde está cada factura y toda la data relevante */
+  facturas(f: Filtros): Promise<FacturaFila[]>;
+  /** el registro de qué pasó y cuándo, filtrable */
+  eventos(f: { etapa?: string; nivel?: string; q?: string; limit?: number }): Promise<{ filas: EventoLog[]; total: number }>;
   motivos(norma: string): Promise<{ motivo: string; result: Resultado; n: number }[]>;
   expediente(fileId: string, norma: string): Promise<Expediente | null>;
   bandeja(): Promise<Escalado[]>;
@@ -80,6 +84,52 @@ const mockSource: DataSource = {
       const dec = decs.get(d.doc_id)!;
       return { file_id: d.file_id, result: dec.result, motivo: dec.motivo };
     });
+  },
+
+  async facturas(f) {
+    const decs = decisiones(f.norma ?? normas.normaActiva());
+    return filtrados(f).map((d) => {
+      const dec = decs.get(d.doc_id)!;
+      const ext = mock.extracciones.get(d.doc_id)!;
+      const nif = ext.campos.nif_emisor;
+      return {
+        file_id: d.file_id,
+        doc_id: d.doc_id,
+        lote: d.lote,
+        etapa: "decidida" as const,
+        tiene_texto: d.tiene_texto,
+        via: ext.via,
+        proveedor: ext.campos.proveedor,
+        nif,
+        pedido: ext.campos.pedido,
+        total_cent: ext.campos.total_cent,
+        result: dec.result,
+        motivo: dec.motivo,
+        latencia_ms: ext.latencia_ms + dec.latencia_ms,
+        coste_eur: ext.coste_eur + dec.coste_eur,
+        intentos: d.intentos,
+        decidida_at: dec.creado_at,
+      };
+    });
+  },
+
+  async eventos(f) {
+    const fileDe = new Map(mock.documentos.map((d) => [d.doc_id, d.file_id]));
+    let filas: EventoLog[] = mock.eventos.map((e) => ({
+      ...e,
+      file_id: e.doc_id ? fileDe.get(e.doc_id) ?? null : null,
+    }));
+    if (f.etapa) filas = filas.filter((e) => e.etapa === f.etapa);
+    if (f.nivel) filas = filas.filter((e) => e.nivel === f.nivel);
+    if (f.q) {
+      const q = f.q.toLowerCase();
+      filas = filas.filter(
+        (e) => e.file_id?.toLowerCase().includes(q) || e.mensaje.toLowerCase().includes(q),
+      );
+    }
+    filas.sort((a, b) => b.at.localeCompare(a.at) || b.id - a.id);
+    const total = filas.length;
+    return { filas: filas.slice(0, f.limit ?? 200), total };
   },
 
   async motivos(norma) {
