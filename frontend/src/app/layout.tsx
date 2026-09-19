@@ -13,14 +13,14 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Revision de facturas",
-  description: "Panel local para lanzar y revisar la extraccion + reglas de negocio",
+  title: "Revisión de facturas",
+  description: "Panel local para lanzar y revisar la extracción + reglas de negocio",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
-      lang="en"
+      lang="es"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
