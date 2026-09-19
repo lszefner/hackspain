@@ -5,6 +5,12 @@ import { use, useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/Badge";
 import { getFactura, lanzarUna, type FacturaDetalle } from "@/lib/api";
 
+const VERDICT_ICON: Record<string, string> = {
+  PASS: "text-emerald-600",
+  FAIL: "text-red-600",
+  NEEDS_REVIEW: "text-amber-600",
+};
+
 export default function FacturaPage(props: PageProps<"/factura/[id]">) {
   const { id } = use(props.params);
   const fileId = decodeURIComponent(id);
@@ -15,78 +21,132 @@ export default function FacturaPage(props: PageProps<"/factura/[id]">) {
     try {
       setFactura(await getFactura(fileId));
     } catch {
-      // ignore transient errors, keep last known state
+      // keep last known state on transient errors
     }
   }, [fileId]);
 
   useEffect(() => {
-    cargar();
-  }, [cargar]);
+    const t0 = setTimeout(cargar, 0);
+    const t =
+      factura?.estado === "procesando" ? setInterval(cargar, 1500) : null;
+    return () => {
+      clearTimeout(t0);
+      if (t) clearInterval(t);
+    };
+  }, [cargar, factura?.estado]);
 
   return (
-    <main className="p-6 font-sans max-w-3xl mx-auto">
-      <p className="mb-3">
-        <Link href="/" className="text-blue-700 underline">
-          &larr; volver
-        </Link>
-      </p>
-      <h1 className="text-xl font-semibold mb-3">
-        {fileId} &middot; <Badge value={factura?.decision} />
-      </h1>
-
-      {factura?.error && (
-        <div className="bg-amber-50 border border-amber-300 rounded px-3 py-2 my-3 text-sm">
-          {factura.error}
-        </div>
-      )}
-
-      <button
-        disabled={loading || factura?.estado === "procesando"}
-        onClick={async () => {
-          setLoading(true);
-          await lanzarUna(fileId);
-          await cargar();
-          setLoading(false);
-        }}
-        className="px-3 py-1.5 border rounded bg-gray-50 disabled:opacity-50"
-      >
-        {factura?.estado === "hecha" || factura?.estado === "error" ? "Volver a revisar" : "Revisar ahora"}
-      </button>
-
-      {factura && factura.estado !== "pendiente" && (
-        <>
-          <h3 className="text-base font-semibold mt-6 mb-2">Checks (rules_ingestion/checks.py)</h3>
-          <div className="space-y-2">
-            {factura.checks.length === 0 && <p className="text-sm text-gray-500">sin checks</p>}
-            {factura.checks.map((c, i) => (
-              <div key={i} className="bg-white border rounded px-3 py-2 text-sm">
-                <b>
-                  <Badge value={c.verdict} />
-                </b>{" "}
-                &middot; {c.canonical}
-                <br />
-                {c.reason}
-              </div>
-            ))}
+    <div className="min-h-full flex flex-col">
+      <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-4xl items-center gap-4 px-5 py-3">
+          <Link href="/" className="text-sm text-zinc-500 hover:text-zinc-900">
+            ← facturas
+          </Link>
+          <h1 className="truncate font-mono text-sm text-zinc-800">{fileId}</h1>
+          <div className="ml-auto flex items-center gap-3">
+            <Badge value={factura?.estado} />
+            <button
+              disabled={loading || factura?.estado === "procesando"}
+              onClick={async () => {
+                setLoading(true);
+                try {
+                  await lanzarUna(fileId);
+                } finally {
+                  await cargar();
+                  setLoading(false);
+                }
+              }}
+              className="rounded-lg bg-zinc-900 px-3.5 py-1.5 text-xs font-medium text-white transition hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {factura?.estado === "hecha" || factura?.estado === "error"
+                ? "Revisar de nuevo"
+                : "Revisar"}
+            </button>
           </div>
+        </div>
+      </header>
 
-          <h3 className="text-base font-semibold mt-6 mb-2">
-            Campos extraidos (mapeados a rules_ingestion.invoice)
-          </h3>
-          <table className="w-full bg-white border-collapse text-sm">
-            <tbody>
-              {Object.entries(factura.campos)
-                .filter(([k]) => k !== "file_id")
-                .map(([k, v]) => (
-                  <tr key={k}>
-                    <td className="border px-2 py-1">{k}</td>
-                    <td className="border px-2 py-1">{JSON.stringify(v)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </>
-      )}
-    </main>
+      <main className="mx-auto w-full max-w-4xl flex-1 px-5 py-6">
+        <div className="mb-6 flex items-center gap-3">
+          <span className="text-sm text-zinc-500">decisión</span>
+          <Badge value={factura?.decision} />
+        </div>
+
+        {factura?.error && (
+          <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {factura.error}
+          </div>
+        )}
+
+        {!factura && <p className="text-sm text-zinc-400">Cargando…</p>}
+
+        {factura && factura.estado === "pendiente" && (
+          <p className="text-sm text-zinc-500">
+            Esta factura aún no ha sido revisada.
+          </p>
+        )}
+
+        {factura && factura.estado !== "pendiente" && (
+          <>
+            <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Comprobaciones
+            </h2>
+            <div className="mb-8 divide-y divide-zinc-100 overflow-hidden rounded-xl border border-zinc-200 bg-white">
+              {factura.checks.length === 0 && (
+                <p className="px-4 py-3 text-sm text-zinc-400">sin checks</p>
+              )}
+              {factura.checks.map((c, i) => (
+                <div key={i} className="flex items-start gap-3 px-4 py-3">
+                  <span className={`mt-0.5 text-sm font-bold ${VERDICT_ICON[c.verdict] ?? ""}`}>
+                    {c.verdict === "PASS" ? "✓" : c.verdict === "FAIL" ? "✗" : "!"}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-zinc-800">
+                        {c.canonical}
+                      </span>
+                      <Badge value={c.verdict} />
+                    </div>
+                    <p className="mt-0.5 text-sm text-zinc-500">{c.reason}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <h2 className="mb-2 text-xs font-medium uppercase tracking-wider text-zinc-500">
+              Campos extraídos
+            </h2>
+            <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white">
+              <table className="w-full text-sm">
+                <tbody className="divide-y divide-zinc-100">
+                  {Object.entries(factura.campos).filter(([k]) => k !== "file_id")
+                    .length === 0 && (
+                    <tr>
+                      <td className="px-4 py-3 text-sm text-zinc-400">sin campos</td>
+                    </tr>
+                  )}
+                  {Object.entries(factura.campos)
+                    .filter(([k]) => k !== "file_id")
+                    .map(([k, v]) => (
+                      <tr key={k}>
+                        <td className="w-48 px-4 py-2 font-mono text-xs text-zinc-500">
+                          {k}
+                        </td>
+                        <td className="px-4 py-2 font-mono text-[13px] text-zinc-800">
+                          {v === null || v === undefined ? (
+                            <span className="text-zinc-300">—</span>
+                          ) : (
+                            JSON.stringify(v)
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          </>
+        )}
+      </main>
+    </div>
   );
 }

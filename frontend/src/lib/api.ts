@@ -1,4 +1,6 @@
-export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://127.0.0.1:8010";
+import snapshot from "@/data/snapshot.json";
+
+export const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "";
 
 export type Estado = "pendiente" | "procesando" | "hecha" | "error";
 export type Decision = "PAGAR" | "ESCALAR" | "NO_PAGAR" | null;
@@ -42,21 +44,42 @@ async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return res.json() as Promise<T>;
 }
 
-export const getResumen = () => api<Resumen>("/api/resumen");
+// Snapshot fallback: when there's no reachable backend (e.g. the Vercel
+// deployment, which has no live pipeline behind it), fall back to a static
+// export of the last local run instead of surfacing "offline". Real local
+// dev against `python3 backend/server.py` always wins when it's reachable.
+const SNAPSHOT_RESUMEN = snapshot.resumen as Resumen;
+const SNAPSHOT_FACTURAS = snapshot.facturas as Record<string, FacturaDetalle>;
 
-export const getFactura = (fileId: string) =>
-  api<FacturaDetalle>(`/api/factura/${encodeURIComponent(fileId)}`);
+export const getResumen = (): Promise<Resumen> =>
+  api<Resumen>("/api/resumen").catch(() => SNAPSHOT_RESUMEN);
 
+export const getFactura = (fileId: string): Promise<FacturaDetalle> =>
+  api<FacturaDetalle>(`/api/factura/${encodeURIComponent(fileId)}`).catch(
+    () =>
+      SNAPSHOT_FACTURAS[fileId] ?? {
+        file_id: fileId,
+        estado: "pendiente",
+        decision: null,
+        checks: [],
+        campos: {},
+        error: null,
+      }
+  );
+
+// No live backend to launch a revision against in snapshot mode -- resolve
+// as a no-op instead of throwing (offline UI is intentionally not shown for
+// getResumen/getFactura, so it shouldn't appear here either).
 export const lanzarLote = () =>
   api<{ ok: boolean; procesando: boolean }>("/api/lanzar", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: "objetivo=lote",
-  });
+  }).catch(() => ({ ok: false, procesando: false }));
 
 export const lanzarUna = (fileId: string) =>
   api<{ ok: boolean; procesando: boolean }>("/api/lanzar", {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: `objetivo=una&file_id=${encodeURIComponent(fileId)}`,
-  });
+  }).catch(() => ({ ok: false, procesando: false }));
