@@ -42,7 +42,8 @@ def huella(*rutas: Path) -> str:
 def rutas_norma(version: str = "v3") -> tuple[Path, Path]:
     """Los dos ficheros que deciden. Los DOS forman la identidad: la norma
     dice que se comprueba y la politica que se hace con el veredicto."""
-    return RAIZ_REGLAS / f"norma_{version}.yaml", RAIZ_REGLAS / "politica.yaml"
+    from alberto.reglas.motor import ruta_politica
+    return RAIZ_REGLAS / f"norma_{version}.yaml", ruta_politica(version)
 
 
 def etiqueta_norma(version: str = "v3") -> str:
