@@ -175,12 +175,47 @@ RULES = [
      "params": "no exception configured"},
 ]
 
-RULE_HISTORY = [
-    {"from": "v3.1", "to": "v3.2", "when": "18 Sep 14:20", "title": "VAT tolerance raised to 0.5%",
-     "said": "round the cents, a two cent gap is not a problem"},
-    {"from": "v3.0", "to": "v3.1", "when": "16 Sep 09:05", "title": "DUPLICATES now blocks instead of escalating",
-     "said": "if we already paid it, do not even ask me"},
+# Every version the desk has run under, newest first. The policy is what the
+# engine actually reads, so any of them can be replayed over the 500 pages in
+# the box and the difference between two of them is measured, never asserted.
+RULESETS = [
+    {"v": "v3.2", "sha": "9f2c1ab4", "when": "18 Sep 14:20",
+     "title": "the due date stopped blocking",
+     "said": "we never write down the day it arrives, so stop calling them late",
+     "policy": {"tol": 0.005, "dup": "DO NOT PAY", "order": True, "ocr": True, "due": False}},
+    {"v": "v3.1", "sha": "4c17be09", "when": "16 Sep 09:05",
+     "title": "a page we cannot read is never paid blind",
+     "said": "if you could not read it, do not pay it",
+     "policy": {"tol": 0.005, "dup": "DO NOT PAY", "order": True, "ocr": True, "due": True}},
+    {"v": "v3.0", "sha": "b0d94f31", "when": "11 Sep 17:40",
+     "title": "a repeat invoice number is refused outright",
+     "said": "if we already paid it, do not even ask me",
+     "policy": {"tol": 0.002, "dup": "DO NOT PAY", "order": True, "ocr": False, "due": True}},
+    {"v": "v2.9", "sha": "77a1e6c5", "when": "02 Sep 10:15",
+     "title": "a purchase order is required on the page",
+     "said": "no order number, no payment",
+     "policy": {"tol": 0.002, "dup": "ESCALATE", "order": True, "ocr": False, "due": True}},
+    {"v": "v2.8", "sha": "1e5a0c73", "when": "24 Aug 08:30",
+     "title": "the ruleset the desk started from",
+     "said": "",
+     "policy": {"tol": 0.002, "dup": "ESCALATE", "order": False, "ocr": False, "due": True}},
 ]
+
+
+def ruleset(v=None):
+    """The ruleset asked for, or the one in force."""
+    want = v or TOTALS["ruleset"]
+    for r in RULESETS:
+        if r["v"] == want:
+            return r
+    return RULESETS[0]
+
+
+def rule_history():
+    """The chain read as changes: each version against the one before it."""
+    return [{"from": RULESETS[n + 1]["v"], "to": r["v"], "when": r["when"],
+             "title": r["title"], "said": r["said"]}
+            for n, r in enumerate(RULESETS[:-1])]
 
 WAITING = [
     {"vendor": "Informática Benimámet S.L.", "what": "confirmation of the new account", "since": "14 Sep"},
@@ -323,7 +358,7 @@ def facts():
         "ready_to_pay": PAYMENTS,
         "duplicates_stopped": DUPLICATES,
         "ruleset": {"version": TOTALS["ruleset"], "sha256": TOTALS["ruleset_sha"],
-                    "rules": RULES, "recent_changes": RULE_HISTORY},
+                    "rules": RULES, "recent_changes": rule_history()},
         "waiting_on_others": WAITING,
     }
 
@@ -365,6 +400,76 @@ def batch_block(b):
             "rows": rows, "actions": acts}
 
 
+# what each rule means when it is the one that stopped a page
+_WHY = {
+    "READABLE": "with no text layer to read",
+    "VENDOR": "paying an account the master does not have",
+    "DUPLICATES": "on a number already used",
+    "AMOUNT": "where the arithmetic does not close",
+    "DATES": "with no date on the page",
+    "MISSING": "with no purchase order",
+}
+
+
+def run_block(res):
+    """What a dropped archive actually came to, as one panel. Unlike the seeded
+    batch above, every figure here was read off a page and judged by the rules,
+    so the panel says so and the invoices can be opened one by one."""
+    rows = []
+    if res["pay"]:
+        rows.append({"lead": str(res["pay"]), "title": "pay", "sub": "clean on every rule",
+                     "value": money(res["pay_eur"]), "tone": "good",
+                     "table": _run_table(res, "PAY")})
+    if res["escalate"]:
+        top = ", ".join(f"{n} {_WHY.get(k, k.lower())}" for k, n in res["reasons"][:2]) or "waiting on you"
+        rows.append({"lead": str(res["escalate"]), "title": "escalate", "sub": top,
+                     "value": money(res["escalate_eur"]), "tone": "warn",
+                     "table": _run_table(res, "ESCALATE")})
+    if res["nopay"]:
+        rows.append({"lead": str(res["nopay"]), "title": "do not pay",
+                     "sub": "the same invoice number twice in the archive",
+                     "value": money(res["nopay_eur"]),
+                     "table": _run_table(res, "DO NOT PAY")})
+    if res["scans"]:
+        rows.append({"lead": str(res["scans"]), "title": "scans, no text layer",
+                     "sub": "nothing was lifted off these; they are in the escalated pile",
+                     "value": "needs OCR"})
+    if res["rejected"]:
+        rows.append({"lead": str(len(res["rejected"])), "title": "could not read",
+                     "sub": "; ".join(f"{r[0]} — {r[1]}" for r in res["rejected"][:3]),
+                     "value": "not in"})
+    if not res["total"]:
+        rows.insert(0, {"lead": "0", "title": "no invoice in it",
+                        "sub": "I opened it and there was not a single page I could read",
+                        "value": "—"})
+    acts = []
+    if res["escalate"]:
+        acts.append({"label": f"Start with the {res['escalate']} escalated", "kind": "primary",
+                     "ask": "which invoices do I need to review"})
+    if res["total"]:
+        acts.append({"label": "See them in Invoices", "ui": "invoices"})
+    return {"id": "run", "title": res["label"],
+            "meta": f"{res['total']} read · {res['suppliers']} suppliers · "
+                    f"{res['size']} · {res['seconds']}",
+            "rows": rows, "actions": acts}
+
+
+def _run_table(res, action):
+    """The pages behind one verdict, newest layout first: file, supplier,
+    number, amount, and the rule that decided it."""
+    rows = [r for r in res["rows"] if r["action"] == action][:12]
+    return {"head": ["File", "Supplier", "Issued", "Amount", "Decided by"],
+            "rows": [{"cells": [r["file"], r["vendor"], r["date"],
+                                money(r["total"]) if r["total"] else "—",
+                                ", ".join(r["blocking"]).lower() or "all five passed"],
+                      "fields": [["Invoice number", r["number"]], ["Tax id", r["nif"]],
+                                 ["Purchase order", r["order"]],
+                                 ["Account on the invoice", r["iban"]],
+                                 ["Net", money(r["base"]) if r["base"] is not None else "—"],
+                                 ["Total", money(r["total"]) if r["total"] else "—"]]}
+                     for r in rows]}
+
+
 # --------------------------------------------------------------------------- #
 # actions. The buttons move real state: a cluster leaves the queue, the totals
 # fold again, and the change is written down. Every one of them is reversible
@@ -377,7 +482,7 @@ OUTBOX: list = []
 LOG: list = []
 _undo: list = []
 
-_MUT = ("QUEUE", "TOTALS", "PAYMENTS", "WAITING", "RULES", "RULE_HISTORY", "OUTBOX", "LOG")
+_MUT = ("QUEUE", "TOTALS", "PAYMENTS", "WAITING", "RULES", "RULESETS", "OUTBOX", "LOG")
 
 
 def _snapshot():
@@ -468,8 +573,10 @@ def act(name, key=None, reason=None):
         title = f"{c['vendor'].split(' S')[0]} exempt from: {c['title']}"
         RULES.append({"name": "EXCEPTION", "on_fail": "PAY", "text": title,
                       "params": f"scope = {c['vendor']} · added {TODAY}"})
-        RULE_HISTORY.insert(0, {"from": old, "to": TOTALS["ruleset"], "when": f"{TODAY} {_stamp()}",
-                                "title": title, "said": "stop bringing me these"})
+        RULESETS.insert(0, {"v": TOTALS["ruleset"], "sha": TOTALS["ruleset_sha"],
+                            "when": f"{TODAY} {_stamp()}", "title": title,
+                            "said": "stop bringing me these",
+                            "policy": dict(RULESETS[0]["policy"])})
         LOG.append([_stamp(), "new rule", c["vendor"], c["count"], c["eur"]])
         return {"said": f"Ruleset {TOTALS['ruleset']}. {c['vendor']} stops escalating for this, and the "
                         f"{c['count']} in front of you clear on their own. Old verdicts keep the version "
@@ -571,9 +678,12 @@ _MON = {"enero": 1, "febrero": 2, "marzo": 3, "abril": 4, "mayo": 5, "junio": 6,
 _SHORT = ["", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 
 
-def _lines(path):
-    """The text the page actually carries. Nothing is guessed."""
-    raw = path.read_bytes()
+def _lines(src):
+    """The text the page actually carries. Nothing is guessed.
+
+    Takes a path or the bytes themselves, so a page that has just come up the
+    wire is read by exactly the same reader as one already in the box."""
+    raw = src if isinstance(src, (bytes, bytearray)) else src.read_bytes()
     out = []
     for m in _re.finditer(rb"stream(.*?)endstream", raw, _re.DOTALL):
         b = m.group(1).strip(b"\r\n")
@@ -607,9 +717,9 @@ _NUM = r"([A-Za-z0-9/\-]*\d[A-Za-z0-9/\-]*)"
 _MONEY = r"[\s.:]*(?:EUR\s*)?([\d][\d.,]*)"
 
 
-def _read(path):
+def _read(src):
     """One invoice, as the page states it. Five layouts, one reader."""
-    txt = " \n ".join(_lines(path))
+    txt = " \n ".join(_lines(src))
     if len(txt) < 60:
         return {"scanned": True}
 
@@ -657,12 +767,14 @@ def _read(path):
     }
 
 
-_ARCHIVE = None
 RUN_DATE = TODAY_D
 
 
-def _judge(inv, master, seen):
-    """The five rules, in precedence order, on the real numbers."""
+def _judge(inv, master, seen, pol=None):
+    """The rules, in precedence order, on the real numbers. What a rule tolerates
+    and what it does when it fails comes from the ruleset, so the same page can
+    be put through v3.2 and v2.9 and the two answers compared."""
+    pol = pol or ruleset()["policy"]
     checks, blocking = [], []
 
     def add(name, ok, detail, effect):
@@ -672,8 +784,12 @@ def _judge(inv, master, seen):
             blocking.append(name)
 
     if inv.get("scanned"):
-        add("READABLE", False, "no text layer on the page; it is a scan and needs OCR", "ESCALATE")
-        return checks, blocking, "ESCALATE"
+        if pol["ocr"]:
+            add("READABLE", False, "no text layer on the page; it is a scan and needs OCR", "ESCALATE")
+            return checks, blocking, "ESCALATE"
+        checks.append({"name": "READABLE", "verdict": "PASS", "effect": "PAY",
+                       "detail": "no text layer on the page, and this ruleset did not stop for that"})
+        return checks, [], "PAY"
 
     iban = (inv.get("iban") or "").replace(" ", "")
     m_iban = (master or {}).get("iban", "").replace(" ", "")
@@ -686,7 +802,7 @@ def _judge(inv, master, seen):
     dup = bool(num) and seen.get(num, 0) > 1
     add("DUPLICATES", not dup,
         f"key {num or '—'}, {'already seen on another page' if dup else 'no earlier payment'}",
-        "DO NOT PAY")
+        pol["dup"])
 
     base, vat, total = inv.get("base"), inv.get("vat"), inv.get("total")
     if base is not None and total:
@@ -694,8 +810,9 @@ def _judge(inv, master, seen):
         # not printed we take it as the difference and check the 21% holds.
         shown = vat if vat is not None else round(total - base, 2)
         delta = round(base + shown - total, 2)
-        rate_ok = abs(round(base * 1.21, 2) - total) <= max(0.02, total * 0.005)
-        add("AMOUNT", abs(delta) <= max(0.02, total * 0.005) and rate_ok,
+        room = max(0.02, total * pol["tol"])
+        rate_ok = abs(round(base * 1.21, 2) - total) <= room
+        add("AMOUNT", abs(delta) <= room and rate_ok,
             f"base {money(base)} + VAT {money(shown)}"
             + ("" if vat is not None else " (taken as the difference)")
             + f" = {money(round(base + shown, 2))}, the page says {money(total)}, "
@@ -707,33 +824,132 @@ def _judge(inv, master, seen):
     if inv.get("issued"):
         due = _date.fromordinal(inv["issued"].toordinal() + terms)
         # We know when it was issued and what the terms are. We do NOT record when
-        # it reached the desk, so we cannot honestly call it late. It informs; it
-        # does not block. The day arrival is captured, this becomes a real check.
-        add("DATES", True,
-            f"issued {inv['issued'].strftime('%d %b %Y')}, {terms} day terms, "
-            f"due {due.strftime('%d %b %Y')} — arrival not recorded, so it does not block",
+        # it reached the desk. Up to v3.1 the desk called anything past its due
+        # date late and brought it over, which buried the queue in invoices that
+        # were only late because the box is a year old. It informs now.
+        overdue = pol["due"] and due < RUN_DATE
+        head = (f"issued {inv['issued'].strftime('%d %b %Y')}, {terms} day terms, "
+                f"due {due.strftime('%d %b %Y')}")
+        add("DATES", not overdue,
+            head + (f" — past due on the day of the run" if overdue
+                    else " — arrival not recorded, so it does not block"),
             "ESCALATE")
     else:
         add("DATES", False, "no issue date on the page", "ESCALATE")
 
-    add("MISSING", bool(inv.get("order")),
-        f"order {inv['order']} on the page" if inv.get("order") else "no order number anywhere on the page",
-        "ESCALATE")
+    if pol["order"]:
+        add("MISSING", bool(inv.get("order")),
+            f"order {inv['order']} on the page" if inv.get("order")
+            else "no order number anywhere on the page", "ESCALATE")
 
-    action = ("DO NOT PAY" if "DUPLICATES" in blocking
-              else "ESCALATE" if blocking else "PAY")
+    # the worst thing any failing rule asks for is what happens to the invoice
+    asked = [c["effect"] for c in checks if c["verdict"] == "BLOCKS"]
+    action = ("DO NOT PAY" if "DO NOT PAY" in asked
+              else "ESCALATE" if asked else "PAY")
     return checks, blocking, action
 
 
+_MASTER = None
+
+
+def _master():
+    """The supplier master, read once, indexed the two ways we look a page up:
+    by the tax id printed on it, and by the supplier id in the file name."""
+    global _MASTER
+    if _MASTER is None:
+        from desk import master as _m
+        prov, _ped = _m.load()
+        _MASTER = (prov, {v["nif"]: v for v in prov.values()})
+    return _MASTER
+
+
+def _row(inv, seen, pol=None):
+    """One parsed page, matched to a supplier and judged. The shape every view
+    in the interface reads, whether the page came out of the box or off a zip."""
+    prov, by_nif = _master()
+    vend = by_nif.get(inv.get("nif") or "")
+    if not vend:
+        vid = inv["file"].rsplit("_", 1)[-1].replace(".pdf", "")
+        vend = prov.get(vid)
+    checks, blocking, action = _judge(inv, vend, seen, pol)
+    issued = inv.get("issued")
+    return {
+        "file": inv["file"],
+        "vendor": (vend or {}).get("razon_social", "unidentified supplier"),
+        "vendor_id": (vend or {}).get("id", "—"),
+        "nif": inv.get("nif") or (vend or {}).get("nif", "—"),
+        "terms": (vend or {}).get("condiciones", "—"),
+        "iban": inv.get("iban") or "—",
+        "iban_master": (vend or {}).get("iban", "—"),
+        "number": inv.get("number") or "—",
+        "order": inv.get("order") or "—",
+        "base": inv.get("base"), "vat": inv.get("vat"),
+        "total": inv.get("total") or 0.0,
+        "date": issued.strftime("%d ") + _SHORT[issued.month] if issued else "—",
+        "issued": issued.isoformat() if issued else None,
+        "scanned": bool(inv.get("scanned")),
+        "action": action, "blocking": blocking, "checks": checks,
+        "found": (blocking[0].lower() if blocking else "clean"),
+    }
+
+
+def read_pdf(name, blob):
+    """A page that has just landed, read by the same reader as the box but not
+    yet judged: nothing can be decided about it until its neighbours are read."""
+    inv = _read(blob)
+    inv["file"] = name
+    return inv
+
+
+def judge_batch(parsed):
+    """Every page of a run, judged together. The invoice numbers are counted
+    across the whole archive before anything is decided, which is what lets a
+    number that appears twice stop both copies -- the desk's position everywhere
+    else: when two pages claim the same invoice, neither is paid until someone
+    says which one is real."""
+    seen = {}
+    for inv in parsed:
+        if inv.get("number"):
+            seen[inv["number"]] = seen.get(inv["number"], 0) + 1
+    return [_row(inv, seen) for inv in parsed]
+
+
 def archive():
-    global _ARCHIVE
-    if _ARCHIVE is not None:
-        return _ARCHIVE
+    """The box as the ruleset in force sees it."""
+    return replay()
 
-    from desk import master as _m
-    prov, _ped = _m.load()
-    by_nif = {v["nif"]: v for v in prov.values()}
 
+_PARSED = None
+_SEEN = None
+_REPLAYS: dict = {}
+
+
+def _parsed():
+    """The 500 pages, read once. Reading is the expensive half; judging them
+    again under another ruleset is arithmetic, which is what makes comparing
+    two versions over the whole box instant."""
+    global _PARSED, _SEEN
+    if _PARSED is None:
+        _PARSED = _read_box()
+        _SEEN = {}
+        for i in _PARSED:
+            if i.get("number"):
+                _SEEN[i["number"]] = _SEEN.get(i["number"], 0) + 1
+    return _PARSED
+
+
+def replay(v=None):
+    """Every page in the box put through one ruleset. The version in force is
+    the archive everything else reads; the others are kept beside it so the
+    difference between two of them can be shown rather than claimed."""
+    rs = ruleset(v)
+    key = rs["v"]
+    if key not in _REPLAYS:
+        _REPLAYS[key] = [_row(inv, _SEEN, rs["policy"]) for inv in _parsed()]
+    return _REPLAYS[key]
+
+
+def _read_box():
     parsed = []
     for path in sorted(CAJA.glob("*.pdf")):
         inv = _read(path)
@@ -745,39 +961,7 @@ def archive():
     RUN_DATE = max(dates).replace(day=min(28, max(dates).day)) if dates else TODAY_D
     RUN_DATE = _date.fromordinal(max(dates).toordinal() + 2) if dates else TODAY_D
 
-    seen = {}
-    for i in parsed:
-        if i.get("number"):
-            seen[i["number"]] = seen.get(i["number"], 0) + 1
-
-    rows = []
-    for inv in parsed:
-        vend = by_nif.get(inv.get("nif") or "")
-        if not vend:
-            vid = inv["file"].rsplit("_", 1)[-1].replace(".pdf", "")
-            vend = prov.get(vid)
-        checks, blocking, action = _judge(inv, vend, seen)
-        issued = inv.get("issued")
-        rows.append({
-            "file": inv["file"],
-            "vendor": (vend or {}).get("razon_social", "unidentified supplier"),
-            "vendor_id": (vend or {}).get("id", "—"),
-            "nif": inv.get("nif") or (vend or {}).get("nif", "—"),
-            "terms": (vend or {}).get("condiciones", "—"),
-            "iban": inv.get("iban") or "—",
-            "iban_master": (vend or {}).get("iban", "—"),
-            "number": inv.get("number") or "—",
-            "order": inv.get("order") or "—",
-            "base": inv.get("base"), "vat": inv.get("vat"),
-            "total": inv.get("total") or 0.0,
-            "date": issued.strftime("%d ") + _SHORT[issued.month] if issued else "—",
-            "issued": issued.isoformat() if issued else None,
-            "scanned": bool(inv.get("scanned")),
-            "action": action, "blocking": blocking, "checks": checks,
-            "found": (blocking[0].lower() if blocking else "clean"),
-        })
-    _ARCHIVE = rows
-    return rows
+    return parsed
 
 
 def archive_page(q="", action="", vendor="", limit=60, offset=0):
@@ -1029,45 +1213,117 @@ def summary():
 # The ruleset, as it actually behaves. Not documentation: each rule carries
 # what it caught across the 500 invoices in the box.
 # --------------------------------------------------------------------------- #
-_ORDER = [
-    ("READABLE", "gate", "The page has a text layer at all.",
-     "Nothing else can run on a scan. It stops here and waits for OCR."),
-    ("DUPLICATES", "DO NOT PAY", "No invoice with this number has been paid before.",
-     "The only rule that refuses outright. Everything else brings it to you."),
-    ("VENDOR", "ESCALATE", "The account and the NIF on the page match the master.",
-     "A changed account is how invoice fraud actually works, so it never auto-pays."),
-    ("AMOUNT", "ESCALATE", "Base plus VAT reaches the total the page states.",
-     "Tolerance 0.5%. Where the page prints no VAT line it is taken as the difference."),
-    ("DATES", "ESCALATE", "There is a readable issue date, and the terms are known.",
-     ("It reports the due date but does not block: nothing records when an invoice "
-      "reached the desk, so calling it late would be a guess.")),
-    ("MISSING", "ESCALATE", "A purchase order number is on the page.",
-     "No exception configured. Turning one into a rule from a cluster adds it here."),
-]
 
 
-def rules_view():
-    rows = archive()
-    hit = {}
+def _chain(pol):
+    """The rules a ruleset actually runs, in the order it runs them. Two of them
+    read their own parameters off the policy, and one of them is not there at
+    all before v3.0 -- which is the whole point of being able to compare."""
+    tol = f"{pol['tol'] * 100:.1f}".rstrip("0").rstrip(".")
+    out = []
+    if pol["ocr"]:
+        out.append(("READABLE", "gate", "The page has a text layer at all.",
+                    "Nothing else can run on a scan. It stops here and waits for OCR."))
+    out += [
+        ("DUPLICATES", pol["dup"], "No invoice with this number has been paid before.",
+         ("The only rule that refuses outright. Everything else brings it to you."
+          if pol["dup"] == "DO NOT PAY"
+          else "It still comes to you: under this ruleset a repeat is your call, not mine.")),
+        ("VENDOR", "ESCALATE", "The account and the NIF on the page match the master.",
+         "A changed account is how invoice fraud actually works, so it never auto-pays."),
+        ("AMOUNT", "ESCALATE", "Base plus VAT reaches the total the page states.",
+         f"Tolerance {tol}%. Where the page prints no VAT line it is taken as the difference."),
+        ("DATES", "ESCALATE" if pol["due"] else "reports",
+         "There is a readable issue date, and the terms are known.",
+         ("Anything past its due date on the day of the run is stopped and brought to you."
+          if pol["due"] else
+          "It reports the due date but does not block: nothing records when an invoice "
+          "reached the desk, so calling it late would be a guess.")),
+    ]
+    if pol["order"]:
+        out.append(("MISSING", "ESCALATE", "A purchase order number is on the page.",
+                    "No exception configured. Turning one into a rule from a cluster adds it here."))
+    return out
+
+
+def _hits(rows):
+    got = {}
     for r in rows:
         for b in r["blocking"]:
-            slot = hit.setdefault(b, {"n": 0, "eur": 0.0})
+            slot = got.setdefault(b, {"n": 0, "eur": 0.0})
             slot["n"] += 1
             slot["eur"] = round(slot["eur"] + r["total"], 2)
+    return got
+
+
+def _tally(rows):
+    out = {a: {"n": 0, "eur": 0.0} for a in ("PAY", "ESCALATE", "DO NOT PAY")}
+    for r in rows:
+        slot = out[r["action"]]
+        slot["n"] += 1
+        slot["eur"] = round(slot["eur"] + r["total"], 2)
+    return out
+
+
+def rules_view(v=None, vs=None):
+    """One ruleset, and optionally what a second one would have done with the
+    same 500 pages. Nothing here is asserted: both sides are a real run."""
+    rs = ruleset(v)
+    rows = replay(rs["v"])
+    hit = _hits(rows)
+
+    other = ruleset(vs) if vs and vs != rs["v"] else None
+    rows2 = replay(other["v"]) if other else None
+    hit2 = _hits(rows2) if other else {}
+    names2 = {n for n, *_ in _chain(other["policy"])} if other else set()
 
     out = []
-    for i, (name, effect, does, note) in enumerate(_ORDER, 1):
+    for i, (name, effect, does, note) in enumerate(_chain(rs["policy"]), 1):
         got = hit.get(name, {"n": 0, "eur": 0.0})
-        out.append({"step": i, "name": name, "effect": effect, "does": does, "note": note,
-                    "n": got["n"], "eur": got["eur"],
-                    "share": round(got["n"] / len(rows) * 100, 1) if rows else 0})
+        row = {"step": i, "name": name, "effect": effect, "does": does, "note": note,
+               "n": got["n"], "eur": got["eur"],
+               "share": round(got["n"] / len(rows) * 100, 1) if rows else 0}
+        if other:
+            was = hit2.get(name, {"n": 0, "eur": 0.0})
+            row["was"] = was["n"]
+            row["delta"] = got["n"] - was["n"]
+            row["new"] = name not in names2
+            for n2, e2, _d2, note2 in _chain(other["policy"]):
+                if n2 == name:
+                    row["changed"] = (e2 != effect) or (note2 != note)
+                    row["was_effect"] = e2
+                    break
+        out.append(row)
 
-    extra = [r for r in RULES if r["name"] not in {o[0] for o in _ORDER}]
+    extra = [r for r in RULES if r["name"] not in {o[0] for o in _chain(rs["policy"])}]
     for j, r in enumerate(extra, len(out) + 1):
         out.append({"step": j, "name": r["name"], "effect": r["on_fail"], "does": r["text"],
                     "note": r["params"], "n": 0, "eur": 0.0, "share": 0, "added": True})
 
-    return {"version": TOTALS["ruleset"], "sha": TOTALS["ruleset_sha"],
+    view = {"version": rs["v"], "sha": rs["sha"], "in_force": TOTALS["ruleset"],
             "checked": len(rows), "clean": sum(1 for r in rows if not r["blocking"]),
             "stopped": sum(1 for r in rows if r["blocking"]),
-            "rules": out, "history": RULE_HISTORY}
+            "rules": out, "history": rule_history(),
+            "versions": [{"v": r["v"], "when": r["when"], "title": r["title"], "said": r["said"]}
+                         for r in RULESETS],
+            "tally": _tally(rows)}
+
+    if other:
+        by_file = {r["file"]: r for r in rows2}
+        moved = []
+        for r in rows:
+            was = by_file.get(r["file"])
+            if not was or was["action"] == r["action"]:
+                continue
+            moved.append({"file": r["file"], "vendor": r["vendor"], "number": r["number"],
+                          "total": r["total"], "date": r["date"],
+                          "was": was["action"], "now": r["action"],
+                          "why": ", ".join(sorted(set(r["blocking"]) ^ set(was["blocking"]))).lower()
+                                 or "the same rule, a different answer"})
+        moved.sort(key=lambda m: -m["total"])
+        view["against"] = {
+            "version": other["v"], "when": other["when"], "title": other["title"],
+            "said": other["said"], "tally": _tally(rows2),
+            "moved": moved, "moved_eur": round(sum(m["total"] for m in moved), 2),
+        }
+    return view

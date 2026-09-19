@@ -189,6 +189,12 @@ def human(n):
     return f"{n/1048576:.1f} MB" if n >= 1048576 else f"{max(1, n // 1024)} KB"
 
 
+def elapsed(sec):
+    """A real run over a few dozen pages takes milliseconds. Saying 0.0 s makes
+    it look broken, so it is said in the unit it actually happened in."""
+    return f"{sec:.1f} s" if sec >= 1 else f"{round(sec * 1000)} ms"
+
+
 def clock(sec):
     return f"{sec // 60} min {sec % 60} s" if sec >= 60 else f"{sec} s"
 
@@ -222,6 +228,48 @@ def inspect(name, blob):
 
     return {"name": name, "size": len(blob), "ok": False,
             "reason": f"{low.rsplit('.', 1)[-1] if '.' in low else 'this'} is not a file I read", "invoices": []}
+
+
+# What came up the wire is held here until the run is over: a zip is no use as
+# a verdict, only as the pages inside it. Memory only, capped, oldest dropped
+# first -- this is a demo desk, not a filing cabinet.
+HELD: dict = {}
+RUNS: dict = {}
+HELD_MAX = 6
+
+
+def hold(blob, info):
+    """Keep the bytes under a handle the page can send back to us."""
+    key = hashlib.sha256(blob[:4096] + str(len(blob)).encode()
+                         + info["name"].encode()).hexdigest()[:12]
+    HELD[key] = {"blob": blob, "info": info}
+    for stale in list(HELD)[:-HELD_MAX]:
+        HELD.pop(stale, None)
+    return key
+
+
+def pages(key):
+    """Every PDF inside what was held, in the order the archive lists them."""
+    held = HELD.get(key)
+    if not held:
+        return []
+    info, blob = held["info"], held["blob"]
+    if info.get("kind") == "pdf":
+        return [(info["name"], blob)]
+    out = []
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(blob))
+    except zipfile.BadZipFile:
+        return []
+    for e in sorted(zf.infolist(), key=lambda e: e.filename):
+        base = e.filename.rsplit("/", 1)[-1]
+        if e.is_dir() or base.startswith(".") or not base.lower().endswith(".pdf"):
+            continue
+        try:
+            out.append((base, zf.read(e)))
+        except Exception:                                          # noqa: BLE001, S112
+            continue
+    return out
 
 
 def seeded(name, lo, hi):
@@ -330,6 +378,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self._chat()
         if path == "/api/upload":
             return self._upload()
+        if path == "/api/process":
+            return self._process()
         if path == "/api/batch":
             return self._batch()
         if path == "/api/action":
@@ -348,7 +398,8 @@ class Handler(SimpleHTTPRequestHandler):
                 offset=int((q.get("offset") or ["0"])[0])))
 
         if path == "/api/rules":
-            return self._json(state.rules_view())
+            return self._json(state.rules_view((q.get("v") or [""])[0],
+                                               (q.get("vs") or [""])[0]))
 
         if path == "/api/summary":
             return self._json(state.summary())
@@ -434,12 +485,95 @@ class Handler(SimpleHTTPRequestHandler):
         blob = self._body(MAX_UPLOAD)
         if blob is None:
             return self.send_error(413)
-        out = json.dumps(inspect(name, blob)).encode()
+        info = inspect(name, blob)
+        if info.get("ok"):
+            info["key"] = hold(blob, info)
+        out = json.dumps(info).encode()
         self.send_response(200)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(out)))
         self.end_headers()
         self.wfile.write(out)
+
+    # -- the run: every page inside what was dropped, read and judged one at
+    # -- a time, each verdict going out the moment it exists -----------------
+    def _process(self):
+        try:
+            req = json.loads(self._body(64 * 1024) or b"{}")
+        except json.JSONDecodeError:
+            return self.send_error(400)
+        keys = [str(k) for k in (req.get("keys") or []) if str(k) in HELD]
+        if not keys:
+            return self.send_error(400)
+
+        held = [HELD[k]["info"] for k in keys]
+        label = held[0]["name"] if len(held) == 1 else f"{len(held)} files"
+        size = sum(i.get("size", 0) for i in held)
+        work = [pair for k in keys for pair in pages(k)]
+        rejected = [list(r) for i in held for r in i.get("inside_rejected", [])]
+
+        self._sse_open()
+        t0 = time.time()
+        rows, dupes = [], []
+        try:
+            self._send({"type": "open", "label": label, "total": len(work),
+                        "size": human(size), "files": [i["name"] for i in held]})
+            # read everything first, judge it together, then hand it over one at
+            # a time in the order it was read
+            order, parsed = [], []
+            for name, blob in work:
+                if name in state.ARCHIVE:
+                    dupes.append(name)
+                    order.append(("known", name))
+                    continue
+                try:
+                    parsed.append(state.read_pdf(name, blob))
+                except Exception as exc:                          # noqa: BLE001
+                    rejected.append([name, str(exc)[:80] or "the page would not open"])
+                    order.append(("reject", name))
+                    continue
+                order.append(("invoice", len(parsed) - 1))
+            rows = state.judge_batch(parsed)
+
+            for n, (what, ref) in enumerate(order, 1):
+                if what == "invoice":
+                    row = rows[ref]
+                    out = {k: row[k] for k in ("file", "vendor", "number", "date", "total",
+                                               "action", "blocking", "found", "scanned")}
+                    # the rules it went through, so the page can draw the trace
+                    out["rules"] = [[c["name"], c["verdict"]] for c in row["checks"]]
+                    self._send({"type": "invoice", "n": n, "row": out})
+                else:
+                    self._send({"type": what, "n": n, "file": ref})
+
+            counts = {a: sum(1 for r in rows if r["action"] == a)
+                      for a in ("PAY", "ESCALATE", "DO NOT PAY")}
+            eur = {a: round(sum(r["total"] or 0 for r in rows if r["action"] == a), 2)
+                   for a in counts}
+            reasons: dict = {}
+            for r in rows:
+                for b in r["blocking"]:
+                    reasons[b] = reasons.get(b, 0) + 1
+
+            run = {
+                "label": label, "size": human(size), "total": len(rows),
+                "suppliers": len({r["vendor"] for r in rows}),
+                "seconds": elapsed(time.time() - t0),
+                "pay": counts["PAY"], "pay_eur": eur["PAY"],
+                "escalate": counts["ESCALATE"], "escalate_eur": eur["ESCALATE"],
+                "nopay": counts["DO NOT PAY"], "nopay_eur": eur["DO NOT PAY"],
+                "scans": sum(1 for r in rows if r["scanned"]),
+                "dupes": dupes, "rejected": rejected,
+                "reasons": sorted(reasons.items(), key=lambda kv: (-kv[1], kv[0])),
+                "cost_per_invoice_usd": state.TOTALS["cost_per_invoice_usd"],
+            }
+            rid = hashlib.sha256((label + str(t0)).encode()).hexdigest()[:10]
+            RUNS[rid] = {**run, "rows": rows}
+            for stale in list(RUNS)[:-4]:
+                RUNS.pop(stale, None)
+            self._send({"type": "done", "run": rid, "summary": run})
+        except (BrokenPipeError, ConnectionResetError):
+            return
 
     # -- the batch result, then a sentence about it -------------------------
     def _batch(self):
@@ -447,12 +581,22 @@ class Handler(SimpleHTTPRequestHandler):
             req = json.loads(self._body(1024 * 1024) or b"{}")
         except json.JSONDecodeError:
             return self.send_error(400)
-        files = req.get("files") or []
-        if not files:
-            return self.send_error(400)
         said = str(req.get("text") or "").strip()[:1500]
-        b = outcome(files)
-        panel = state.batch_block(b)
+        run = RUNS.get(str(req.get("run") or ""))
+        files = req.get("files") or []
+        if not run and not files:
+            return self.send_error(400)
+
+        if run:
+            b = {k: v for k, v in run.items() if k != "rows"}
+            panel = state.run_block(run)
+            caveat = ("Every verdict in it was read off the page and judged by the five rules, "
+                      "so you may speak about it as work you did.")
+        else:
+            b = outcome(files)
+            panel = state.batch_block(b)
+            caveat = ("The verdicts in this batch are demo data and the panel says so; do not "
+                      "claim you truly read the PDFs.")
 
         facts = json.dumps({**state.facts(), "the_batch_just_dropped": b}, ensure_ascii=False)
         msgs = [
@@ -461,8 +605,7 @@ class Handler(SimpleHTTPRequestHandler):
                 f"FACTS (the only source of truth):\n{facts}\n\n"
                 f"ON SCREEN under your sentence: the result of the batch Alberto just dropped "
                 f"(counts, amounts, duplicates, files you could not read). Do not restate it.\n"
-                f"The verdicts in this batch are demo data and the panel says so; do not claim "
-                f"you truly read the PDFs."
+                + caveat
                 + ("\nAlberto sent the batch with a message; answer THAT, using the batch result."
                    if said else "")},
             {"role": "user", "content": (

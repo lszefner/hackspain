@@ -16,7 +16,7 @@
   --chip:#f3efe8; --chip2:#eae4da;
   --shadow:0 1px 2px rgba(60,40,24,.05), 0 6px 18px rgba(60,40,24,.06);
   --shadow-lift:0 2px 4px rgba(60,40,24,.06), 0 14px 32px rgba(60,40,24,.09);
-  --load:#2f62d8; --load-soft:#eef2fd; --load-line:#d5e0fa;
+  --water:#3f97ba; --water-soft:#ecf6fa; --water-line:#cee5ef;
   --sans:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
   --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   --ease:cubic-bezier(.2,.7,.2,1);
@@ -71,24 +71,34 @@ body.chatting .hello{opacity:0;transform:translateY(-12px);pointer-events:none}
 body.chatting .thread{opacity:1}
 .msg{max-width:800px;width:100%;margin:0 auto;animation:enter .36s var(--ease) both}
 @keyframes enter{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
-.msg .who{font-size:10.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--faint);
-  margin-bottom:9px;display:flex;gap:9px;align-items:center;font-weight:600}
-.msg .who time{font-weight:400;letter-spacing:.02em;font-variant-numeric:tabular-nums}
 .msg .say{font-size:15.5px;line-height:1.62;white-space:pre-wrap}
 .msg.user{display:flex;justify-content:flex-end}
 .msg.user .stack{display:flex;flex-direction:column;gap:8px;align-items:flex-end;max-width:78%}
 .msg.user .bubble{background:var(--chip);padding:9px 15px;border-radius:16px;
   border-bottom-right-radius:6px;font-size:15px}
-.meta{font-size:11px;color:var(--faint);margin-top:10px;font-family:var(--mono);letter-spacing:.02em}
 
-/* ───────────────── thinking: sits in the thread, where the answer lands */
-.think{display:inline-flex;align-items:center;gap:11px;padding:7px 20px 7px 8px;border-radius:999px;
-  background:var(--load-soft);border:1px solid var(--load-line);color:var(--load);
-  font-size:15px;letter-spacing:-.008em;animation:enter .3s var(--ease) both}
-.think canvas{flex:none;display:block}
-.think .lbl{min-width:184px}
+/* ───────────────── thinking: sits in the thread, where the answer lands.
+   No pill, no colour that is not ours: the dark brown of the ink, with a light
+   passing slowly through the letters the whole time it is working. */
+.think{display:inline-flex;align-items:center;gap:12px;animation:enter .3s var(--ease) both}
+.think canvas{flex:none;display:block;animation:breathe 4.6s var(--ease) infinite}
+@keyframes breathe{0%,100%{opacity:.95}50%{opacity:.58}}
+.think .lbl{min-width:190px;font-size:15.5px;font-weight:500;letter-spacing:-.012em;
+  background:linear-gradient(100deg,
+    var(--accent) 0%, var(--accent) 40%,
+    #a08772 46%, #e3d5c2 50%, #a08772 54%,
+    var(--accent) 60%, var(--accent) 100%);
+  background-size:260% 100%;background-position:180% 0;
+  -webkit-background-clip:text;background-clip:text;
+  color:transparent;-webkit-text-fill-color:transparent;
+  animation:sheen 4.6s cubic-bezier(.45,.05,.55,.95) infinite}
+@keyframes sheen{to{background-position:-70% 0}}
 .think .lbl:after{content:"";animation:dots 1.5s steps(1,end) infinite}
 @keyframes dots{0%{content:"."}25%{content:".."}50%{content:"..."}75%{content:"...."}}
+@media (prefers-reduced-motion:reduce){
+  .think .lbl{animation:none;-webkit-text-fill-color:var(--accent);color:var(--accent)}
+  .think canvas{animation:none}
+}
 
 /* the answer arrives word by word, each one condensing out of a blur */
 .say .w{display:inline-block;opacity:0;filter:blur(7px);transform:translateY(4px);
@@ -208,6 +218,15 @@ body.chatting .composer-in{max-width:800px}
 .att{display:grid;grid-template-columns:28px 1fr auto auto;gap:10px;align-items:center;
   background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 8px 9px;
   box-shadow:var(--shadow);position:relative;overflow:hidden;animation:enter .28s var(--ease) both}
+.att>*:not(.pool){position:relative;z-index:1}
+/* an archive is the one you watch fill, so it is given the depth to show it */
+.att.big{min-height:78px;padding:11px 13px 11px 12px;grid-template-columns:36px 1fr auto auto;
+  border-radius:14px}
+.att.big .ico{width:36px;height:36px;border-radius:9px;font-size:9.5px}
+.att.big .nm{font-size:14.5px;max-width:320px}
+.att.big .st{font-size:12px;margin-top:4px}
+.att.big .crest{height:16px}
+.att.big .pct{font-size:13px;min-width:38px}
 .att .ico{width:28px;height:28px;border-radius:7px;background:var(--chip);color:var(--mut);
   display:grid;place-items:center;font:500 8.5px/1 var(--mono);letter-spacing:.04em;
   transition:background .35s var(--ease),color .35s var(--ease)}
@@ -221,12 +240,144 @@ body.chatting .composer-in{max-width:800px}
 .att .pct{font-family:var(--mono);font-size:12px;color:var(--faint);min-width:30px;text-align:right}
 .att .x{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:var(--faint);font-size:12px}
 .att .x:hover{background:var(--chip);color:var(--ink)}
-.att .fbar{position:absolute;left:0;bottom:0;height:2px;width:0;background:var(--ink);
-  transition:width .18s linear,opacity .5s .3s}
-.att.ok .fbar,.att.bad .fbar{opacity:0}
 .tick{animation:pop .3s var(--ease) both;display:inline-block}
 @keyframes pop{from{opacity:0;scale:.5}to{opacity:1;scale:1}}
 .msg.user .att{box-shadow:none}
+
+/* ───────────────── the upload, as water in a glass.
+   The card fills from the bottom while the bytes go up. Two crests run across
+   the surface at different speeds, so the line never repeats, and a slow
+   specular passes over the whole of it. Nothing here is a library. */
+.att{--lvl:0%}
+.att .pool{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;
+  opacity:0;transition:opacity .5s var(--ease)}
+.att.wet .pool{opacity:1}
+.att.ok .pool,.att.bad .pool{opacity:0;transition:opacity 1.1s var(--ease)}
+.att .lvl{position:absolute;left:0;right:0;bottom:0;height:var(--lvl);
+  transition:height .34s cubic-bezier(.3,.8,.3,1)}
+.att .fill{position:absolute;inset:0;background:linear-gradient(180deg,
+  color-mix(in srgb,var(--water) 36%,transparent),
+  color-mix(in srgb,var(--water) 14%,transparent) 52%,
+  color-mix(in srgb,var(--water) 26%,transparent))}
+.att .glint{position:absolute;inset:0;
+  background:linear-gradient(104deg,transparent 32%,rgba(255,255,255,.8) 47%,
+    rgba(255,255,255,.22) 55%,transparent 70%);
+  background-size:240% 100%;animation:glint 3.6s cubic-bezier(.4,0,.6,1) infinite}
+@keyframes glint{from{background-position:200% 0}to{background-position:-100% 0}}
+.crest{position:absolute;left:0;bottom:100%;width:200%;height:12px;display:block;
+  color:var(--water);opacity:.62;filter:drop-shadow(0 -1px 0 rgba(255,255,255,.7))}
+.crest .w1{animation:drift 3.1s linear infinite}
+.crest .w2{animation:drift 4.7s linear infinite reverse;opacity:.5}
+@keyframes drift{to{transform:translateX(-100px)}}
+
+/* the whole page becomes a shallow pool while something is over it */
+.drop-ov .ripple{position:absolute;left:50%;top:52%;width:120px;height:120px;margin:-60px 0 0 -60px;
+  border-radius:50%;border:1.5px solid color-mix(in srgb,var(--water) 70%,transparent);
+  animation:ripple 2.6s var(--ease) infinite}
+.drop-ov .ripple:nth-of-type(2){animation-delay:.85s}
+.drop-ov .ripple:nth-of-type(3){animation-delay:1.7s}
+@keyframes ripple{from{transform:scale(.35);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.drop-ov .pool2{position:absolute;left:0;right:0;bottom:0;height:80px;overflow:hidden}
+.drop-ov .pool2 .crest{bottom:44px;height:18px;opacity:.5;width:200%}
+.drop-ov .pool2 i{position:absolute;left:0;right:0;bottom:0;height:45px;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--water) 26%,transparent),
+    color-mix(in srgb,var(--water) 10%,transparent))}
+
+/* ───────────────── the run: one page at a time, and you can watch it happen */
+.run{max-width:800px;width:100%;margin:0 auto;background:var(--panel);border:1px solid var(--line);
+  border-radius:16px;box-shadow:var(--shadow);overflow:hidden;
+  animation:enter .42s var(--ease) both}
+.run-head{display:flex;align-items:baseline;gap:12px;padding:14px 18px 12px}
+.run-head .rt{font-size:14.5px;font-weight:600;letter-spacing:-.014em}
+.run-head .rm{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint);
+  font-variant-numeric:tabular-nums;white-space:nowrap}
+.run-head .rm b{font-weight:400;color:var(--mut)}
+
+.tally{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;
+  background:var(--line);border-top:1px solid var(--line)}
+.tally .tc{background:var(--panel);padding:11px 18px 12px}
+.tally .tk6{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
+  font-weight:600}
+.tally .tn{font-family:var(--mono);font-size:21px;letter-spacing:-.025em;margin-top:6px;
+  font-variant-numeric:tabular-nums;color:var(--line2);transition:color .5s var(--ease)}
+.tally .tv{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:3px;
+  font-variant-numeric:tabular-nums;transition:color .5s var(--ease)}
+.tally .tc.live .tv{color:var(--mut)}
+.tally .tc.pay.live .tn{color:var(--pay)}
+.tally .tc.rev.live .tn{color:var(--esc)}
+.tally .tc.stop.live .tn{color:var(--no)}
+.tally .tn.bump{animation:bump .42s var(--ease)}
+@keyframes bump{40%{transform:translateY(-2px)}}
+
+/* the pages stack from the bottom and rise out of the top, so a hundred of
+   them cost the same room as five */
+.stage{position:relative;height:268px;overflow:hidden;border-top:1px solid var(--line);
+  -webkit-mask-image:linear-gradient(180deg,transparent 2%,#000 40%,#000);
+  mask-image:linear-gradient(180deg,transparent 2%,#000 40%,#000);
+  transition:height .6s var(--ease)}
+.run.settled .stage{height:0;border-top-color:transparent}
+.ivc{position:absolute;left:10px;right:10px;bottom:8px;height:56px;
+  display:grid;grid-template-columns:8px minmax(0,1.45fr) minmax(0,1.15fr) auto 88px;
+  grid-template-rows:auto auto;row-gap:7px;column-gap:13px;align-content:center;
+  padding:0 9px;border-radius:9px;
+  will-change:transform,opacity;
+  transition:transform .34s cubic-bezier(.22,.72,.16,1),opacity .34s var(--ease)}
+
+/* the same graph as the expediente, small enough to go past at speed:
+   the steps it went through, the rules it met, and where it came out */
+.mini{grid-column:1/-1;display:flex;align-items:center;gap:0;padding-left:1px}
+.mini .ms{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
+.mini .ms.off{background:var(--bg);box-shadow:inset 0 0 0 1.5px var(--line2)}
+.mini .mw{width:16px;height:1.5px;background:var(--line2);flex:none}
+.mini .mrs{display:flex;gap:3px;padding:0 7px;flex:none}
+.mini .mr{width:6px;height:6px;border-radius:2px;background:var(--line2)}
+.mini .mr.PASS{background:var(--pay)}
+.mini .mr.BLOCKS{background:var(--no)}
+.mini .ms.end{width:9px;height:9px;background:var(--line2)}
+.mini .ms.end.PAY{background:var(--pay)}
+.mini .ms.end.ESCALATE{background:var(--esc)}
+.mini .ms.end.DONOTPAY{background:var(--no)}
+.mini .mlab{font-family:var(--mono);font-size:10px;color:var(--faint);margin-left:9px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ivc .dt3{width:8px;height:8px;border-radius:50%;background:var(--line2)}
+.ivc.PAY .dt3{background:var(--pay)}
+.ivc.ESCALATE .dt3{background:var(--esc)}
+.ivc.DONOTPAY .dt3{background:var(--no)}
+.ivc .fl{font-family:var(--mono);font-size:12px;color:var(--ink);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ivc .vn{font-size:12.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ivc .am{font-family:var(--mono);font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums}
+.ivc .vk{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:5px;justify-self:end;text-align:center;white-space:nowrap}
+.ivc .vk.PAY{background:var(--pay-soft);color:var(--pay)}
+.ivc .vk.ESCALATE{background:var(--esc-soft);color:var(--esc)}
+.ivc .vk.DONOTPAY{background:var(--no-soft);color:var(--no)}
+.ivc .vk.SKIP{background:var(--chip2);color:var(--faint)}
+.ivc.quiet{opacity:.6}
+.ivc.quiet .fl{color:var(--mut)}
+
+/* the bar under it is the same water, seen edge on */
+.run-bar{position:relative;height:3px;background:var(--chip2);overflow:hidden}
+.run-bar i{position:absolute;inset:0;width:0;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--water) 55%,transparent),var(--water));
+  transition:width .4s var(--ease)}
+.run-bar:after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.85),transparent);
+  background-size:36% 100%;background-repeat:no-repeat;
+  animation:runsheen 1.5s var(--ease) infinite}
+@keyframes runsheen{from{background-position:-40% 0}to{background-position:140% 0}}
+.run.settled .run-bar:after{display:none}
+.run.settled .run-bar{background:transparent}
+.run.settled .run-bar i{opacity:.28;transition:opacity .6s var(--ease)}
+.run-foot{display:flex;align-items:center;gap:10px;padding:11px 18px;background:var(--chip);
+  font-size:12.5px;color:var(--mut);opacity:0;height:0;padding-top:0;padding-bottom:0;
+  overflow:hidden;transition:opacity .5s var(--ease) .15s,height .5s var(--ease),
+    padding .5s var(--ease)}
+.run.settled .run-foot{opacity:1;height:42px;padding-top:11px;padding-bottom:11px}
+.run-foot .ok3{color:var(--pay);font-weight:600}
+@media (prefers-reduced-motion:reduce){
+  .att .glint,.crest .w1,.crest .w2,.run-bar:after,.drop-ov .ripple{animation:none}
+}
 
 .composer{display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);
   border-radius:16px;padding:6px 6px 6px 8px;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .25s}
@@ -259,9 +410,69 @@ body.chatting .chips{justify-content:flex-start}
 .rhead{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:16px}
 .rhead h2{margin:0 0 5px;font-size:20px;letter-spacing:-.02em;font-weight:600}
 .rhead p{margin:0;font-size:13.5px;color:var(--mut);max-width:60ch;line-height:1.55}
-.stamp{text-align:right;white-space:nowrap}
-.stamp .vv{font-family:var(--mono);font-size:17px;letter-spacing:-.01em}
-.stamp .ss{font-family:var(--mono);font-size:10.5px;color:var(--faint);margin-top:2px}
+/* ── the ruleset in hand, and the one it is being read against */
+.vbar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:12px;
+  padding:9px 12px;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  box-shadow:var(--shadow)}
+.vbar select{background:var(--chip);border:1px solid var(--line);border-radius:9px;padding:6px 10px;
+  color:var(--ink);font:inherit;font-size:13px;font-family:var(--mono);outline:none;cursor:pointer;
+  transition:border-color .15s var(--ease),background .15s var(--ease)}
+.vbar select:hover{background:var(--chip2)}
+.vbar select:focus{border-color:var(--line2)}
+.vbar .vx{font-size:12.5px;color:var(--faint)}
+.vbar .vnote{font-size:12.5px;color:var(--mut);padding-left:11px;border-left:1px solid var(--line);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vbar .vcount{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--faint);
+  white-space:nowrap}
+
+.dl{font-family:var(--mono);font-size:11px;padding:1px 6px;border-radius:5px;
+  background:var(--chip2);color:var(--faint);white-space:nowrap}
+.dl.up{background:var(--esc-soft);color:var(--esc)}
+.dl.dn{background:var(--pay-soft);color:var(--pay)}
+.tag{font-size:8.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;
+  border-radius:5px;background:var(--accent);color:#fff;white-space:nowrap}
+.tag.ch{background:var(--chip2);color:var(--mut)}
+
+/* ── what the two of them do differently, measured over the same 500 pages */
+.dif{background:var(--panel);border:1px solid var(--line2);border-radius:14px;
+  box-shadow:var(--shadow-lift);margin-bottom:12px;overflow:hidden;
+  animation:enter .4s var(--ease) both}
+.dif-head{padding:15px 18px 13px}
+.dif-head h3{margin:0 0 5px;font-size:16px;letter-spacing:-.018em;font-weight:600}
+.dif-head p{margin:0;font-size:12.5px;color:var(--mut)}
+.dif-head .said2{font-style:italic}
+.swing{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:var(--line);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.sw2{background:var(--panel);padding:12px 18px 13px}
+.sw2 .k7{font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:600}
+.sw2 .n7{display:flex;align-items:baseline;gap:8px;margin-top:7px;font-family:var(--mono);
+  font-variant-numeric:tabular-nums}
+.sw2 .was7{font-size:14px;color:var(--faint)}
+.sw2 .arr{font-size:12px;color:var(--line2)}
+.sw2 .now7{font-size:21px;letter-spacing:-.02em}
+.sw2.pay .now7{color:var(--pay)} .sw2.rev .now7{color:var(--esc)} .sw2.stop .now7{color:var(--no)}
+.sw2 .e7{font-family:var(--mono);font-size:11px;color:var(--faint);margin-top:4px}
+.dif-body{padding:14px 18px 16px}
+.dif-body .none7{color:var(--faint);font-size:13.5px;padding:8px 0}
+.moved{font-family:var(--mono);font-size:12px}
+.moved .mh,.moved .mr2{display:grid;
+  grid-template-columns:minmax(0,1.5fr) minmax(0,1.2fr) 92px 150px minmax(0,1fr);
+  gap:14px;align-items:center;padding:8px 8px;border-radius:7px}
+.moved .mh{font-family:var(--sans);font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:var(--faint);font-weight:600;border-bottom:1px solid var(--line2);padding-bottom:7px}
+.moved .mr2{border-bottom:1px solid var(--line);cursor:pointer;transition:background .14s var(--ease)}
+.moved .mr2:hover{background:var(--chip)}
+.moved .c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.moved .am2{text-align:right}
+.moved .sup{font-family:var(--sans);font-size:12.5px;color:var(--mut)}
+.moved .why2{color:var(--faint);font-family:var(--sans);font-size:12px}
+.moved .swap{display:flex;align-items:center;gap:7px;font-family:var(--sans)}
+.moved .kk{font-size:9.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;
+  padding:2px 6px;border-radius:5px;white-space:nowrap}
+.kk.PAY{background:var(--pay-soft);color:var(--pay)}
+.kk.ESCALATE{background:var(--esc-soft);color:var(--esc)}
+.kk.DONOTPAY{background:var(--no-soft);color:var(--no)}
+.kk.was{background:none;color:var(--faint);border:1px solid var(--line)}
 
 .chain{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;
   box-shadow:var(--shadow);margin-bottom:12px}
@@ -281,7 +492,7 @@ body.chatting .chips{justify-content:flex-start}
   padding:2px 7px;border-radius:5px;justify-self:start;white-space:nowrap}
 .ef.ESCALATE{background:var(--esc-soft);color:var(--esc)}
 .ef.DONOTPAY{background:var(--no-soft);color:var(--no)}
-.ef.gate{background:var(--chip2);color:var(--mut)}
+.ef.gate,.ef.reports{background:var(--chip2);color:var(--mut)}
 .rule .ct{display:flex;align-items:center;gap:9px;justify-content:flex-end}
 .rule .ct .tk{width:56px;height:5px;border-radius:999px;background:var(--chip2);overflow:hidden}
 .rule .ct .tk i{display:block;height:100%;background:var(--accent);border-radius:999px}
@@ -324,10 +535,16 @@ body.chatting .chips{justify-content:flex-start}
   box-shadow:var(--shadow);margin-bottom:12px}
 .card2 h3{margin:0;font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--mut);font-weight:600}
 .card2 .lede2{margin:5px 0 15px;font-size:13px;color:var(--faint);max-width:64ch}
-.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:stretch}
+/* the two charts are read side by side, so they stand on the same floor and
+   reach the same ceiling: the card gives its whole remaining height to them */
+.duo .card2{display:flex;flex-direction:column}
+.duo .card2 .lede2{margin-bottom:16px}
+.duo .ring-wrap,.duo .cols{flex:1;min-height:210px}
 
 /* a ring for share of spend, columns for volume. Inline SVG and CSS, no library. */
-.ring-wrap{display:grid;grid-template-columns:186px minmax(0,1fr);gap:20px;align-items:center}
+.ring-wrap{display:grid;grid-template-columns:186px minmax(0,1fr);gap:20px;align-items:center;
+  align-content:center}
 .ring{width:186px;height:186px;display:block}
 .ring circle{transition:opacity .18s var(--ease);transform-origin:50% 50%}
 .ring-wrap.dim circle.sl{opacity:.26}
@@ -346,7 +563,7 @@ body.chatting .chips{justify-content:flex-start}
 .key .kp{font-family:var(--mono);font-size:11px;color:var(--faint);width:40px;text-align:right}
 
 .cols{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;align-items:end;
-  height:190px;padding-top:6px}
+  height:190px;padding-top:6px;padding-bottom:2px}
 .col{display:flex;flex-direction:column;justify-content:flex-end;height:100%;gap:5px;min-width:0}
 .col .stk{display:flex;flex-direction:column;justify-content:flex-end;border-radius:5px 5px 0 0;
   overflow:hidden;animation:rise2 .6s var(--ease) both}
@@ -364,6 +581,10 @@ body.chatting .chips{justify-content:flex-start}
 .xax span{text-align:center}
 @media (max-width:1000px){
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* side by side the two of them need the room for a supplier name; below that
+   they stack, and each one gets the whole width */
+@media (max-width:1240px){
   .duo{grid-template-columns:1fr}
 }
 
@@ -461,12 +682,6 @@ body.chatting .chips{justify-content:flex-start}
 .sec{margin-bottom:22px}
 .sec h5{margin:0 0 10px;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);
   font-weight:600}
-.sec dl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 34px;margin:0}
-.sec dl div{display:flex;justify-content:space-between;align-items:baseline;gap:14px;padding:7px 0;
-  border-bottom:1px dashed var(--line)}
-.sec dt{color:var(--faint);font-size:11.5px;white-space:nowrap;flex:none}
-.sec dd{margin:0;font-family:var(--mono);font-size:12px;text-align:right;
-  word-break:break-word;min-width:0}
 .why-box{border:1px solid var(--line2);border-radius:12px;padding:15px 18px;margin-bottom:20px;
   background:var(--chip)}
 .why-box .lbl3{display:block;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;
@@ -478,13 +693,6 @@ body.chatting .chips{justify-content:flex-start}
 .why-box.ESCALATE .lbl3{color:var(--esc)}
 .why-box.DONOTPAY{background:var(--no-soft);border-color:color-mix(in srgb,var(--no) 28%,var(--line))}
 .why-box.DONOTPAY .lbl3{color:var(--no)}
-.sums{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0 34px;margin-top:14px;
-  padding-top:14px;border-top:1px solid var(--line2)}
-.sum{display:flex;justify-content:space-between;align-items:baseline;gap:14px}
-.sum .k4{font-size:11.5px;color:var(--faint)}
-.sum .v4{font-family:var(--mono);font-size:13px}
-.sum.tot .k4{color:var(--ink);font-weight:600}
-.sum.tot .v4{font-size:14.5px;font-weight:500}
 .dos-acts{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:-8px 0 22px}
 .btn.ask{display:inline-flex;align-items:center;gap:7px;border-color:var(--accent);
   color:var(--accent);font-weight:600;background:var(--panel)}
@@ -494,32 +702,88 @@ body.chatting .chips{justify-content:flex-start}
 .dos-acts .spacer{flex:1}
 .dos-said{margin:-8px 0 22px;font-size:14.5px;line-height:1.6;display:flex;gap:12px;
   align-items:baseline;flex-wrap:wrap;animation:enter .3s var(--ease) both}
-.chk{display:grid;grid-template-columns:auto 1fr auto;gap:11px;align-items:baseline;padding:8px 0;
-  border-bottom:1px dashed var(--line)}
-.chk .nm{font-size:12px;font-weight:600;letter-spacing:.04em}
-.chk .dt{font-family:var(--mono);font-size:11.5px;color:var(--mut);line-height:1.5}
-.chk .vd2{font-size:9.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
-  padding:2px 7px;border-radius:5px;white-space:nowrap}
-.vd2.PASS{background:var(--pay-soft);color:var(--pay)}
-.vd2.BLOCKS{background:var(--no-soft);color:var(--no)}
-.tl{list-style:none;margin:0;padding:0;display:grid;grid-auto-flow:column;
-  grid-auto-columns:minmax(0,1fr)}
-.tl li{position:relative;padding:20px 16px 0 0}
-.tl li:before{content:"";position:absolute;left:0;top:0;width:11px;height:11px;border-radius:50%;
-  background:var(--bg);border:1.5px solid var(--line2);z-index:1}
-.tl li:after{content:"";position:absolute;left:12px;right:0;top:5px;height:1.5px;background:var(--line2)}
-.tl li:last-child:after{display:none}
-.tl li.hot:before{background:var(--esc);border-color:var(--esc)}
-.tl .k2{font-size:10px;font-weight:600;letter-spacing:.07em;color:var(--ink)}
-.tl .d2{font-size:12px;color:var(--mut);margin-top:3px;line-height:1.45}
-.tl .m2{font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:5px}
+/* ───────────────── the lifecycle: what actually happened to this page, which
+   is the whole claim. The rules are not a list beside it -- they are the step
+   in it where the verdict was decided, and they hang off that step. */
+.life-card{background:var(--panel);border:1px solid var(--line2);border-radius:16px;
+  box-shadow:var(--shadow-lift);padding:18px 20px 20px;margin-bottom:20px}
+.life-card .lh{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.life-card .lh h4{margin:0;font-size:15px;letter-spacing:-.018em;font-weight:600}
+.life-card .lh .lm{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--faint);
+  white-space:nowrap}
+
+.rail{list-style:none;margin:0;padding:0;display:grid;
+  grid-template-columns:repeat(var(--n,5),minmax(0,1fr))}
+.stp{position:relative;padding:26px 20px 0 0;animation:stepin .5s var(--ease) both;
+  animation-delay:calc(var(--i) * .11s)}
+@keyframes stepin{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.stp .nd{position:absolute;left:0;top:0;width:13px;height:13px;border-radius:50%;
+  background:var(--accent);border:2px solid var(--accent);z-index:1}
+.stp.miss .nd{background:var(--bg);border-color:var(--line2)}
+.stp:after{content:"";position:absolute;left:17px;right:0;top:5.5px;height:2px;
+  background:var(--line2);transform-origin:left;
+  animation:grow .42s var(--ease) both;animation-delay:calc(var(--i) * .11s + .16s)}
+.stp:last-child:after{display:none}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.stp .sk{display:block;font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--ink)}
+.stp .sd{display:block;font-size:12.5px;color:var(--mut);margin-top:5px;line-height:1.5}
+.stp .sm{display:block;font-family:var(--mono);font-size:10px;color:var(--faint);margin-top:6px}
+.stp.end .nd{width:17px;height:17px;top:-2px;left:-2px;animation:land .5s var(--ease) both;
+  animation-delay:calc(var(--i) * .11s + .1s)}
+@keyframes land{from{transform:scale(.3)}to{transform:scale(1)}}
+.stp.end.PAY .nd{background:var(--pay);border-color:var(--pay)}
+.stp.end.ESCALATE .nd{background:var(--esc);border-color:var(--esc)}
+.stp.end.DONOTPAY .nd{background:var(--no);border-color:var(--no)}
+.stp.end .sk{letter-spacing:.09em}
+
+/* the rules hang off the step that ran them */
+.rdrop{display:grid;grid-template-columns:repeat(var(--n,5),minmax(0,1fr));margin-top:4px}
+.rdrop .tie{grid-column:var(--r,4);grid-row:1;height:22px;margin-left:5.5px;
+  border-left:2px dashed var(--line2);animation:drop .4s var(--ease) both;animation-delay:.5s;
+  transform-origin:top}
+@keyframes drop{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+/* one card per rule, in a single row under the rail, so the group reads as the
+   inside of that one step rather than a list of its own */
+.rgrid{grid-column:1/-1;grid-row:2;display:grid;gap:8px;
+  grid-template-columns:repeat(var(--k,5),minmax(0,1fr))}
+.rk{border:1px solid var(--line);border-radius:11px;padding:10px 12px 11px;background:var(--bg);
+  animation:stepin .45s var(--ease) both;animation-delay:calc(.62s + var(--j) * .07s)}
+.rk.BLOCKS{border-color:color-mix(in srgb,var(--no) 34%,var(--line));background:var(--no-soft)}
+.rk .rtop{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.rk .rn{font-size:10.5px;font-weight:700;letter-spacing:.08em}
+.rk .rv{font-size:8.5px;font-weight:600;letter-spacing:.06em;padding:2px 6px;border-radius:5px;
+  background:var(--pay-soft);color:var(--pay)}
+.rk .rv.BLOCKS{background:var(--no);color:#fff}
+.rk .rd2{display:block;font-family:var(--mono);font-size:10.5px;color:var(--mut);margin-top:7px;
+  line-height:1.55;word-break:break-word}
+
+/* ───────────────── everything read off the page, in one lane you push sideways */
+.lane1{display:flex;overflow-x:auto;overflow-y:hidden;padding:2px 0 10px;
+  scroll-snap-type:x proximity;scrollbar-width:thin}
+.lane1::-webkit-scrollbar{height:6px}
+.lane1::-webkit-scrollbar-thumb{background:var(--line2);border-radius:99px}
+.lane1::-webkit-scrollbar-track{background:transparent}
+.lane1 .cf{flex:0 0 auto;min-width:158px;max-width:290px;padding:8px 20px 8px 0;margin-right:20px;
+  border-right:1px dashed var(--line);scroll-snap-align:start}
+.lane1 .cf:last-child{border-right:0;margin-right:0;padding-right:4px}
+.lane1 .ck{display:block;font-size:11px;color:var(--faint);white-space:nowrap}
+.lane1 .cv{display:block;font-family:var(--mono);font-size:13px;margin-top:6px;
+  word-break:break-all;line-height:1.35}
+.lane1 .cf.tot{border-right-style:solid;border-right-color:var(--line2)}
+.lane1 .cf.tot .ck{color:var(--mut);font-weight:600}
+.lane1 .cf.tot .cv{font-size:15.5px}
+.lane1 .cf.grand .cv{font-weight:500}
+
 @media (max-width:1000px){
   .dossier{width:96vw}
-  .sec dl{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .tl{grid-auto-flow:row;grid-auto-columns:auto}
-  .tl li{padding:0 0 14px 20px}
-  .tl li:before{top:4px}
-  .tl li:after{left:5px;top:12px;right:auto;bottom:-2px;width:1.5px;height:auto}
+  .rail{grid-template-columns:1fr}
+  .stp{padding:0 0 18px 24px}
+  .stp .nd{top:3px}
+  .stp:after{left:5.5px;top:14px;right:auto;bottom:-4px;width:2px;height:auto}
+  .stp.end .nd{left:-2px;top:1px}
+  .rdrop{grid-template-columns:1fr}
+  .rdrop .tie{grid-column:1;height:14px}
+  .rgrid{grid-template-columns:1fr}
 }
 
 /* ───────────────── other views */
@@ -529,14 +793,24 @@ body.chatting .chips{justify-content:flex-start}
 .page .lede{color:var(--mut);font-size:14px;margin:0 0 20px;max-width:62ch}
 .soon{border:1px dashed var(--line2);border-radius:14px;padding:34px;text-align:center;color:var(--faint);font-size:14px}
 
-.drop-ov{position:absolute;inset:12px;border:1.5px dashed var(--ink);border-radius:18px;
-  background:color-mix(in srgb,var(--bg) 84%,transparent);backdrop-filter:blur(3px);
+.drop-ov{position:absolute;inset:12px;border-radius:20px;overflow:hidden;
+  border:1.5px solid color-mix(in srgb,var(--water) 42%,transparent);
+  background:radial-gradient(130% 78% at 50% 114%,
+      color-mix(in srgb,var(--water) 22%,transparent), transparent 58%),
+    color-mix(in srgb,var(--bg) 80%,transparent);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.65);backdrop-filter:blur(3px);
   display:none;place-items:center;z-index:30;text-align:center}
 .drop-ov.on{display:grid;animation:enter .18s var(--ease) both}
 .drop-ov h3{margin:0 0 6px;font-size:21px;letter-spacing:-.02em;font-weight:600}
 .drop-ov p{margin:0;color:var(--mut);font-size:14px}
 
 @media (max-width:760px){
+  .stage{height:212px}
+  .ivc{grid-template-columns:8px minmax(0,1fr) auto 80px;column-gap:10px}
+  .ivc .vn{display:none}
+  .tally .tc{padding:9px 12px 10px}
+  .tally .tn{font-size:18px}
+  .run-foot{font-size:11.5px}
   .app{grid-template-columns:54px 1fr}
   .nav-item span,.brand .who2{display:none}
   .nav-item{justify-content:center;padding:9px 0}
@@ -598,7 +872,11 @@ body.chatting .chips{justify-content:flex-start}
         </div>
       </div>
 
-      <div class="drop-ov" id="dropov"><div><h3>Go on, let go</h3><p>.pdf or .zip · it waits in the box until you say send</p></div></div>
+      <div class="drop-ov" id="dropov">
+        <i class="ripple"></i><i class="ripple"></i><i class="ripple"></i>
+        <div><h3>Go on, let go</h3><p>.zip or .pdf · it waits in the box until you say send</p></div>
+        <div class="pool2"><i></i></div>
+      </div>
     </section>
 
     <section class="view" id="view-invoices">
@@ -632,7 +910,6 @@ body.chatting .chips{justify-content:flex-start}
 <script>
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const now = () => new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minute: '2-digit'});
 const KB = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, n >> 10) + ' KB';
 const EXT = n => (n.split('.').pop() || '').toUpperCase().slice(0, 3);
 
@@ -709,8 +986,7 @@ function bubble(html){
 function replyShell(){
   const d = document.createElement('div');
   d.className = 'msg';
-  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
-    <div class="say"></div><div class="blocks"></div><div class="meta"></div>`;
+  d.innerHTML = `<div class="say"></div><div class="blocks"></div>`;
   thread.append(d); scroll();
   return d;
 }
@@ -720,11 +996,10 @@ let waiting = null, cycle = 0;
 function think(labels){
   const d = document.createElement('div');
   d.className = 'msg';
-  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
-    <div class="say"><span class="think"><span class="lbl"></span></span></div>`;
+  d.innerHTML = `<div class="say"><span class="think"><span class="lbl"></span></span></div>`;
   thread.append(d);
   const lbl = d.querySelector('.lbl');
-  const stop = globe(d.querySelector('.think'), 34, '#2f62d8');
+  const stop = globe(d.querySelector('.think'), 32, '#4a3324');
   let i = 0;
   lbl.textContent = labels[0];
   clearInterval(cycle);
@@ -740,11 +1015,13 @@ function unthink(){
 /* Split on whitespace but keep it, so wrapping survives. */
 const tokenise = t => t.split(/(\s+)/).filter(x => x !== '');
 
-/* The globe holds for at least MIN_THINK. Then the sentence condenses in,
-   one word at a time, and only once it settles does the panel arrive. */
-async function consume(res, labels){
+/* The globe holds for at least as long as it is given. Then the sentence
+   condenses in, one word at a time, and only once it settles does the panel
+   arrive. After a run there is no need to hold: the waiting already happened
+   in front of him, page by page. */
+async function consume(res, hold = MIN_THINK){
   const t0 = Date.now();
-  let buf = '', pending = null, info = null, streamDone = false, failed = null;
+  let buf = '', pending = null, streamDone = false, failed = null;
 
   const pump = (async () => {
     try {
@@ -760,7 +1037,6 @@ async function consume(res, labels){
           let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
           if (ev.type === 'blocks' && ev.blocks && ev.blocks.length) pending = ev.blocks;
           else if (ev.type === 'delta') buf += ev.text;
-          else if (ev.type === 'done') info = ev;
         }
       }
     } catch (err){ failed = err; }
@@ -769,7 +1045,7 @@ async function consume(res, labels){
 
   await new Promise(r => {
     (function wait(){
-      if (Date.now() - t0 >= MIN_THINK && (buf || streamDone)) return r();
+      if (Date.now() - t0 >= hold && (buf || streamDone)) return r();
       setTimeout(wait, 90);
     })();
   });
@@ -778,7 +1054,7 @@ async function consume(res, labels){
   if (failed && !buf) buf = 'The desk did not answer (' + (failed.message || failed) + '). Nothing moved.';
 
   const d = replyShell();
-  const say = d.querySelector('.say'), blocks = d.querySelector('.blocks'), meta = d.querySelector('.meta');
+  const say = d.querySelector('.say'), blocks = d.querySelector('.blocks');
 
   let out = 0;
   await new Promise(r => {
@@ -802,8 +1078,6 @@ async function consume(res, labels){
   });
 
   await pump;
-  if (info) meta.textContent = [info.model, info.ms != null ? info.ms + ' ms' : null,
-                                info.tokens ? info.tokens + ' tokens' : null].filter(Boolean).join(' · ');
   if (pending){
     const html = pending.map(panelHTML).join('');
     setTimeout(() => { blocks.innerHTML = html; scroll(); }, 200);
@@ -814,8 +1088,8 @@ async function consume(res, labels){
 
 const THINK_ASK   = ['Digging through the ledger', 'Arguing with the rules',
                      'Making it make sense', 'Nearly there, Alberto'];
-const THINK_BATCH = ['Opening what you threw at me', 'Reading every last page',
-                     'Running them past the rules', 'Rounding up the awkward ones'];
+const THINK_BATCH = ['Looking at what came out of that', 'Working out where to start',
+                     'Rounding up the awkward ones'];
 
 async function ask(text){
   if (busy || !text.trim()) return;
@@ -828,7 +1102,7 @@ async function ask(text){
     out = await consume(await fetch('/api/chat', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({text, history}),
-    }), THINK_ASK);
+    }));
   } catch (err){
     unthink();
     replyShell().querySelector('.say').textContent =
@@ -855,13 +1129,31 @@ function refreshSend(){
       : 'Throw a <kbd>.pdf</kbd> or a <kbd>.zip</kbd> anywhere on this page';
 }
 
+/* One crest, drawn wide enough that it can slide a whole period and still
+   cover the card. Two of them, at odds with each other, read as water. */
+function crest(span){
+  // The viewBox is stretched to whatever it sits on, so the width of the box
+  // decides how long a wave looks. A card gets a few; the whole page gets many.
+  const wave = (y, amp) => {
+    let d = `M-200,${y} q25,${amp} 50,0`, x = -150;
+    while (x < span + 200){ d += ' t50,0'; x += 50; }
+    return `${d} L${x},12 L-200,12 Z`;
+  };
+  return `<svg class="crest" viewBox="0 0 ${span} 12" preserveAspectRatio="none" aria-hidden="true">
+    <path class="w1" fill="currentColor" d="${wave(6, -4)}"/>
+    <path class="w2" fill="currentColor" d="${wave(7.5, 4)}"/></svg>`;
+}
+const CREST = crest(200);
+$('#dropov .pool2').insertAdjacentHTML('beforeend', crest(1400));
+
 function attach(file){
   const el = document.createElement('div');
-  el.className = 'att';
+  el.className = 'att wet' + (/\.zip$/i.test(file.name) ? ' big' : '');
   el.innerHTML = `<span class="ico">${esc(EXT(file.name))}</span>
     <span><span class="nm">${esc(file.name)}</span><span class="st">${KB(file.size)} · uploading</span></span>
     <span class="pct">0%</span>
-    <button class="x" type="button" title="Remove">✕</button><i class="fbar"></i>`;
+    <button class="x" type="button" title="Remove">✕</button>
+    <i class="pool"><i class="lvl"><i class="fill"></i><i class="glint"></i>${CREST}</i></i>`;
   tray.append(el);
 
   const item = {file, el, settled: false, result: null};
@@ -872,15 +1164,18 @@ function attach(file){
   };
   refreshSend();
 
-  const bar = el.querySelector('.fbar'), pctEl = el.querySelector('.pct'), stEl = el.querySelector('.st');
+  const pctEl = el.querySelector('.pct'), stEl = el.querySelector('.st');
+  const level = p => el.style.setProperty('--lvl', (p * 100).toFixed(1) + '%');
   let answer = null, walked = false;
 
   const settle = () => {
     if (!answer || !walked) return;
     const r = answer;
     item.result = r; item.settled = true;
-    el.classList.add(r.ok ? 'ok' : 'bad');
-    bar.style.width = '100%';
+    item.key = r.key || null;
+    level(1);
+    // it brims for a moment, then drains away and leaves the verdict behind
+    setTimeout(() => { el.classList.remove('wet'); el.classList.add(r.ok ? 'ok' : 'bad'); }, 260);
     const n = (r.invoices || []).length;
     stEl.textContent = r.ok
       ? `${KB(file.size)} · uploaded · ${n} invoice${n === 1 ? '' : 's'}`
@@ -890,14 +1185,16 @@ function attach(file){
   };
 
   // On localhost the bytes land instantly, which reads as nothing happening.
-  // The bar is walked over a couple of seconds so the transfer is legible.
-  const span = Math.min(6500, 2000 + file.size / 26000);
+  // The level is walked over a couple of seconds so the transfer is legible.
+  // On a timer, not a frame: a hidden window stops painting, and an upload
+  // that never finishes because he looked away is not an upload.
+  const span = Math.min(6500, 2400 + file.size / 26000);
   const t0 = Date.now();
   (function walk(){
     const p = Math.min(0.99, (Date.now() - t0) / span);
-    bar.style.width = (p * 100) + '%';
+    level(p);
     pctEl.textContent = Math.round(p * 100) + '%';
-    if (p < 0.99) return requestAnimationFrame(walk);
+    if (p < 0.99) return setTimeout(walk, 32);
     walked = true; settle();
   })();
 
@@ -914,6 +1211,203 @@ function attach(file){
 
 const addFiles = list => { [...list].forEach(attach); $('#q').focus(); };
 
+/* ───────────────── the run: every page inside, one at a time.
+   The desk reads as fast as it can; the stage shows the verdicts at a pace a
+   person can actually follow. Pages stack up from the bottom and rise out of
+   the top, so five hundred of them cost the same room as five. */
+const SLOT_H = 64, SLOTS = 4;
+// A page every third of a second is a pace you can read, and it is longer than
+// the move itself: each card lands and settles before the next one arrives.
+// Anything faster and they overlap, which is the opposite of watching work.
+const STAGE_GAP = 360, RUN_BUDGET = 12000;
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const kind = a => String(a || '').replace(/[^A-Z]/g, '');
+
+function runCard(label){
+  const d = document.createElement('div');
+  d.className = 'msg';
+  d.innerHTML = `<div class="run">
+      <div class="run-head">
+        <span class="rt">${esc(label)}</span>
+        <span class="rm">opening it</span>
+      </div>
+      <div class="tally">
+        <div class="tc pay"><div class="tk6">Pay</div><div class="tn">0</div><div class="tv">€0.00</div></div>
+        <div class="tc rev"><div class="tk6">Needs you</div><div class="tn">0</div><div class="tv">€0.00</div></div>
+        <div class="tc stop"><div class="tk6">Do not pay</div><div class="tn">0</div><div class="tv">€0.00</div></div>
+      </div>
+      <div class="stage"></div>
+      <div class="run-bar"><i></i></div>
+      <div class="run-foot"></div>
+    </div>`;
+  thread.append(d); scroll();
+  return d.querySelector('.run');
+}
+
+/* Every page on the stage sits in a slot. A new one lands in the bottom slot
+   and pushes the rest up a place; by the sixth they have faded out entirely. */
+function stageOf(stage){
+  const live = [];
+  return (html, cls) => {
+    const c = document.createElement('div');
+    c.className = 'ivc ' + cls;
+    c.innerHTML = html;
+    c.style.transform = 'translateY(18px) scale(.985)';
+    c.style.opacity = '0';
+    stage.append(c);
+    live.push(c);
+    setTimeout(() => live.forEach((el, i) => {
+      const up = live.length - 1 - i;
+      el.style.transform = `translateY(${-up * SLOT_H}px) scale(${1 - up * 0.014})`;
+      el.style.opacity = String(Math.max(0, 1 - up * 0.22));
+    }), 20);
+    while (live.length > SLOTS + 1){
+      const gone = live.shift();
+      setTimeout(() => gone.remove(), 520);
+    }
+    return () => live.forEach(el => {          // the stage empties upward at the end
+      el.style.transform = `translateY(${-(SLOTS + 1) * SLOT_H}px) scale(.94)`;
+      el.style.opacity = '0';
+    });
+  };
+}
+
+/* The trace of one page: what it went through, which rules it met, where it
+   came out. The same five beats as the expediente, drawn small. */
+function miniHTML(r){
+  const known = r.vendor && r.vendor !== 'unidentified supplier';
+  const steps = [['read off the file', true],
+                 ['text lifted off the page', !r.scanned],
+                 ['matched to a supplier', !!known],
+                 ['rules run', !r.scanned]];
+  const rules = (r.rules || []).map(([n, v]) =>
+    `<i class="mr ${esc(v)}" title="${esc(n)} · ${esc(v)}"></i>`).join('');
+  const why = r.blocking && r.blocking.length ? r.blocking.join(', ').toLowerCase() : 'clean on every rule';
+  return `<span class="mini">
+    ${steps.map(([t, ok]) =>
+      `<i class="ms${ok ? '' : ' off'}" title="${esc(t)}"></i><i class="mw"></i>`).join('')}
+    <span class="mrs">${rules}</span><i class="mw"></i>
+    <i class="ms end ${esc(kind(r.action))}" title="${esc(r.action)}"></i>
+    <span class="mlab">${esc(why)}</span></span>`;
+}
+
+function ivcHTML(r){
+  return `<i class="dt3"></i>
+    <span class="fl">${esc(r.file)}</span>
+    <span class="vn">${esc(r.vendor)}</span>
+    <span class="am">${r.total ? esc(money(r.total)) : '—'}</span>
+    <span class="vk ${esc(kind(r.action))}">${esc(r.action)}</span>
+    ${miniHTML(r)}`;
+}
+
+/* Reads the archive on the desk and paces what comes back. Returns the id of
+   the run so the sentence after it can be written about real numbers. */
+async function processRun(items){
+  const keys = items.map(s => s.result && s.result.key).filter(Boolean);
+  if (!keys.length) return null;
+
+  const label = items.length === 1 ? items[0].file.name : items.length + ' files';
+  const card = runCard(label);
+  const rm = card.querySelector('.rm'), bar = card.querySelector('.run-bar i');
+  const put = stageOf(card.querySelector('.stage'));
+  const cells = {PAY: card.querySelector('.tc.pay'), ESCALATE: card.querySelector('.tc.rev'),
+                 'DO NOT PAY': card.querySelector('.tc.stop')};
+  const tally = {PAY: [0, 0], ESCALATE: [0, 0], 'DO NOT PAY': [0, 0]};
+
+  const queue = [];
+  let total = 0, shown = 0, summary = null, over = false, drain = null, failed = null;
+
+  const pump = (async () => {
+    try {
+      const res = await fetch('/api/process', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({keys}),
+      });
+      const reader = res.body.getReader(), dec = new TextDecoder();
+      let raw = '';
+      for (;;){
+        const {done, value} = await reader.read();
+        if (done) break;
+        raw += dec.decode(value, {stream: true});
+        const parts = raw.split('\n\n'); raw = parts.pop();
+        for (const part of parts){
+          const line = part.trim(); if (!line.startsWith('data:')) continue;
+          let ev; try { ev = JSON.parse(line.slice(5).trim()); } catch { continue; }
+          if (ev.type === 'open') total = ev.total;
+          else if (ev.type === 'done') summary = ev;
+          else queue.push(ev);
+        }
+      }
+    } catch (err){ failed = err; }
+    over = true;
+  })();
+
+  // The run is given the same length however much is in it: a dozen pages are
+  // worth lingering over, five hundred still have to end. The count takes every
+  // page; the stage takes as many as a person can actually read, and no more.
+  const step = () => Math.min(300, Math.max(16, Math.round(RUN_BUDGET / Math.max(1, total || 12))));
+  let lastCard = 0;
+
+  while (!over || queue.length){
+    if (!queue.length){ await sleep(60); continue; }
+    const ev = queue.shift();
+    shown++;
+    const last = over && !queue.length;
+    const room = Date.now() - lastCard >= STAGE_GAP;
+
+    if (ev.type === 'invoice'){
+      const r = ev.row;
+      if (room || last){ drain = put(ivcHTML(r), kind(r.action)); lastCard = Date.now(); }
+      const t = tally[r.action];
+      if (t){
+        t[0]++; t[1] += Number(r.total) || 0;
+        const c = cells[r.action], n = c.querySelector('.tn');
+        c.classList.add('live');
+        n.textContent = t[0];
+        c.querySelector('.tv').textContent = money(t[1]);
+        n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump');
+      }
+    } else if (ev.type === 'known' && (room || last)){
+      drain = put(`<i class="dt3"></i><span class="fl">${esc(ev.file)}</span>
+        <span class="vn">I already had this one</span><span class="am"></span>
+        <span class="vk SKIP">seen</span>
+        <span class="mini"><i class="ms"></i><i class="mw"></i>
+          <span class="mlab">not run again</span></span>`, 'quiet');
+      lastCard = Date.now();
+    } else if (ev.type === 'reject' && (room || last)){
+      drain = put(`<i class="dt3"></i><span class="fl">${esc(ev.file)}</span>
+        <span class="vn">the page would not open</span><span class="am"></span>
+        <span class="vk SKIP">out</span>
+        <span class="mini"><i class="ms off"></i><i class="mw"></i>
+          <span class="mlab">nothing to read</span></span>`, 'quiet');
+      lastCard = Date.now();
+    }
+    rm.innerHTML = `<b>reading</b> ${shown} of ${total || '…'}`;
+    bar.style.width = (total ? Math.min(100, shown / total * 100) : 4) + '%';
+    // it starts deliberately and finds its rhythm after a page or two
+    await sleep(step() * (shown <= 3 ? 1.9 - shown * 0.25 : 1));
+  }
+  await pump;
+
+  if (drain) drain();
+  bar.style.width = '100%';
+  const b = summary && summary.summary;
+  rm.innerHTML = b
+    ? `${b.total} read · ${b.suppliers} supplier${b.suppliers === 1 ? '' : 's'} · ${esc(b.size)} · ${esc(b.seconds)}`
+    : 'nothing came back';
+  card.querySelector('.run-foot').innerHTML = b
+    ? `<span class="ok3">✓</span> Every page read and judged by the five rules` +
+      (b.scans ? ` · ${b.scans} scan${b.scans === 1 ? '' : 's'} with no text layer` : '') +
+      (b.dupes.length ? ` · ${b.dupes.length} I already had` : '') +
+      (b.rejected.length ? ` · ${b.rejected.length} I could not read` : '')
+    : `<span>${esc(failed ? 'The run stopped: ' + (failed.message || failed) : 'The run came back empty.')}</span>`;
+  await sleep(240);
+  card.classList.add('settled');
+  await sleep(380);
+  scroll();
+  return summary && summary.run;
+}
+
 async function sendBatch(text, items){
   document.body.classList.add('chatting');
   const stack = bubble(text ? `<div class="bubble">${esc(text)}</div>` : '');
@@ -924,13 +1418,18 @@ async function sendBatch(text, items){
   staged = []; tray.innerHTML = '';
   refreshSend(); scroll();
 
+  let run = null;
+  try { run = await processRun(items); }
+  catch (err){ run = null; }
+
   think(THINK_BATCH);
   let out = '';
   try {
     out = await consume(await fetch('/api/batch', {
       method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({files: items.map(s => s.result), text, history}),
-    }), THINK_BATCH);
+      body: JSON.stringify(run ? {run, text, history}
+                               : {files: items.map(s => s.result), text, history}),
+    }), run ? 900 : MIN_THINK);
   } catch (err){
     unthink();
     replyShell().querySelector('.say').textContent =
@@ -1055,8 +1554,7 @@ async function runAction(btn, act, key, reason){
 function say(text, undoable){
   const d = document.createElement('div');
   d.className = 'msg';
-  d.innerHTML = `<div class="who">Desk <time>${now()}</time></div>
-    <div class="say">${esc(text)}</div>
+  d.innerHTML = `<div class="say">${esc(text)}</div>
     ${undoable ? '<div class="row-undo"><button class="btn" data-act="undo">Put it back</button></div>' : ''}`;
   thread.append(d); scroll();
 }
@@ -1209,6 +1707,39 @@ $('#view-invoices').addEventListener('click', e => {
   if (row) openDossier(row.dataset.file);
 });
 
+/* The trace, full size. Every step the page went through, in the order it went
+   through them, and the rules hanging off the step that decided it. This is the
+   claim the desk is making, so it is the first thing on the expediente. */
+function lifeHTML(d, verdict){
+  const steps = d.timeline, last = steps.length - 1;
+  const ri = Math.max(0, steps.findIndex(t => t.kind === 'RULES_RUN'));
+  const blocked = d.checks.filter(c => c.verdict === 'BLOCKS').length;
+  return `<div class="life-card">
+    <div class="lh">
+      <h4>What happened</h4>
+      <span class="lm">${steps.length} steps · ${d.ms} ms · ruleset ${esc(d.ruleset)}</span>
+    </div>
+    <ol class="rail" style="--n:${steps.length}">
+      ${steps.map((t, i) => `<li class="stp${i === last ? ' end ' + esc(verdict) : ''}${
+        t.kind === 'OCR_NEEDED' ? ' miss' : ''}" style="--i:${i}">
+        <span class="nd"></span>
+        <span class="sk">${esc(t.kind.replace(/_/g, ' '))}</span>
+        <span class="sd">${esc(t.detail)}</span>
+        <span class="sm">${esc(t.actor)} · ${t.ms} ms</span>
+      </li>`).join('')}
+    </ol>
+    <div class="rdrop" style="--n:${steps.length};--r:${ri + 1};--k:${d.checks.length}">
+      <span class="tie"></span>
+      <div class="rgrid">${d.checks.map((c, j) => `
+        <div class="rk ${esc(c.verdict)}" style="--j:${j}">
+          <span class="rtop"><span class="rn">${esc(c.name)}</span>
+            <span class="rv ${esc(c.verdict)}">${esc(c.verdict)}</span></span>
+          <span class="rd2">${esc(c.detail)}</span>
+        </div>`).join('')}</div>
+    </div>
+  </div>`;
+}
+
 /* the expediente: the real page on the left, what we read off it on the right */
 let dossierFile = null;
 
@@ -1245,23 +1776,15 @@ async function openDossier(file){
         Ask Albertito about it</button>
     </div>`}
 
-    <div class="sec"><h5>What I read off the page</h5>
-      <dl>${d.fields.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-      <div class="sums">${(d.amounts || []).map(([k, v], i) =>
-        `<span class="sum${i === 2 ? ' tot' : ''}"><span class="k4">${esc(k)}</span>
-         <span class="v4">${esc(v)}</span></span>`).join('')}</div></div>
+    ${lifeHTML(d, kind)}
 
-    <div class="sec"><h5>Rules · ${d.checks.length} run · ${blocked.length} blocking</h5>
-      ${d.checks.map(c => `<div class="chk">
-        <span class="nm ${c.verdict === 'BLOCKS' ? 'NOPAY' : ''}">${esc(c.name)}</span>
-        <span class="dt">${esc(c.detail)}</span>
-        <span class="vd2 ${esc(c.verdict)}">${esc(c.verdict)}</span></div>`).join('')}</div>
-
-    <div class="sec"><h5>What happened · ${d.timeline.length} events · ${d.ms} ms · $${d.cost}</h5>
-      <ul class="tl">${d.timeline.map(t => `<li class="${t.kind === 'VERDICT' ? 'hot' : ''}">
-        <div class="k2">${esc(t.kind)}</div>
-        <div class="d2">${esc(t.detail)}</div>
-        <div class="m2">${esc(t.actor)} · ${t.ms} ms · $${t.cost.toFixed(5)}</div></li>`).join('')}</ul></div>`;
+    <div class="sec"><h5>What I read off the page · ${d.fields.length + (d.amounts || []).length} fields</h5>
+      <div class="lane1">
+        ${d.fields.map(([k, v]) => `<div class="cf">
+          <span class="ck">${esc(k)}</span><span class="cv">${esc(v)}</span></div>`).join('')}
+        ${(d.amounts || []).map(([k, v], i) => `<div class="cf tot${i === 2 ? ' grand' : ''}">
+          <span class="ck">${esc(k)}</span><span class="cv">${esc(v)}</span></div>`).join('')}
+      </div></div>`;
 
   $('#dossier').classList.add('on'); $('#dossier').setAttribute('aria-hidden', 'false');
   $('#scrim').classList.add('on');
@@ -1422,23 +1945,98 @@ async function loadSummary(){
 /* ───────────────── rules: the ruleset, and what it actually caught */
 let rulesReady = false;
 
+const RV = {v: '', vs: '', shown: 25};
+
 async function loadRules(){
-  const d = await (await fetch('/api/rules')).json();
+  const p = new URLSearchParams({v: RV.v, vs: RV.vs});
+  const d = await (await fetch('/api/rules?' + p)).json();
+  RV.v = d.version;
   const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
   const worst = Math.max(...d.rules.map(r => r.n), 1);
+  const here = d.versions.find(x => x.v === d.version) || {};
+  const a = d.against;
+
+  const opt = (list, sel, none) =>
+    (none ? `<option value=""${sel ? '' : ' selected'}>${none}</option>` : '') +
+    list.map(x => `<option value="${esc(x.v)}"${x.v === sel ? ' selected' : ''}>${esc(x.v)}${
+      x.v === d.in_force ? ' · in force' : ''}</option>`).join('');
+
+  const delta = r => {
+    if (r.delta === undefined) return '';
+    if (r.new) return `<span class="tag">new here</span>`;
+    if (!r.delta) return `<span class="dl">same</span>`;
+    return `<span class="dl ${r.delta > 0 ? 'up' : 'dn'}">${r.delta > 0 ? '+' : '−'}${Math.abs(r.delta)}</span>`;
+  };
+
+  const swing = (k, cls, key) => {
+    const now = d.tally[key].n, was = a.tally[key].n, dd = now - was;
+    return `<div class="sw2 ${cls}"><div class="k7">${k}</div>
+      <div class="n7"><span class="was7">${was}</span><span class="arr">→</span>
+        <span class="now7">${now}</span>
+        ${dd ? `<span class="dl ${dd > 0 ? 'up' : 'dn'}">${dd > 0 ? '+' : '−'}${Math.abs(dd)}</span>`
+             : '<span class="dl">same</span>'}</div>
+      <div class="e7">${esc(eur0(a.tally[key].eur))} → ${esc(eur0(d.tally[key].eur))}</div></div>`;
+  };
+
+  const moved = a ? a.moved.slice(0, RV.shown) : [];
 
   $('#rules-page').innerHTML = `
     <div class="rhead">
       <div>
         <h2>Rules</h2>
-        <p>Six checks run on every invoice, in this order. The first one that stops it
-           decides, and nothing outside this list has a say. Change one and every verdict
-           can be replayed against it.</p>
+        <p>Every invoice goes through this list, in this order. Pick a version to see what it
+           ran, and a second one to put the same 500 pages through both and read the difference
+           off the result — not off the release note.</p>
       </div>
-      <div class="stamp"><div class="vv">${esc(d.version)}</div>
-        <div class="ss">sha256 ${esc(d.sha)}</div>
-        <div class="ss">${d.checked} checked · ${d.stopped} stopped</div></div>
     </div>
+
+    <div class="vbar">
+      <select id="rv">${opt(d.versions, d.version, '')}</select>
+      <span class="vx">compared with</span>
+      <select id="rvs">${opt(d.versions.filter(x => x.v !== d.version), RV.vs, 'nothing')}</select>
+      <span class="vnote">${esc(here.title || '')}</span>
+      <span class="vcount">${d.checked} checked · ${d.tally.PAY.n} pay ·
+        ${d.tally.ESCALATE.n} review · ${d.tally['DO NOT PAY'].n} stopped</span>
+    </div>
+
+    ${a ? `<div class="dif">
+      <div class="dif-head">
+        <h3>${esc(a.version)} → ${esc(d.version)} · ${a.moved.length
+          ? `${a.moved.length} of ${d.checked} land differently`
+          : 'not one of the 500 lands differently'}</h3>
+        <p>${esc(here.title || '')} · ${esc(here.when || '')}${here.said
+          ? ` · you said: <span class="said2">“${esc(here.said)}”</span>` : ''}</p>
+      </div>
+      <div class="swing">
+        ${swing('Pay', 'pay', 'PAY')}
+        ${swing('Needs you', 'rev', 'ESCALATE')}
+        ${swing('Do not pay', 'stop', 'DO NOT PAY')}
+      </div>
+      <div class="dif-body">
+        ${!a.moved.length
+          ? `<div class="none7">The change is real, but nothing in this box touches it. Every one of
+             the ${d.checked} pages gets the same verdict under both.</div>`
+          : `<div class="moved">
+            <div class="mh"><span>File</span><span>Supplier</span>
+              <span style="text-align:right">Amount</span><span>${esc(a.version)} → ${esc(d.version)}</span>
+              <span>What decided it</span></div>
+            ${moved.map(m => `<div class="mr2" data-file="${esc(m.file)}">
+              <span class="c">${esc(m.file)}</span>
+              <span class="c sup">${esc(m.vendor)}</span>
+              <span class="c am2">${esc(money(m.total))}</span>
+              <span class="swap"><span class="kk was">${esc(m.was)}</span>
+                <span class="arr">→</span>
+                <span class="kk ${esc(m.now.replace(/[^A-Z]/g, ''))}">${esc(m.now)}</span></span>
+              <span class="c why2">${esc(m.why)}</span>
+            </div>`).join('')}
+            ${a.moved.length > moved.length
+              ? `<button class="more" id="more-moved">The other ${a.moved.length - moved.length}</button>`
+              : ''}
+            <div class="amt3" style="margin-top:12px">${esc(eur0(a.moved_eur))} of invoice value
+              sits on this change.</div>
+          </div>`}
+      </div>
+    </div>` : ''}
 
     <div class="chain">${d.rules.map(r => `
       <div class="rule" data-rule="${esc(r.name)}">
@@ -1448,6 +2046,7 @@ async function loadRules(){
             <span class="ds">${esc(r.does)}</span></span>
           <span class="ef ${esc(r.effect.replace(/[^A-Za-z]/g, ''))}">${esc(r.effect)}</span>
           <span class="ct">
+            ${delta(r)}
             <span class="tk"><i style="width:${r.n ? Math.max(6, r.n / worst * 100) : 0}%"></i></span>
             <span class="nq${r.n ? '' : ' zero'}">${r.n}</span></span>
           <span class="cv3"></span>
@@ -1456,19 +2055,31 @@ async function loadRules(){
           <div class="amt3">${r.n
             ? `stopped ${r.n} of ${d.checked} · ${esc(eur0(r.eur))} held back · ${r.share}% of the box`
             : (r.added ? 'added from a cluster, nothing has hit it yet'
-                       : 'nothing in the box fails this one')}</div>
+                       : 'nothing in the box fails this one')}${
+            r.delta !== undefined && !r.new && r.changed
+              ? ` · under ${esc(a.version)} it was ${esc(r.was_effect)}` : ''}${
+            r.new ? ` · ${esc(a.version)} did not run this rule at all` : ''}</div>
         </div></div></div>
       </div>`).join('')}</div>
 
     <div class="hist"><h3>What changed · ${d.history.length}</h3>
       ${d.history.map(h => `<div class="hr2">
         <span class="vj">${esc(h.from)} → ${esc(h.to)}</span>
-        <span><span class="tt">${esc(h.title)}</span><div class="qq">you said: “${esc(h.said)}”</div></span>
+        <span><span class="tt">${esc(h.title)}</span>${h.said
+          ? `<div class="qq">you said: “${esc(h.said)}”</div>` : ''}</span>
         <span class="wn">${esc(h.when)}</span></div>`).join('')}</div>`;
+
+  $('#rv').onchange = e => { RV.v = e.target.value; RV.shown = 25;
+                             if (RV.vs === RV.v) RV.vs = ''; loadRules(); };
+  $('#rvs').onchange = e => { RV.vs = e.target.value; RV.shown = 25; loadRules(); };
+  const more = $('#more-moved');
+  if (more) more.onclick = () => { RV.shown += 60; loadRules(); };
   rulesReady = true;
 }
 
 $('#view-rules').addEventListener('click', e => {
+  const mv = e.target.closest('.moved .mr2');
+  if (mv) return openDossier(mv.dataset.file);
   const top = e.target.closest('.rule-top');
   if (top) top.closest('.rule').classList.toggle('open');
 });

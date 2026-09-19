@@ -1,0 +1,334 @@
+{
+  "schema_version": "2.0",
+  "run_id": "2026-09-19T04:20:55Z",
+  "ruleset_version": "v3",
+  "policy_id": "strict",
+  "policy_class": "strict",
+  "metrics": {
+    "policy_class": "strict",
+    "risk_appetite": 0.85,
+    "escalation_bias": 0.25,
+    "authorization_threshold_eur": 5000.0,
+    "iban_mismatch_on_fail": "NO_PAGAR",
+    "soft_duplicate_verdict": "FAIL",
+    "amount_tolerance_eur": 0.01,
+    "require_erp_pending": true,
+    "enforce_payment_terms": true,
+    "check_nif_control_digit": true,
+    "enable_authorization": true,
+    "enable_new_rules_default": true
+  },
+  "generated_at": "2026-09-19T04:20:55Z",
+  "precedence": [
+    "NO_PAGAR",
+    "ESCALAR",
+    "PAGAR"
+  ],
+  "inputs": {
+    "store_schema_version": "1.1",
+    "discovered_folder": null
+  },
+  "rules": [
+    {
+      "id": "R1",
+      "origin": "canonical",
+      "canonical": "VENDOR",
+      "title": "Valid vendor and matching account",
+      "text": "The vendor exists in the master and is active; the NIF is in the master; the invoice IBAN matches the master's. Different IBAN -> fraud signal -> ESCALAR.",
+      "source_refs": [
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A2",
+          "quote": "1. Pagar solo si el NIF esta en el maestro y el IBAN de la factura coincide con el maestro.",
+          "method": "lexical",
+          "is_rule": 0.9922,
+          "maps_to_conf": 0.6667
+        }
+      ],
+      "method": "lexical",
+      "judge": {
+        "is_rule": 0.9922,
+        "maps_to_conf": 0.6667,
+        "maps_to": "VENDOR"
+      },
+      "enabled": true,
+      "on_fail": "NO_PAGAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "vendor_id",
+        "nif",
+        "iban"
+      ],
+      "params": {
+        "require_active": true,
+        "require_nif_in_master": true,
+        "require_iban_match": true,
+        "check_nif_control_digit": true
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_vendor",
+        "source": "def check_vendor(inv: dict, master: dict, params: dict) -> Verdict:\n    vendor = _find_vendor(inv, master)\n    if vendor is None:\n        return \"FAIL\", \"vendor not found in the master\"\n\n    if params.get(\"require_nif_in_master\", True):\n        if inv.get(\"nif\") and inv[\"nif\"] != vendor.get(\"nif\"):\n            return \"FAIL\", f\"NIF {inv['nif']} does not match the master ({vendor.get('nif')})\"\n\n    if params.get(\"require_iban_match\", True):\n        if inv.get(\"iban\") and inv[\"iban\"] != vendor.get(\"iban\"):\n            return \"FAIL\", \"invoice IBAN does not match the master's (possible fraud)\"\n\n    return \"PASS\", \"vendor, NIF and IBAN match the master\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    },
+    {
+      "id": "R2",
+      "origin": "canonical",
+      "canonical": "DUPLICATES",
+      "title": "No duplicate payments",
+      "text": "Same invoice + same vendor -> NO_PAGAR (already paid / double submit). Same amount + same date -> NEEDS_REVIEW. The ERP state of the order must be PENDIENTE; PAGADA -> already paid -> NO_PAGAR.",
+      "source_refs": [
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A6",
+          "quote": "5. Estado ERP del pedido: PENDIENTE. Nunca pagar dos veces el mismo pedido.",
+          "method": "lexical",
+          "is_rule": 0.9922,
+          "maps_to_conf": 0.8571
+        }
+      ],
+      "method": "lexical",
+      "judge": {
+        "is_rule": 0.9922,
+        "maps_to_conf": 0.8571,
+        "maps_to": "DUPLICATES"
+      },
+      "enabled": true,
+      "on_fail": "NO_PAGAR",
+      "soft_verdict": "NEEDS_REVIEW",
+      "input_fields": [
+        "invoice_number",
+        "vendor_id",
+        "amount",
+        "date",
+        "pedido"
+      ],
+      "params": {
+        "hard_key": [
+          "invoice_number",
+          "vendor_id"
+        ],
+        "soft_key": [
+          "amount",
+          "date"
+        ],
+        "require_erp_pending": true,
+        "soft_duplicate_verdict": "FAIL"
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_duplicates",
+        "source": "def check_duplicates(inv: dict, master: dict, params: dict) -> Verdict:\n    # already paid in the ERP (authoritative state) -> hard stop\n    if params.get(\"require_erp_pending\", True) and inv.get(\"pedido\"):\n        estado = master.get(\"erp_estado\", {}).get(inv[\"pedido\"])\n        if estado == \"PAGADA\":\n            return \"FAIL\", f\"order {inv['pedido']} is already marked PAGADA in the ERP\"\n\n    # same invoice + same vendor already processed -> hard stop\n    hard_key = (inv.get(\"invoice_number\"), inv.get(\"vendor_id\"))\n    if hard_key in master.get(\"seen_invoice_keys\", set()):\n        return \"FAIL\", \"same invoice and vendor already processed\"\n\n    # same amount + same date -> not certain, needs a human\n    soft_key = (str(inv.get(\"total\")), inv.get(\"date\"))\n    if soft_key in master.get(\"seen_amount_date\", set()):\n        return \"NEEDS_REVIEW\", \"same amount and date as another invoice\"\n\n    return \"PASS\", \"no signs of a duplicate payment\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    },
+    {
+      "id": "R3",
+      "origin": "canonical",
+      "canonical": "AMOUNT",
+      "title": "Amounts and VAT add up",
+      "text": "Line items sum to the base; VAT is correctly computed; total = base + VAT (±0.01); currency EUR; and the invoice amount matches the purchase-order amount (±0.01).",
+      "source_refs": [
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A3",
+          "quote": "2. El pedido debe existir, pertenecer al proveedor y el importe de la factura debe ser igual al del pedido (tolerancia 0,01 EUR).",
+          "method": "lexical",
+          "is_rule": 0.9922,
+          "maps_to_conf": 0.8333
+        },
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A4",
+          "quote": "3. El IVA debe estar bien calculado y el total debe ser base + IVA, con la misma tolerancia de 0,01 EUR.",
+          "method": "lexical",
+          "is_rule": 0.9922,
+          "maps_to_conf": 0.8571
+        }
+      ],
+      "method": "lexical",
+      "judge": {
+        "is_rule": 0.9922,
+        "maps_to_conf": 0.8452,
+        "maps_to": "AMOUNT"
+      },
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "line_items",
+        "base",
+        "iva",
+        "total",
+        "currency",
+        "pedido"
+      ],
+      "params": {
+        "tolerance_eur": 0.01,
+        "check_line_items_sum": true,
+        "check_iva": true,
+        "check_total_is_base_plus_iva": true,
+        "check_matches_pedido": true,
+        "allowed_currencies": [
+          "EUR"
+        ]
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_amount",
+        "source": "def check_amount(inv: dict, master: dict, params: dict) -> Verdict:\n    tol = _dec(params.get(\"tolerance_eur\", 0.01), \"0.01\")\n    base, iva, total = inv.get(\"base\"), inv.get(\"iva\"), inv.get(\"total\")\n\n    allowed = params.get(\"allowed_currencies\")\n    if allowed and inv.get(\"currency\") not in allowed:\n        return \"FAIL\", f\"currency {inv.get('currency')} not allowed\"\n\n    if params.get(\"check_line_items_sum\", True) and inv.get(\"line_items\") and base is not None:\n        suma = sum(inv[\"line_items\"])\n        if abs(suma - base) > tol:\n            return \"FAIL\", f\"line items sum to {suma}, not the base {base}\"\n\n    if params.get(\"check_total_is_base_plus_iva\", True) and None not in (base, iva, total):\n        if abs((base + iva) - total) > tol:\n            return \"FAIL\", f\"total {total} ≠ base+VAT ({base + iva})\"\n\n    if params.get(\"check_matches_pedido\", True) and total is not None:\n        ped = master[\"pedidos\"].get(inv.get(\"pedido\"))\n        if ped is not None and ped.get(\"importe_total\") is not None:\n            if abs(total - ped[\"importe_total\"]) > tol:\n                return \"FAIL\", f\"total {total} ≠ purchase-order amount {ped['importe_total']}\"\n\n    return \"PASS\", \"amounts, VAT and total add up\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    },
+    {
+      "id": "R4",
+      "origin": "canonical",
+      "canonical": "AUTHORIZATION",
+      "title": "Amount-based authorization (threshold)",
+      "text": "Amount above a threshold -> requires human approval (ESCALAR). Our addition; OFF in the v3 norm profile.",
+      "source_refs": [],
+      "method": "predefined",
+      "judge": {
+        "is_rule": null,
+        "maps_to_conf": null,
+        "maps_to": null
+      },
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "total"
+      ],
+      "params": {
+        "escalate_above_eur": 5000.0
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_authorization",
+        "source": "def check_authorization(inv: dict, master: dict, params: dict) -> Verdict:\n    threshold = _dec(params.get(\"escalate_above_eur\", 10000), \"10000\")\n    total = inv.get(\"total\")\n    if total is not None and total > threshold:\n        return \"NEEDS_REVIEW\", f\"amount {total} exceeds threshold {threshold}: requires approval\"\n    return \"PASS\", \"amount below the authorization threshold\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    },
+    {
+      "id": "R5",
+      "origin": "canonical",
+      "canonical": "DATES",
+      "title": "Valid dates within payment terms",
+      "text": "The date is valid and not in the future; and it falls within the vendor's payment terms (Condiciones, e.g. '60 dias').",
+      "source_refs": [
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A5",
+          "quote": "4. La fecha debe ser valida y no futura.",
+          "method": "lexical",
+          "is_rule": 0.9608,
+          "maps_to_conf": 1.0
+        }
+      ],
+      "method": "lexical",
+      "judge": {
+        "is_rule": 0.9608,
+        "maps_to_conf": 1.0,
+        "maps_to": "DATES"
+      },
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "date",
+        "vendor_id"
+      ],
+      "params": {
+        "allow_future": false,
+        "enforce_payment_terms": true
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_dates",
+        "source": "def check_dates(inv: dict, master: dict, params: dict) -> Verdict:\n    date = inv.get(\"date\")\n    if date is None:\n        return \"PASS\", \"no date (covered by the required-fields rule)\"\n\n    if not params.get(\"allow_future\", False) and is_future(date, master.get(\"today\")):\n        return \"FAIL\", f\"date {date} is in the future\"\n\n    if params.get(\"enforce_payment_terms\", True):\n        vendor = _find_vendor(inv, master)\n        dias = payment_terms_days(vendor.get(\"condiciones\")) if vendor else None\n        if dias is not None and master.get(\"today\"):\n            # overdue beyond the vendor's payment window -> a human should look\n            from datetime import date as _date\n            y, m, d = (int(x) for x in date.split(\"-\"))\n            ty, tm, td = (int(x) for x in master[\"today\"].split(\"-\"))\n            if (_date(ty, tm, td) - _date(y, m, d)).days > dias:\n                return \"NEEDS_REVIEW\", f\"invoice overdue: more than {dias} days since {date}\"\n\n    return \"PASS\", \"date valid, not future, and within terms\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    },
+    {
+      "id": "R6",
+      "origin": "canonical",
+      "canonical": "MISSING",
+      "title": "Required fields present",
+      "text": "Missing required data (NIF / IBAN / PEDIDO / IMPORTE / IVA / FECHA) -> ESCALAR so a human can complete them.",
+      "source_refs": [
+        {
+          "file": "FINAL_v7_DEFINITIVO_ahorasi.xlsx",
+          "sheet": "Norma_Pagos_v3",
+          "cell": "A7",
+          "quote": "6. Cualquier anomalia que un humano deba ver: ESCALAR con motivo. Ante duda razonable, escalar antes que pagar.",
+          "method": "lexical",
+          "is_rule": 0.9241,
+          "maps_to_conf": 0.8333
+        }
+      ],
+      "method": "lexical",
+      "judge": {
+        "is_rule": 0.9241,
+        "maps_to_conf": 0.8333,
+        "maps_to": "MISSING"
+      },
+      "enabled": true,
+      "on_fail": "ESCALAR",
+      "soft_verdict": null,
+      "input_fields": [
+        "nif",
+        "iban",
+        "pedido",
+        "importe",
+        "iva",
+        "fecha"
+      ],
+      "params": {
+        "required_fields": [
+          "nif",
+          "iban",
+          "pedido",
+          "importe",
+          "iva",
+          "fecha"
+        ]
+      },
+      "condition": {
+        "kind": "python_check",
+        "module": "rules_ingestion.checks",
+        "function": "check_missing",
+        "source": "def check_missing(inv: dict, master: dict, params: dict) -> Verdict:\n    required = params.get(\"required_fields\", list(_FIELD_MAP))\n    missing = [f for f in required\n               if inv.get(_FIELD_MAP.get(f, f)) in (None, \"\")]\n    if missing:\n        return \"FAIL\", \"missing required fields: \" + \", \".join(missing)\n    return \"PASS\", \"all required fields are present\"\n"
+      },
+      "demoted": false,
+      "demote_reason": null
+    }
+  ],
+  "rejected": [],
+  "stats": {
+    "rules_total": 6,
+    "canonical": 6,
+    "new_agent": 0,
+    "new_deepseek": 0,
+    "enabled": 6,
+    "demoted": 0,
+    "rejected": 0,
+    "discovery_candidates": null,
+    "new_compiled": 0
+  }
+}
