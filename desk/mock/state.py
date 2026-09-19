@@ -359,7 +359,11 @@ def batch_block(b):
     if b["escalate"]:
         acts.append({"label": f"Start with the {b['escalate']} escalated", "kind": "primary",
                      "ask": "which invoices do I need to review"})
-    acts += [{"label": "See the whole batch"}, {"label": "See the batch trace", "kind": "quiet"}]
+    # Both used to carry only a label: the click handler dispatches on
+    # data-ask/-ui/-act, so a bare label rendered a button that did nothing.
+    acts += [{"label": "See the whole batch", "ui": "invoices"},
+             {"label": "See the batch trace", "kind": "quiet",
+              "ask": "how did it go"}]
     return {"id": "batch", "title": b["label"],
             "meta": f"{b['total']} invoices · {b['size']} · {b['seconds']} · demo",
             "rows": rows, "actions": acts}
@@ -561,7 +565,11 @@ from pathlib import Path as _Path
 _ROOT = _Path(__file__).resolve().parents[2]
 if str(_ROOT) not in _sys.path:
     _sys.path.insert(0, str(_ROOT))          # so `desk.master` resolves from here
-CAJA = _ROOT / "facturas"
+from backend import caja_paths as _cp  # noqa: E402  (needs _ROOT on sys.path)
+
+# La Caja moved out of the repo root; caja_paths resolves ALBERTO_CAJA,
+# then caja/, then the newest snapshot.
+CAJA = _cp.facturas()
 # The box holds a year of invoices. The run is dated just after the newest one
 # in it, so "past due" means what it would have meant on the day of the run --
 # not "old because the fixture is old".

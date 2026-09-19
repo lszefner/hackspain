@@ -5,6 +5,7 @@ import zipfile
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
+from backend import caja_paths
 from rules_ingestion import normalize as N
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -19,7 +20,10 @@ COLUMNS = {
 }
 
 
-def load(path: Path = ROOT / "FINAL_v7_DEFINITIVO_ahorasi.xlsx") -> tuple[dict, dict]:
+def load(path: Path | None = None) -> tuple[dict, dict]:
+    # La Caja moved out of the repo root; caja_paths resolves ALBERTO_CAJA,
+    # then caja/, then the newest snapshot.
+    path = path or caja_paths.excel()
     with zipfile.ZipFile(path) as book:
         shared = []
         if "xl/sharedStrings.xml" in book.namelist():
