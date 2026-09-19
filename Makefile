@@ -1,4 +1,4 @@
-PYTHON ?= python3
+PYTHON ?= uv run python
 ERP_PORT ?= 8009
 ERP_HOST ?= 127.0.0.1
 LOTE2_ERP ?= ../lote_2_sorpresa/erp_export_lote2.csv
@@ -9,11 +9,15 @@ LOTE2_ERP ?= ../lote_2_sorpresa/erp_export_lote2.csv
 # v10 vaya despues de v9 y no antes, como haria el orden alfabetico.
 INSTANTANEA := $(shell ls -d caja_de_alberto/v* 2>/dev/null | sort -V | tail -1)
 ERP := $(PYTHON) caja/alberto_erp.py --puerto $(ERP_PORT)
+# La centralita lee ELEVENLABS_API_KEY del entorno. Esto carga .env en la
+# shell de la receta, sin que make lo parsee (un valor con espacios o con `#`
+# lo rompe) y sin que quede nada en el propio Makefile.
+CON_ENV := set -a; [ -f .env ] && . ./.env; set +a;
 
 .DEFAULT_GOAL := help
 POLICY ?= balanced
 SCAN_INPUT ?= rules_ingestion/eval/fixtures
-.PHONY: help erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
+.PHONY: help centralita export voces erp erp-fast erp-lote2 erp-lote2-fast erp-status erp-login rules rules-offline rules-all-policies scan scan-gen test eval-fixtures eval-score eval-score-live e2e-fixtures e2e-score e2e-score-live
 
 help: ## Show participant commands.
 	@printf '%s\n' '500 Sombras de Alberto' '' 'Commands:'
@@ -27,6 +31,19 @@ caja: ## Seed the live Caja (caja/) from the newest snapshot.
 	@cp -R "$(INSTANTANEA)" caja
 	@rm -f caja/MANIFIESTO.sha256 caja/PROCEDENCIA.md
 	@echo "caja/ sembrada desde $(INSTANTANEA) ($$(ls caja/facturas | wc -l | tr -d ' ') facturas)"
+
+export: ## Extract + evaluate the demo invoices offline into phone_calls/datos/.
+	@$(CON_ENV) $(PYTHON) -m phone_calls.exportar
+
+voces: ## Pre-render the demo's spoken lines (ElevenLabs if keyed, else `say`).
+	@$(CON_ENV) $(PYTHON) -m phone_calls.voz
+
+centralita: ## Voice agent for supplier calls, on port 8011 (needs `make export`).
+	@test -f phone_calls/datos/maestro.json || { echo "falta el export: corre `make export`"; exit 1; }
+	@# Con '-': sin `say` no hay audio pregrabado, pero la centralita arranca
+	@# igual y habla el navegador. Quedarse sin demo por eso seria absurdo.
+	-@$(CON_ENV) $(PYTHON) -m phone_calls.voz >/dev/null 2>&1
+	@$(CON_ENV) $(PYTHON) -m phone_calls.servidor --puerto 8011
 
 erp: caja ## Start the local ERP on port 8009.
 	$(ERP)

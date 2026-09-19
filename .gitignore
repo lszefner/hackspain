@@ -38,3 +38,9 @@ nueva.db
 # Frontend
 **/frontend/node_modules/
 **/frontend/.next/
+
+# Centralita (phone_calls): los artefactos intermedios del OCR y el audio
+# sintetizado se rehacen con `make export` y `make voces`. Los expedientes y
+# las extracciones SI se commitean: sin ellas habria que volver a pagar OCR.
+phone_calls/datos/extraccion/objetos/
+phone_calls/.voz/
