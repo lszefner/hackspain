@@ -1,46 +1,50 @@
 /* Se proyecta en una sala. Nada por debajo de 15px, contraste alto y el
-   panel del silencio en rojo: es lo que tiene que ver el jurado. */
+   panel del silencio en rojo: es lo que tiene que ver el jurado.
+
+   La paleta es la de la mesa (`desk/mock/index.html`), token a token y con
+   los mismos nombres: papel calido, tinta marron y los tres colores del
+   veredicto. Asi la centralita no parece otra aplicacion cuando se llega a
+   ella desde la portada, y cambiar la identidad se hace en un sitio.
+
+   Sin modo oscuro a proposito: ninguna otra pantalla lo tiene, y tenerlo
+   aqui significaba que en un portatil con el sistema en oscuro esta pagina
+   -- y solo esta -- se veia de otro color. */
 :root {
-  --fondo: #f6f7f9;
-  --papel: #ffffff;
-  --tinta: #14181f;
-  --suave: #5b6675;
-  --linea: #dde1e7;
-  --azul: #1d4ed8;
-  --verde: #12805c;
-  --ambar: #a15c00;
-  --rojo: #b3261e;
-  --rojo-fondo: #fdf2f1;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --fondo: #0e1116; --papel: #161b22; --tinta: #e8ecf1; --suave: #97a3b2;
-    --linea: #2a323d; --azul: #6d9bff; --verde: #3fcf9a; --ambar: #e0a340;
-    --rojo: #ff8177; --rojo-fondo: #2a1a19;
-  }
-}
-:root[data-theme="dark"] {
-  --fondo: #0e1116; --papel: #161b22; --tinta: #e8ecf1; --suave: #97a3b2;
-  --linea: #2a323d; --azul: #6d9bff; --verde: #3fcf9a; --ambar: #e0a340;
-  --rojo: #ff8177; --rojo-fondo: #2a1a19;
+  --bg: #fbf9f5;
+  --panel: #ffffff;
+  --ink: #2b1f16;
+  --mut: #7b6a5c;
+  --faint: #a49486;
+  --line: #e9e2d8;
+  --line2: #d9cec0;
+  --accent: #4a3324;
+  --pay: #4a6b2f;
+  --esc: #9a6412;
+  --no: #a33124;
+  --pay-soft: #eef3e7;
+  --esc-soft: #faf1e2;
+  --no-soft: #faebe8;
+  --chip: #f3efe8;
+  --chip2: #eae4da;
+  --shadow: 0 1px 2px rgba(60, 40, 24, .05), 0 6px 18px rgba(60, 40, 24, .06);
 }
 
 * { box-sizing: border-box; }
 body {
-  margin: 0; background: var(--fondo); color: var(--tinta);
+  margin: 0; background: var(--bg); color: var(--ink);
   font: 16px/1.5 ui-sans-serif, -apple-system, "Segoe UI", system-ui, sans-serif;
 }
 code, .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; }
 
-header { padding: 20px 24px 12px; border-bottom: 1px solid var(--linea); }
+header { padding: 20px 24px 12px; border-bottom: 1px solid var(--line); }
 .marca { display: flex; align-items: center; gap: 10px; }
 h1 { font-size: 20px; margin: 0; letter-spacing: -0.01em; }
 .punto {
   width: 11px; height: 11px; border-radius: 50%;
-  background: var(--linea); flex: none;
+  background: var(--line2); flex: none;
 }
-.punto.viva { background: var(--verde); box-shadow: 0 0 0 4px color-mix(in srgb, var(--verde) 22%, transparent); }
-.fuente { margin: 6px 0 0; color: var(--suave); font-size: 13px; }
+.punto.viva { background: var(--pay); box-shadow: 0 0 0 4px color-mix(in srgb, var(--pay) 22%, transparent); }
+.fuente { margin: 6px 0 0; color: var(--mut); font-size: 13px; }
 
 main {
   display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -49,113 +53,122 @@ main {
 @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
 
 section, aside > div, .sinPanel {
-  background: var(--papel); border: 1px solid var(--linea); border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  box-shadow: var(--shadow);
 }
 .llamada { padding: 16px; }
 
 .barra { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 button {
   font: inherit; font-size: 15px; border-radius: 8px; padding: 8px 14px;
-  border: 1px solid var(--linea); background: var(--papel); color: var(--tinta);
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink);
   cursor: pointer;
 }
+button:hover:not(:disabled) { background: var(--chip2); border-color: var(--line2); }
 button:disabled { opacity: .45; cursor: default; }
-.primario { background: var(--azul); border-color: var(--azul); color: #fff; }
-.micro { background: var(--verde); border-color: var(--verde); color: #fff; }
+.primario { background: var(--accent); border-color: var(--accent); color: #fff; }
+.primario:hover:not(:disabled) { background: #2f3033; border-color: #2f3033; }
+.micro { background: var(--pay); border-color: var(--pay); color: #fff; }
+.micro:hover:not(:disabled) { background: var(--pay); border-color: var(--pay); }
 .micro.escuchando { animation: latido 1.1s ease-in-out infinite; }
 @keyframes latido { 50% { opacity: .55; } }
-.estado { color: var(--suave); font-size: 13px; margin-left: auto; }
+.estado { color: var(--mut); font-size: 13px; margin-left: auto; }
 
 .conversacion {
   min-height: 260px; max-height: 52vh; overflow-y: auto;
   display: flex; flex-direction: column; gap: 10px; padding: 4px;
 }
-.vacio { color: var(--suave); margin: auto; text-align: center; font-size: 15px; }
+.vacio { color: var(--mut); margin: auto; text-align: center; font-size: 15px; }
 .burbuja { max-width: 84%; padding: 10px 13px; border-radius: 12px; font-size: 16px; }
+/* El agente lleva la tinta de la marca; quien llama, el gris de la mesa.
+   Es la misma convencion que el hilo del desk: lo que dice el sistema pesa
+   mas que lo que se le dice. */
 .burbuja.agente {
-  background: color-mix(in srgb, var(--azul) 10%, var(--papel));
-  border: 1px solid color-mix(in srgb, var(--azul) 26%, var(--linea));
+  background: color-mix(in srgb, var(--accent) 6%, var(--panel));
+  border: 1px solid color-mix(in srgb, var(--accent) 20%, var(--line));
   align-self: flex-start; border-bottom-left-radius: 3px;
 }
 .burbuja.proveedor {
-  background: color-mix(in srgb, var(--tinta) 7%, var(--papel));
-  border: 1px solid var(--linea);
+  background: var(--chip);
+  border: 1px solid var(--line);
   align-self: flex-end; border-bottom-right-radius: 3px;
 }
 .burbuja.interina { opacity: .55; font-style: italic; }
 .quien { display: block; font-size: 11px; text-transform: uppercase;
-         letter-spacing: .05em; color: var(--suave); margin-bottom: 3px; }
+         letter-spacing: .05em; color: var(--mut); margin-bottom: 3px; }
 
 .entrada { display: flex; gap: 8px; margin-top: 14px; }
 .entrada input {
   flex: 1; font: inherit; font-size: 16px; padding: 9px 12px;
-  border: 1px solid var(--linea); border-radius: 8px;
-  background: var(--fondo); color: var(--tinta);
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--ink);
 }
+.entrada input::placeholder { color: var(--faint); }
+.entrada input:focus { outline: none; border-color: var(--line2);
+                       background: var(--panel); }
 .grabadas { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .grabadas button { font-size: 13px; padding: 7px 11px; text-align: left; }
 .aviso {
   margin: 12px 0 0; padding: 9px 12px; border-radius: 8px; font-size: 14px;
-  background: var(--rojo-fondo); color: var(--rojo);
-  border: 1px solid color-mix(in srgb, var(--rojo) 35%, transparent);
+  background: var(--no-soft); color: var(--no);
+  border: 1px solid color-mix(in srgb, var(--no) 28%, var(--line));
 }
 
 /* ---- el panel que importa ---- */
 .silencio {
   padding: 16px; margin-bottom: 20px;
-  background: var(--rojo-fondo);
-  border: 2px solid color-mix(in srgb, var(--rojo) 55%, transparent);
+  background: var(--no-soft);
+  border: 2px solid color-mix(in srgb, var(--no) 45%, transparent);
 }
-.silencio h2 { margin: 0 0 12px; font-size: 16px; color: var(--rojo); }
+.silencio h2 { margin: 0 0 12px; font-size: 16px; color: var(--no); }
 .silencio dl { margin: 0; display: grid; gap: 9px; }
 .silencio dt {
   font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
-  color: var(--rojo); opacity: .85;
+  color: var(--no); opacity: .85;
 }
 .silencio dd {
   margin: 2px 0 0; font-family: ui-monospace, "SF Mono", Menlo, monospace;
   font-size: 15px; word-break: break-all;
 }
-.porque { margin: 12px 0 0; font-size: 13px; color: var(--suave); line-height: 1.45; }
+.porque { margin: 12px 0 0; font-size: 13px; color: var(--mut); line-height: 1.45; }
 
 .panel { padding: 16px; }
 .panel h2 { margin: 0 0 12px; font-size: 16px; }
 .cabecera { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 14px; }
 .cabecera dt { font-size: 11px; text-transform: uppercase;
-               letter-spacing: .05em; color: var(--suave); }
+               letter-spacing: .05em; color: var(--mut); }
 .cabecera dd { margin: 2px 0 0; font-size: 15px;
                font-family: ui-monospace, "SF Mono", Menlo, monospace;
                word-break: break-all; }
 
+/* Fondo suave y texto del color, sin borde: es como pinta la mesa sus
+   veredictos (`.vd.PAY`, `.vd.DONOTPAY`). */
 .veredicto { margin: 0 0 12px; display: flex; align-items: baseline;
              gap: 10px; flex-wrap: wrap; }
 .veredicto span {
   font-weight: 650; font-size: 13px; letter-spacing: .04em;
-  padding: 4px 9px; border-radius: 6px; border: 1px solid;
+  padding: 4px 9px; border-radius: 6px; border: 1px solid transparent;
 }
-.veredicto span.PAGAR { color: var(--verde); border-color: var(--verde);
-  background: color-mix(in srgb, var(--verde) 12%, transparent); }
-.veredicto span.ESCALAR { color: var(--ambar); border-color: var(--ambar);
-  background: color-mix(in srgb, var(--ambar) 12%, transparent); }
-.veredicto span.NO_PAGAR { color: var(--rojo); border-color: var(--rojo);
-  background: color-mix(in srgb, var(--rojo) 12%, transparent); }
-.veredicto em { font-style: normal; color: var(--suave); font-size: 14px; }
+.veredicto span.PAGAR { color: var(--pay); background: var(--pay-soft); }
+.veredicto span.ESCALAR { color: var(--esc); background: var(--esc-soft); }
+.veredicto span.NO_PAGAR { color: var(--no); background: var(--no-soft); }
+.veredicto em { font-style: normal; color: var(--mut); font-size: 14px; }
 
 .reglas { list-style: none; margin: 0; padding: 0;
-          border-top: 1px solid var(--linea); }
-.reglas li { padding: 9px 2px; border-bottom: 1px solid var(--linea);
+          border-top: 1px solid var(--line); }
+.reglas li { padding: 9px 2px; border-bottom: 1px solid var(--line);
              display: flex; gap: 10px; align-items: baseline; }
 .reglas b { font-size: 11px; letter-spacing: .04em; width: 62px; flex: none; }
-.reglas .PASA { color: var(--verde); }
-.reglas .FALLA { color: var(--rojo); }
-.reglas .NA { color: var(--ambar); }
-.reglas code { font-size: 12.5px; color: var(--suave); word-break: break-all; }
+.reglas .PASA { color: var(--pay); }
+.reglas .FALLA { color: var(--no); }
+.reglas .NA { color: var(--esc); }
+.reglas code { font-size: 12.5px; color: var(--mut); word-break: break-all; }
 .reglas .id { font-size: 13px; width: 122px; flex: none; }
 
 .notas { margin: 12px 0 0; padding: 9px 12px; font-size: 14px;
-         border-radius: 8px; background: var(--fondo);
-         border-left: 3px solid var(--ambar); }
-.procedencia { margin: 12px 0 0; font-size: 11.5px; color: var(--suave);
+         border-radius: 8px; background: var(--chip);
+         border-left: 3px solid var(--esc); }
+.procedencia { margin: 12px 0 0; font-size: 11.5px; color: var(--faint);
                font-family: ui-monospace, Menlo, monospace; line-height: 1.6;
                word-break: break-all; }
-.sinPanel { padding: 16px; color: var(--suave); font-size: 14px; margin: 0; }
+.sinPanel { padding: 16px; color: var(--mut); font-size: 14px; margin: 0; }
