@@ -1,0 +1,205 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4819_informática.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "FACTURA SIMPLIFICADA Nº FA-4819",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "Fecha: 04/03/2026   Pedido asociado: PO-2026-0136",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "Emisor: Informática Benimámet S.L.  · NIF B98455101  · Valencia",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "paragraph",
+          "text": "IBAN: ES27 0239 0806 6671 2233 4455",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "Destinatario: Banco Miralmar S.A. (CIF A58231074)",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "table",
+          "text": "",
+          "rows": [
+            {
+              "id": "p1-b006-r01",
+              "cells": [
+                {
+                  "id": "p1-b006-r01-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Concepto"
+                },
+                {
+                  "id": "p1-b006-r01-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Uds"
+                },
+                {
+                  "id": "p1-b006-r01-c3",
+                  "column": 3,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Importe"
+                }
+              ]
+            },
+            {
+              "id": "p1-b006-r02",
+              "cells": [
+                {
+                  "id": "p1-b006-r02-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Cuota de servicio"
+                },
+                {
+                  "id": "p1-b006-r02-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1"
+                },
+                {
+                  "id": "p1-b006-r02-c3",
+                  "column": 3,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1.492,27"
+                }
+              ]
+            },
+            {
+              "id": "p1-b006-r03",
+              "cells": [
+                {
+                  "id": "p1-b006-r03-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Transporte urgente"
+                },
+                {
+                  "id": "p1-b006-r03-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1"
+                },
+                {
+                  "id": "p1-b006-r03-c3",
+                  "column": 3,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "2.894,10"
+                }
+              ]
+            },
+            {
+              "id": "p1-b006-r04",
+              "cells": [
+                {
+                  "id": "p1-b006-r04-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "Cuota de servicio"
+                },
+                {
+                  "id": "p1-b006-r04-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "1"
+                },
+                {
+                  "id": "p1-b006-r04-c3",
+                  "column": 3,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "135,66"
+                }
+              ]
+            }
+          ],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "BASE IMPONIBLE: 4.522,03",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "paragraph",
+          "text": "I.V.A. (21%): 949,63",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "IMPORTE TOTAL: 5.471,66",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": [
+        {
+          "description": "Printed dashed horizontal rule around table.",
+          "reference_ids": [
+            "p1-b006"
+          ]
+        },
+        {
+          "description": "Printed dashed horizontal rule around table.",
+          "reference_ids": [
+            "p1-b006"
+          ]
+        }
+      ]
+    }
+  ]
+}

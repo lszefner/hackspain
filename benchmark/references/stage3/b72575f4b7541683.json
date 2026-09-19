@@ -1,0 +1,55 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_008.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-7412",
+  "issue_date": "2026-05-29",
+  "purchase_order_reference": "PO-2026-0484",
+  "currency": "EUR",
+  "supplier": {
+    "name": null,
+    "tax_id": "B90233808",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES9368884400123588900142"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Cuota de servicio",
+      "quantity": null,
+      "amount": "1698.74"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "356.74"
+    }
+  ],
+  "totals": {
+    "taxable_base": "1698.74",
+    "total": "2055.48"
+  },
+  "annotations": [],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/supplier/name",
+      "kind": "unreadable",
+      "raw_text": "Mensajer�a R�pida del Sur S.L.",
+      "candidates": [
+        "Mensajería Rápida del Sur S.L."
+      ]
+    }
+  ]
+}

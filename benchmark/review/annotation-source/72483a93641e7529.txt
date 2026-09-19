@@ -1,0 +1,23 @@
+FACTURA SIMPLIFICADA Nº FA-4819
+Fecha: 04/03/2026   Pedido asociado: PO-2026-0136
+
+Emisor: Informática Benimámet S.L.  · NIF B98455101  · Valencia
+IBAN: ES27 0239 0806 6671 2233 4455
+
+Destinatario: Banco Miralmar S.A. (CIF A58231074)
+
+Concepto               Uds   Importe
+--------------------------------------------------------------------------
+Cuota de servicio              1    1.492,27
+Transporte urgente             1    2.894,10
+Cuota de servicio              1     135,66
+--------------------------------------------------------------------------
+BASE IMPONIBLE: 4.522,03
+I.V.A. (21%): 949,63
+IMPORTE TOTAL: 5.471,66
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

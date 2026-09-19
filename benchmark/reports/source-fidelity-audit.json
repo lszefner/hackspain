@@ -1,0 +1,44 @@
+{
+  "method": "Inspect every page object with PDFium and decode native image bitmap; inspect embedded text separately. No model or provider calls.",
+  "documents": [
+    {
+      "file_id": "scan_023.pdf",
+      "source_sha256": "06a1a3d6ff1a545e7d171b850e99107d6ff37d5fd72152ba2c5ca5e5d8a85fbc",
+      "pages": [
+        {
+          "page": 1,
+          "embedded_text_characters": 0,
+          "objects": [
+            {
+              "object_type": 3,
+              "native_image_size": [
+                496,
+                701
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "file_id": "scan_025.pdf",
+      "source_sha256": "7c20bd53318f9e8c80258bcf19807bbde07ed73e81ce8824bfaabe5f070cfb15",
+      "pages": [
+        {
+          "page": 1,
+          "embedded_text_characters": 0,
+          "objects": [
+            {
+              "object_type": 3,
+              "native_image_size": [
+                1654,
+                2338
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "conclusion": "Exact transcription of the smudged foreground tax-ID digit and tiny footer in scan_023 cannot be independently established from the supplied pixels. Core-field scores exclude uncertain reference fields and do not prove this requirement. A clearer original or trusted transcription is needed for full verification."
+}

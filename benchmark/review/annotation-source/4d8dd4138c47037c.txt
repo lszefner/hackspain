@@ -1,0 +1,21 @@
+INFORMÁTICA BENIMÁMET S.L.
+NIF: B98455101   |  Valencia
+IBAN: ES27 0239 0806 6671 2233 4455
+
+Invoice # FA-3788
+Fecha factura: 12/05/2026  PO: PO-2026-0036
+
+Bill to: Banco Miralmar S.A. (CIF: A58231074)
+
+- Servicio de limpieza (1 ud): EUR 2304.69
+- Reparación equipo (1 ud): EUR 344.38
+
+Subtotal: EUR 2649.07
+IVA (21%): EUR 556.30
+TOTAL A PAGAR: EUR 3205.37
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

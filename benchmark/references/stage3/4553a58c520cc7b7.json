@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-11_P007.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-3566",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0167",
+  "currency": null,
+  "supplier": {
+    "name": "Papelería Ruzafa S.C.",
+    "tax_id": "J40112358",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES5531590012348765123407"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Cuota de servicio",
+      "quantity": null,
+      "amount": "328.73"
+    },
+    {
+      "position": 2,
+      "description": "Suministro pedido",
+      "quantity": null,
+      "amount": "2103.87"
+    },
+    {
+      "position": 3,
+      "description": "Consumibles",
+      "quantity": null,
+      "amount": "4141.99"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "1380.66"
+    }
+  ],
+  "totals": {
+    "taxable_base": "6574.59",
+    "total": "7955.25"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "11/01/2026",
+      "candidates": [
+        "2026-01-11",
+        "2026-11-01"
+      ]
+    }
+  ]
+}

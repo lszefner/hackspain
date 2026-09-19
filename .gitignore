@@ -1,10 +1,15 @@
 .DS_Store
 .env
 .env.local
+.env.*
+!.env.example
 *.local
 __pycache__/
 *.pyc
 .venv/
+.pytest_cache/
+benchmark/runs/
+benchmark/review/pages/
 
 # pipeline run artifacts
 rules_ingestion/outcome/*/rules.discovered*.json
@@ -19,4 +24,3 @@ rules_ingestion/outcome/rules.store.json
 rules_ingestion/outcome/rules.merged.json
 rules_ingestion/outcome/rules.discovered*.json
 rules_ingestion/outcome/*/rules.json
-

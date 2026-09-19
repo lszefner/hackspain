@@ -1,0 +1,121 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4125_transportes.pdf",
+  "capabilities": {
+    "block_kinds": true,
+    "tables": true,
+    "layout": false
+  },
+  "pages": [
+    {
+      "page": 1,
+      "blocks": [
+        {
+          "id": "p1-b001",
+          "kind": "heading",
+          "text": "TRANSPORTES GUADAIRA S.A.",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b002",
+          "kind": "paragraph",
+          "text": "NIF A41220987  SEVILLA",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b003",
+          "kind": "paragraph",
+          "text": "CUENTA DE ABONO (IBAN): ES76 2100 0813 6101 2345 6789",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b004",
+          "kind": "heading",
+          "text": "REF FACTURA: FA-4125",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b005",
+          "kind": "paragraph",
+          "text": "FECHA: 30/01/2026",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b006",
+          "kind": "paragraph",
+          "text": "PEDIDO CLIENTE: PO-2026-0298",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b007",
+          "kind": "paragraph",
+          "text": "CLIENTE: BANCO MIRALMAR S.A.  CIF A58231074",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b008",
+          "kind": "table",
+          "text": "",
+          "rows": [
+            {
+              "id": "p1-b008-r01",
+              "cells": [
+                {
+                  "id": "p1-b008-r01-c1",
+                  "column": 1,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "CUOTA DE SERVICIO"
+                },
+                {
+                  "id": "p1-b008-r01-c2",
+                  "column": 2,
+                  "row_span": 1,
+                  "column_span": 1,
+                  "text": "3.332,41"
+                }
+              ]
+            }
+          ],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b009",
+          "kind": "paragraph",
+          "text": "BASE IMPONIBLE....................      3.332,41",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b010",
+          "kind": "paragraph",
+          "text": "IVA (21%)..........................        699,81",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b011",
+          "kind": "paragraph",
+          "text": "TOTAL.............................      4.032,22",
+          "rows": [],
+          "uncertainties": []
+        },
+        {
+          "id": "p1-b012",
+          "kind": "footer",
+          "text": "Documento generado por el sistema de facturacion del proveedor.",
+          "rows": [],
+          "uncertainties": []
+        }
+      ],
+      "non_text_elements": []
+    }
+  ]
+}

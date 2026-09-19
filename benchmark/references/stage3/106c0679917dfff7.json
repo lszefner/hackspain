@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-14_P002.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-2954",
+  "issue_date": "2026-01-14",
+  "purchase_order_reference": "PO-2026-0144",
+  "currency": null,
+  "supplier": {
+    "name": "TRANSPORTES GUADAIRA S.A.",
+    "tax_id": "A41220987",
+    "location": "SEVILLA",
+    "address": null
+  },
+  "customer": {
+    "name": "BANCO MIRALMAR S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES7621000813610123456789"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "MATERIAL DE OFICINA",
+      "quantity": null,
+      "amount": "416.89"
+    },
+    {
+      "position": 2,
+      "description": "SUMINISTRO PEDIDO",
+      "quantity": null,
+      "amount": "2035.38"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "514.98"
+    }
+  ],
+  "totals": {
+    "taxable_base": "2452.27",
+    "total": "2967.25"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

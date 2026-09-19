@@ -1,0 +1,57 @@
+{
+  "schema_version": "0.1",
+  "file_id": "FA-4673_informática.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-4673",
+  "issue_date": "2026-01-24",
+  "purchase_order_reference": "PO-2026-0180",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Informática Benimámet S.L.",
+    "tax_id": "B98455101",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": "Madrid",
+    "address": "Paseo de la Castellana 214, Madrid"
+  },
+  "payment": {
+    "iban": "ES2702390806667122334455"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Mantenimiento trimestral",
+      "quantity": "1",
+      "amount": "1131.82"
+    },
+    {
+      "position": 2,
+      "description": "Consumibles",
+      "quantity": "1",
+      "amount": "215.58"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "Cuota IVA",
+      "rate_percent": "21",
+      "amount": "282.95"
+    }
+  ],
+  "totals": {
+    "taxable_base": "1347.40",
+    "total": "1630.35"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": []
+}

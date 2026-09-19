@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "manifest",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "const": "0.1"
+    },
+    "selection_status": {
+      "enum": [
+        "awaiting_user_selection",
+        "selected",
+        "synthetic_fixture"
+      ]
+    },
+    "selection_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "documents": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "split": {
+            "enum": [
+              "development",
+              "held_out"
+            ]
+          }
+        },
+        "required": [
+          "file_id",
+          "path",
+          "sha256",
+          "split"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "selection_status",
+    "selection_source",
+    "documents"
+  ],
+  "additionalProperties": false
+}

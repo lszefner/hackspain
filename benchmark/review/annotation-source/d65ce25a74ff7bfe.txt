@@ -1,0 +1,21 @@
+FACTURA SIMPLIFICADA Nº FA-5377
+Fecha: 04/05/2026   Pedido asociado: PO-2026-0405
+
+Emisor: Electricidad Montcada S.A.  · NIF A46990201  · Valencia
+IBAN: ES35 2038 5778 9830 0076 5410
+
+Destinatario: Banco Miralmar S.A. (CIF A58231074)
+
+Concepto               Uds   Importe
+--------------------------------------------------------------------------
+Suministro pedido              1     964,44
+--------------------------------------------------------------------------
+BASE IMPONIBLE: 964,44
+I.V.A. (21%): 202,53
+IMPORTE TOTAL: 1.166,97
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

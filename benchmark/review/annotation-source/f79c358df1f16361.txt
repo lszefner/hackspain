@@ -1,0 +1,23 @@
+SEGURIDAD ALCORES S.L.
+NIF B91455230  SEVILLA
+CUENTA DE ABONO (IBAN): ES09 0073 0100 5105 0533 1902
+
+REF FACTURA: FA-4634
+FECHA: 26/05/2026
+PEDIDO CLIENTE: PO-2026-0069
+
+CLIENTE: BANCO MIRALMAR S.A.  CIF A58231074
+
+INSTALACIÓN                             1.527,70
+REPARACIÓN EQUIPO                          84,87
+SUMINISTRO PEDIDO                       6.874,63
+
+BASE IMPONIBLE....................      8.487,20
+IVA (21%)..........................      1.782,31
+TOTAL.............................     10.269,51
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

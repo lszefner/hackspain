@@ -1,0 +1,21 @@
+TRANSPORTES GUADAIRA S.A.
+NIF A41220987  SEVILLA
+CUENTA DE ABONO (IBAN): ES76 2100 0813 6101 2345 6789
+
+REF FACTURA: FA-4125
+FECHA: 30/01/2026
+PEDIDO CLIENTE: PO-2026-0298
+
+CLIENTE: BANCO MIRALMAR S.A.  CIF A58231074
+
+CUOTA DE SERVICIO                       3.332,41
+
+BASE IMPONIBLE....................      3.332,41
+IVA (21%)..........................        699,81
+TOTAL.............................      4.032,22
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

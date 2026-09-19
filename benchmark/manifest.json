@@ -1,0 +1,307 @@
+{
+  "schema_version": "0.1",
+  "selection_status": "selected",
+  "selection_source": "User instruction: first 10, middle 20, last 20. Unicode filename ascending over 500 PDFs; zero-based slices [0:10], [240:260], [480:500]. Split first 6/12/12 per group development, remaining held_out.",
+  "documents": [
+    {
+      "file_id": "2026-01-08_P001.pdf",
+      "path": "../facturas/2026-01-08_P001.pdf",
+      "sha256": "12a5e1eff4299d5bb0816e7d87aff2ba9be39928cf0478081d14067f02d22836",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-11_P007.pdf",
+      "path": "../facturas/2026-01-11_P007.pdf",
+      "sha256": "9aa687eb3bb56858e681e5626e1232a11af64c2cb0a1236d0b12068bf41a7407",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-12_P002.pdf",
+      "path": "../facturas/2026-01-12_P002.pdf",
+      "sha256": "f77481125c0e301eed174363319250230504aa46e92a0f5316d1f06ded1bd832",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-12_P010.pdf",
+      "path": "../facturas/2026-01-12_P010.pdf",
+      "sha256": "02fc01d5b3bd10f1de1c3e5cbc8937ff9394729594588d384573e22ed4b0d2dd",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-14_P002.pdf",
+      "path": "../facturas/2026-01-14_P002.pdf",
+      "sha256": "a477b8f1a801a4d01ea174302bb2808f7b8e6915e03cb6d0a7c069794a844cad",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-15_P003.pdf",
+      "path": "../facturas/2026-01-15_P003.pdf",
+      "sha256": "794835cd7ae3ec1a13f3553eee821c1d1c2a361f7633abe6b4e02627caf1db38",
+      "split": "development"
+    },
+    {
+      "file_id": "2026-01-16_P004.pdf",
+      "path": "../facturas/2026-01-16_P004.pdf",
+      "sha256": "dc54bdbf1be49124a94097c6997d05a0767ed774426c5259afd78062ecba1c5d",
+      "split": "held_out"
+    },
+    {
+      "file_id": "2026-01-17_P011.pdf",
+      "path": "../facturas/2026-01-17_P011.pdf",
+      "sha256": "f44fe37da2ec64dad5065723e09e37f29b75dec6ebc010e2b6806b4539180c05",
+      "split": "held_out"
+    },
+    {
+      "file_id": "2026-01-18_P005.pdf",
+      "path": "../facturas/2026-01-18_P005.pdf",
+      "sha256": "bad8be8c66ea5f8f20195ae456d559d2df0ade71242e4725ec99d2a164f7b41d",
+      "split": "held_out"
+    },
+    {
+      "file_id": "2026-01-22_P006.pdf",
+      "path": "../facturas/2026-01-22_P006.pdf",
+      "sha256": "49995c2c68ed9a8a091751d75ef250c9d295a01cd515d2c78ee9bc648c563eb1",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-3788_informática.pdf",
+      "path": "../facturas/FA-3788_informática.pdf",
+      "sha256": "7feb3c353e1de9bd9886be8062a36d7956ec2e8c5cc3d3669a61376be43e9752",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-3939_transportes.pdf",
+      "path": "../facturas/FA-3939_transportes.pdf",
+      "sha256": "1a388a5fc1800c52e32f26f1128adcfd4e643e5ab63d01717189d7819d9e9698",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4125_transportes.pdf",
+      "path": "../facturas/FA-4125_transportes.pdf",
+      "sha256": "ad60db2bbdf47044db02effa849ecec0e3143313ee7ea50c08adf651036cd8c3",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4290_mensajería.pdf",
+      "path": "../facturas/FA-4290_mensajería.pdf",
+      "sha256": "8db9c19e0019bf5ffa38f9072549a4b041023cd53f63f4cfac05577474568403",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4294_papelería.pdf",
+      "path": "../facturas/FA-4294_papelería.pdf",
+      "sha256": "301f442b7c9a9b56120ed3e96eae31d484bd5f230420ed239462c1f3c153c156",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4349_electricidad.pdf",
+      "path": "../facturas/FA-4349_electricidad.pdf",
+      "sha256": "5246ee98e8747b3cecc313e054a0fbf15c99e20800265903edd16ab5699153ea",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4385_informática.pdf",
+      "path": "../facturas/FA-4385_informática.pdf",
+      "sha256": "55893528976075bbf31296f2f6df6883707e037f02896f28d038b117809c8186",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4488_transportes.pdf",
+      "path": "../facturas/FA-4488_transportes.pdf",
+      "sha256": "beefc8285b5787fc074e887d3f5065e8f2cfab58f919765241ca7bfbc756231c",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4634_seguridad.pdf",
+      "path": "../facturas/FA-4634_seguridad.pdf",
+      "sha256": "da2ecedd22a8fad63f3c3ce09f07b3416e45f43bc24c0562889f5ea3abe3b227",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4666_transportes.pdf",
+      "path": "../facturas/FA-4666_transportes.pdf",
+      "sha256": "e969c76f674d27a6a6452db81db0782806a29dc2079897b566cfd4093b7c7c2b",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4673_informática.pdf",
+      "path": "../facturas/FA-4673_informática.pdf",
+      "sha256": "e059bd7ceb2eb7e0369ff0aae9fcf83199a2234e65fdaf1d409d330d9b1500cf",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4813_seguridad.pdf",
+      "path": "../facturas/FA-4813_seguridad.pdf",
+      "sha256": "9a6cf8d43481915d84333f9fb736bcddc6ed31cb5b80159843ed4e71ae35934d",
+      "split": "development"
+    },
+    {
+      "file_id": "FA-4816_seguridad.pdf",
+      "path": "../facturas/FA-4816_seguridad.pdf",
+      "sha256": "783a8c0c4370cc3328923280817fdf8ad10bf6ea082c1dbee67fafeb8f6bc15c",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-4819_informática.pdf",
+      "path": "../facturas/FA-4819_informática.pdf",
+      "sha256": "952c66c3f23db2c41e6e4fbcecc603d2b1f6dedeecdf2a2a613b4d0dc1b09654",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-4962_mensajería.pdf",
+      "path": "../facturas/FA-4962_mensajería.pdf",
+      "sha256": "55dc7f9262a63eea877775d4f69b51680900522d203876fe26ba2ddf3f8cbf44",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-5044_mensajería2.pdf",
+      "path": "../facturas/FA-5044_mensajería2.pdf",
+      "sha256": "f9968fa529fc84b8f0d79f670e239646caa2aec6ba3bb0677e35d87b66472d7e",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-5077_electricidad.pdf",
+      "path": "../facturas/FA-5077_electricidad.pdf",
+      "sha256": "8c7f51cb2e7c4226758cf81fd1100a7c5401d883d4e4d54cb5b804caed7a45ef",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-5197_papelería.pdf",
+      "path": "../facturas/FA-5197_papelería.pdf",
+      "sha256": "28d0d463bf64c64dd53078638270d2de536a129528b6eacd1e743b97e4b3b5d0",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-5377_electricidad.pdf",
+      "path": "../facturas/FA-5377_electricidad.pdf",
+      "sha256": "3ed20d9a0da40c793d83b994b23475b1bd04138f40086d356c2e359ba30cec2a",
+      "split": "held_out"
+    },
+    {
+      "file_id": "FA-5418_catering.pdf",
+      "path": "../facturas/FA-5418_catering.pdf",
+      "sha256": "791eee76d7607c0f9758a08ebb6faeec2670c6f9183f0a09900ba0e3b90df89a",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_007.pdf",
+      "path": "../facturas/scan_007.pdf",
+      "sha256": "208876a78ce72e7d6dc4acf842c6c96f38636fd9342fd92e9b1ec3ab5f6d2cf5",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_008.pdf",
+      "path": "../facturas/scan_008.pdf",
+      "sha256": "77a875f6a6ae061a536ebe3dc593961d1fe2bfdd7e9c94c736fe10edcf3f6afe",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_009.pdf",
+      "path": "../facturas/scan_009.pdf",
+      "sha256": "ea706062909bc3ccd3fccff7b78df17469eb544eaccf8ce7d7d52b487485d828",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_010.pdf",
+      "path": "../facturas/scan_010.pdf",
+      "sha256": "149bca3ff90d93fd88bd6849403fe32073195d698663b15b2036cb5138f7b546",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_011.pdf",
+      "path": "../facturas/scan_011.pdf",
+      "sha256": "14db6f53b96b038545d30af3a8ca907007f9a38c9504d555a74f124c36f5915b",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_012.pdf",
+      "path": "../facturas/scan_012.pdf",
+      "sha256": "51b58f420fbb28e7e9ab11daa7534f86c94c05795cf8839ec2b312e32efbaac0",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_013.pdf",
+      "path": "../facturas/scan_013.pdf",
+      "sha256": "0f3b31e650332230dcbc2a8da9704eef4888c892c4a14e2049a850221f344889",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_014.pdf",
+      "path": "../facturas/scan_014.pdf",
+      "sha256": "9d6b47bc5ba1bf956380c6d457c8c7eab9ee13b42b2cdf200c518e258dc78552",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_015.pdf",
+      "path": "../facturas/scan_015.pdf",
+      "sha256": "c149b50153c87bf2ac0a14100077e604328eff9870b29555307f9b198a63820c",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_016.pdf",
+      "path": "../facturas/scan_016.pdf",
+      "sha256": "dae0a41ee6f1aa5cc7ed5e191e5dd071fb28f4be92b46982a50660a53ea63eb1",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_017.pdf",
+      "path": "../facturas/scan_017.pdf",
+      "sha256": "a612f1df981f7967156aaf58ae25bd1a43fc6b3ca285e5d7522efc796a43df5a",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_018.pdf",
+      "path": "../facturas/scan_018.pdf",
+      "sha256": "c59a0bc6553a6a86ba38f0ce30ed57aecb13a418626ec0c549f12835bbaa9869",
+      "split": "development"
+    },
+    {
+      "file_id": "scan_021.pdf",
+      "path": "../facturas/scan_021.pdf",
+      "sha256": "b6a220c2177d4a46b96bab3980bfb90a1918c3a9639b992a571f0704aed3159f",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_022.pdf",
+      "path": "../facturas/scan_022.pdf",
+      "sha256": "dc704b7a7078f7b290d43dcf697852fb5991565a39e59919f4e85a2de904795b",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_023.pdf",
+      "path": "../facturas/scan_023.pdf",
+      "sha256": "06a1a3d6ff1a545e7d171b850e99107d6ff37d5fd72152ba2c5ca5e5d8a85fbc",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_025.pdf",
+      "path": "../facturas/scan_025.pdf",
+      "sha256": "7c20bd53318f9e8c80258bcf19807bbde07ed73e81ce8824bfaabe5f070cfb15",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_026.pdf",
+      "path": "../facturas/scan_026.pdf",
+      "sha256": "c6811fccbb1492b42b615b3e53051c09aa6da0218d4a0a4ad576e21083b6f143",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_027.pdf",
+      "path": "../facturas/scan_027.pdf",
+      "sha256": "a8c8cef5de82309ab7ac130c4b1b6217d601cc829d5192b70801d749a2d3e741",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_028.pdf",
+      "path": "../facturas/scan_028.pdf",
+      "sha256": "f6c0d68f92e2b06fadc6cfd1e76ee705dba983fe5d551f6e1526950ac840f604",
+      "split": "held_out"
+    },
+    {
+      "file_id": "scan_029.pdf",
+      "path": "../facturas/scan_029.pdf",
+      "sha256": "ed7eaccb3ece7a6af3f27457d0254e216e033ce2aca3329ad53c6d3d38d87c7a",
+      "split": "held_out"
+    }
+  ]
+}

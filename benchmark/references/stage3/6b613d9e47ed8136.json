@@ -1,0 +1,61 @@
+{
+  "schema_version": "0.1",
+  "file_id": "2026-01-08_P001.pdf",
+  "document_type": "invoice",
+  "invoice_number": "2026/11604",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0096",
+  "currency": null,
+  "supplier": {
+    "name": "Suministros Levante S.L.",
+    "tax_id": "B46102331",
+    "location": null,
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES2100491500051234567890"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": null,
+      "amount": "2489.99"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "522.90"
+    }
+  ],
+  "totals": {
+    "taxable_base": "2489.99",
+    "total": "3012.89"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "08/01/2026",
+      "candidates": [
+        "2026-01-08",
+        "2026-08-01"
+      ]
+    }
+  ]
+}

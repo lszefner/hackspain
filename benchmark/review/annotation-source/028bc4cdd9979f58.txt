@@ -1,0 +1,22 @@
+FACTURA SIMPLIFICADA Nº FA-4816
+Fecha: 07/03/2026   Pedido asociado: PO-2026-0394
+
+Emisor: Seguridad Alcores S.L.  · NIF B91455230  · Sevilla
+IBAN: ES09 0073 0100 5105 0533 1902
+
+Destinatario: Banco Miralmar S.A. (CIF A58231074)
+
+Concepto               Uds   Importe
+--------------------------------------------------------------------------
+Material de oficina             1     760,34
+Instalación                 1    1.189,25
+--------------------------------------------------------------------------
+BASE IMPONIBLE: 1.949,59
+I.V.A. (21%): 409,41
+IMPORTE TOTAL: 2.359,00
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

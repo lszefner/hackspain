@@ -1,0 +1,21 @@
+FACTURA
+Factura: 2026/11604  Fecha: 08/01/2026
+Pedido: PO-2026-0096
+
+Suministros Levante S.L.
+NIF: B46102331
+IBAN: ES21 0049 1500 0512 3456 7890
+
+Cliente: Banco Miralmar S.A. · CIF: A58231074
+
+Servicio mensual ....... 2.489,99
+
+Base: 2.489,99
+IVA (21%): 522,90
+TOTAL: 3.012,89
+
+
+
+
+
+Documento generado por el sistema de facturacion del proveedor.

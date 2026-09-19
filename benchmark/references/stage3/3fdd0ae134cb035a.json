@@ -1,0 +1,71 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_028.pdf",
+  "document_type": "invoice",
+  "invoice_number": "FA-9950",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0731",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Ofimática Cieza S.L.",
+    "tax_id": "B30455812",
+    "location": "Murcia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES6001825322180201588391"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": null,
+      "amount": "935.00"
+    },
+    {
+      "position": 2,
+      "description": "Mantenimiento trimestral",
+      "quantity": null,
+      "amount": "935.00"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "392.70"
+    }
+  ],
+  "totals": {
+    "taxable_base": "1870.00",
+    "total": "2262.70"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    },
+    {
+      "kind": "stamp",
+      "text": "RECIBIDO\nCONTABILIDAD"
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "11/06/2026",
+      "candidates": [
+        "2026-06-11",
+        "2026-11-06"
+      ]
+    }
+  ]
+}

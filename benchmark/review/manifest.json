@@ -1,0 +1,705 @@
+{
+  "schema_version": "0.1",
+  "generated_at": "2026-09-18T23:07:29.622433+00:00",
+  "documents": [
+    {
+      "file_id": "2026-01-08_P001.pdf",
+      "sha256": "12a5e1eff4299d5bb0816e7d87aff2ba9be39928cf0478081d14067f02d22836",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-08_P001.pdf",
+      "reading": "../references/stage2/6b613d9e47ed8136.json",
+      "invoice": "../references/stage3/6b613d9e47ed8136.json",
+      "provenance": "../references/provenance/6b613d9e47ed8136.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (08/01/2026)"
+      ]
+    },
+    {
+      "file_id": "2026-01-11_P007.pdf",
+      "sha256": "9aa687eb3bb56858e681e5626e1232a11af64c2cb0a1236d0b12068bf41a7407",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-11_P007.pdf",
+      "reading": "../references/stage2/4553a58c520cc7b7.json",
+      "invoice": "../references/stage3/4553a58c520cc7b7.json",
+      "provenance": "../references/provenance/4553a58c520cc7b7.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (11/01/2026)"
+      ]
+    },
+    {
+      "file_id": "2026-01-12_P002.pdf",
+      "sha256": "f77481125c0e301eed174363319250230504aa46e92a0f5316d1f06ded1bd832",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-12_P002.pdf",
+      "reading": "../references/stage2/3fe2aef804746603.json",
+      "invoice": "../references/stage3/3fe2aef804746603.json",
+      "provenance": "../references/provenance/3fe2aef804746603.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (12/01/2026)"
+      ]
+    },
+    {
+      "file_id": "2026-01-12_P010.pdf",
+      "sha256": "02fc01d5b3bd10f1de1c3e5cbc8937ff9394729594588d384573e22ed4b0d2dd",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-12_P010.pdf",
+      "reading": "../references/stage2/bfc74d685da5435a.json",
+      "invoice": "../references/stage3/bfc74d685da5435a.json",
+      "provenance": "../references/provenance/bfc74d685da5435a.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (12/01/2026)"
+      ]
+    },
+    {
+      "file_id": "2026-01-14_P002.pdf",
+      "sha256": "a477b8f1a801a4d01ea174302bb2808f7b8e6915e03cb6d0a7c069794a844cad",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-14_P002.pdf",
+      "reading": "../references/stage2/106c0679917dfff7.json",
+      "invoice": "../references/stage3/106c0679917dfff7.json",
+      "provenance": "../references/provenance/106c0679917dfff7.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "2026-01-15_P003.pdf",
+      "sha256": "794835cd7ae3ec1a13f3553eee821c1d1c2a361f7633abe6b4e02627caf1db38",
+      "split": "development",
+      "pdf": "../../facturas/2026-01-15_P003.pdf",
+      "reading": "../references/stage2/bb67d3848734d918.json",
+      "invoice": "../references/stage3/bb67d3848734d918.json",
+      "provenance": "../references/provenance/bb67d3848734d918.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "2026-01-16_P004.pdf",
+      "sha256": "dc54bdbf1be49124a94097c6997d05a0767ed774426c5259afd78062ecba1c5d",
+      "split": "held_out",
+      "pdf": "../../facturas/2026-01-16_P004.pdf",
+      "reading": "../references/stage2/aec3bfe7ea6577bc.json",
+      "invoice": "../references/stage3/aec3bfe7ea6577bc.json",
+      "provenance": "../references/provenance/aec3bfe7ea6577bc.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "2026-01-17_P011.pdf",
+      "sha256": "f44fe37da2ec64dad5065723e09e37f29b75dec6ebc010e2b6806b4539180c05",
+      "split": "held_out",
+      "pdf": "../../facturas/2026-01-17_P011.pdf",
+      "reading": "../references/stage2/67eaa393e803678a.json",
+      "invoice": "../references/stage3/67eaa393e803678a.json",
+      "provenance": "../references/provenance/67eaa393e803678a.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "2026-01-18_P005.pdf",
+      "sha256": "bad8be8c66ea5f8f20195ae456d559d2df0ade71242e4725ec99d2a164f7b41d",
+      "split": "held_out",
+      "pdf": "../../facturas/2026-01-18_P005.pdf",
+      "reading": "../references/stage2/096f8da8ff62c138.json",
+      "invoice": "../references/stage3/096f8da8ff62c138.json",
+      "provenance": "../references/provenance/096f8da8ff62c138.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "2026-01-22_P006.pdf",
+      "sha256": "49995c2c68ed9a8a091751d75ef250c9d295a01cd515d2c78ee9bc648c563eb1",
+      "split": "held_out",
+      "pdf": "../../facturas/2026-01-22_P006.pdf",
+      "reading": "../references/stage2/e8d30453af58cbf9.json",
+      "invoice": "../references/stage3/e8d30453af58cbf9.json",
+      "provenance": "../references/provenance/e8d30453af58cbf9.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-3788_informática.pdf",
+      "sha256": "7feb3c353e1de9bd9886be8062a36d7956ec2e8c5cc3d3669a61376be43e9752",
+      "split": "development",
+      "pdf": "../../facturas/FA-3788_informática.pdf",
+      "reading": "../references/stage2/4d8dd4138c47037c.json",
+      "invoice": "../references/stage3/4d8dd4138c47037c.json",
+      "provenance": "../references/provenance/4d8dd4138c47037c.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (12/05/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-3939_transportes.pdf",
+      "sha256": "1a388a5fc1800c52e32f26f1128adcfd4e643e5ab63d01717189d7819d9e9698",
+      "split": "development",
+      "pdf": "../../facturas/FA-3939_transportes.pdf",
+      "reading": "../references/stage2/a458b3bfeeab5891.json",
+      "invoice": "../references/stage3/a458b3bfeeab5891.json",
+      "provenance": "../references/provenance/a458b3bfeeab5891.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4125_transportes.pdf",
+      "sha256": "ad60db2bbdf47044db02effa849ecec0e3143313ee7ea50c08adf651036cd8c3",
+      "split": "development",
+      "pdf": "../../facturas/FA-4125_transportes.pdf",
+      "reading": "../references/stage2/cf949b7088d0fd48.json",
+      "invoice": "../references/stage3/cf949b7088d0fd48.json",
+      "provenance": "../references/provenance/cf949b7088d0fd48.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4290_mensajería.pdf",
+      "sha256": "8db9c19e0019bf5ffa38f9072549a4b041023cd53f63f4cfac05577474568403",
+      "split": "development",
+      "pdf": "../../facturas/FA-4290_mensajería.pdf",
+      "reading": "../references/stage2/23029dbc28732f16.json",
+      "invoice": "../references/stage3/23029dbc28732f16.json",
+      "provenance": "../references/provenance/23029dbc28732f16.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4294_papelería.pdf",
+      "sha256": "301f442b7c9a9b56120ed3e96eae31d484bd5f230420ed239462c1f3c153c156",
+      "split": "development",
+      "pdf": "../../facturas/FA-4294_papelería.pdf",
+      "reading": "../references/stage2/e6a44da53635fb1b.json",
+      "invoice": "../references/stage3/e6a44da53635fb1b.json",
+      "provenance": "../references/provenance/e6a44da53635fb1b.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (05/02/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-4349_electricidad.pdf",
+      "sha256": "5246ee98e8747b3cecc313e054a0fbf15c99e20800265903edd16ab5699153ea",
+      "split": "development",
+      "pdf": "../../facturas/FA-4349_electricidad.pdf",
+      "reading": "../references/stage2/33b57236f2ebc615.json",
+      "invoice": "../references/stage3/33b57236f2ebc615.json",
+      "provenance": "../references/provenance/33b57236f2ebc615.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4385_informática.pdf",
+      "sha256": "55893528976075bbf31296f2f6df6883707e037f02896f28d038b117809c8186",
+      "split": "development",
+      "pdf": "../../facturas/FA-4385_informática.pdf",
+      "reading": "../references/stage2/85f9083c3021aeaf.json",
+      "invoice": "../references/stage3/85f9083c3021aeaf.json",
+      "provenance": "../references/provenance/85f9083c3021aeaf.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4488_transportes.pdf",
+      "sha256": "beefc8285b5787fc074e887d3f5065e8f2cfab58f919765241ca7bfbc756231c",
+      "split": "development",
+      "pdf": "../../facturas/FA-4488_transportes.pdf",
+      "reading": "../references/stage2/2382ec8618abadd1.json",
+      "invoice": "../references/stage3/2382ec8618abadd1.json",
+      "provenance": "../references/provenance/2382ec8618abadd1.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Embedded total contains zero-width characters; visible transcription is 2.637,80 €. No arithmetic repair.",
+        "/issue_date: ambiguous (08/04/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-4634_seguridad.pdf",
+      "sha256": "da2ecedd22a8fad63f3c3ce09f07b3416e45f43bc24c0562889f5ea3abe3b227",
+      "split": "development",
+      "pdf": "../../facturas/FA-4634_seguridad.pdf",
+      "reading": "../references/stage2/f79c358df1f16361.json",
+      "invoice": "../references/stage3/f79c358df1f16361.json",
+      "provenance": "../references/provenance/f79c358df1f16361.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4666_transportes.pdf",
+      "sha256": "e969c76f674d27a6a6452db81db0782806a29dc2079897b566cfd4093b7c7c2b",
+      "split": "development",
+      "pdf": "../../facturas/FA-4666_transportes.pdf",
+      "reading": "../references/stage2/fe868bd96ca544a0.json",
+      "invoice": "../references/stage3/fe868bd96ca544a0.json",
+      "provenance": "../references/provenance/fe868bd96ca544a0.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (10/01/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-4673_informática.pdf",
+      "sha256": "e059bd7ceb2eb7e0369ff0aae9fcf83199a2234e65fdaf1d409d330d9b1500cf",
+      "split": "development",
+      "pdf": "../../facturas/FA-4673_informática.pdf",
+      "reading": "../references/stage2/b551034d04106ca6.json",
+      "invoice": "../references/stage3/b551034d04106ca6.json",
+      "provenance": "../references/provenance/b551034d04106ca6.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4813_seguridad.pdf",
+      "sha256": "9a6cf8d43481915d84333f9fb736bcddc6ed31cb5b80159843ed4e71ae35934d",
+      "split": "development",
+      "pdf": "../../facturas/FA-4813_seguridad.pdf",
+      "reading": "../references/stage2/5478878b93701c61.json",
+      "invoice": "../references/stage3/5478878b93701c61.json",
+      "provenance": "../references/provenance/5478878b93701c61.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-4816_seguridad.pdf",
+      "sha256": "783a8c0c4370cc3328923280817fdf8ad10bf6ea082c1dbee67fafeb8f6bc15c",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-4816_seguridad.pdf",
+      "reading": "../references/stage2/028bc4cdd9979f58.json",
+      "invoice": "../references/stage3/028bc4cdd9979f58.json",
+      "provenance": "../references/provenance/028bc4cdd9979f58.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (07/03/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-4819_informática.pdf",
+      "sha256": "952c66c3f23db2c41e6e4fbcecc603d2b1f6dedeecdf2a2a613b4d0dc1b09654",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-4819_informática.pdf",
+      "reading": "../references/stage2/72483a93641e7529.json",
+      "invoice": "../references/stage3/72483a93641e7529.json",
+      "provenance": "../references/provenance/72483a93641e7529.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (04/03/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-4962_mensajería.pdf",
+      "sha256": "55dc7f9262a63eea877775d4f69b51680900522d203876fe26ba2ddf3f8cbf44",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-4962_mensajería.pdf",
+      "reading": "../references/stage2/acbe65514d88f14d.json",
+      "invoice": "../references/stage3/acbe65514d88f14d.json",
+      "provenance": "../references/provenance/acbe65514d88f14d.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-5044_mensajería2.pdf",
+      "sha256": "f9968fa529fc84b8f0d79f670e239646caa2aec6ba3bb0677e35d87b66472d7e",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-5044_mensajería2.pdf",
+      "reading": "../references/stage2/f19d9454706014bf.json",
+      "invoice": "../references/stage3/f19d9454706014bf.json",
+      "provenance": "../references/provenance/f19d9454706014bf.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Embedded text contains an invisible ATENCION AGENTE paragraph. Not visible on rendered white page; excluded from visual reference. Human reviewer should confirm visibility policy.",
+        "/issue_date: ambiguous (08/05/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-5077_electricidad.pdf",
+      "sha256": "8c7f51cb2e7c4226758cf81fd1100a7c5401d883d4e4d54cb5b804caed7a45ef",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-5077_electricidad.pdf",
+      "reading": "../references/stage2/8c56831900dc3b62.json",
+      "invoice": "../references/stage3/8c56831900dc3b62.json",
+      "provenance": "../references/provenance/8c56831900dc3b62.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "FA-5197_papelería.pdf",
+      "sha256": "28d0d463bf64c64dd53078638270d2de536a129528b6eacd1e743b97e4b3b5d0",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-5197_papelería.pdf",
+      "reading": "../references/stage2/13d192adaca3ef00.json",
+      "invoice": "../references/stage3/13d192adaca3ef00.json",
+      "provenance": "../references/provenance/13d192adaca3ef00.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (01/02/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-5377_electricidad.pdf",
+      "sha256": "3ed20d9a0da40c793d83b994b23475b1bd04138f40086d356c2e359ba30cec2a",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-5377_electricidad.pdf",
+      "reading": "../references/stage2/d65ce25a74ff7bfe.json",
+      "invoice": "../references/stage3/d65ce25a74ff7bfe.json",
+      "provenance": "../references/provenance/d65ce25a74ff7bfe.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "/issue_date: ambiguous (04/05/2026)"
+      ]
+    },
+    {
+      "file_id": "FA-5418_catering.pdf",
+      "sha256": "791eee76d7607c0f9758a08ebb6faeec2670c6f9183f0a09900ba0e3b90df89a",
+      "split": "held_out",
+      "pdf": "../../facturas/FA-5418_catering.pdf",
+      "reading": "../references/stage2/373bb6e8bf0e2f53.json",
+      "invoice": "../references/stage3/373bb6e8bf0e2f53.json",
+      "provenance": "../references/provenance/373bb6e8bf0e2f53.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": []
+    },
+    {
+      "file_id": "scan_007.pdf",
+      "sha256": "208876a78ce72e7d6dc4acf842c6c96f38636fd9342fd92e9b1ec3ab5f6d2cf5",
+      "split": "development",
+      "pdf": "../../facturas/scan_007.pdf",
+      "reading": "../references/stage2/e6e51a3eb7e24fc5.json",
+      "invoice": "../references/stage3/e6e51a3eb7e24fc5.json",
+      "provenance": "../references/provenance/e6e51a3eb7e24fc5.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties."
+      ]
+    },
+    {
+      "file_id": "scan_008.pdf",
+      "sha256": "77a875f6a6ae061a536ebe3dc593961d1fe2bfdd7e9c94c736fe10edcf3f6afe",
+      "split": "development",
+      "pdf": "../../facturas/scan_008.pdf",
+      "reading": "../references/stage2/b72575f4b7541683.json",
+      "invoice": "../references/stage3/b72575f4b7541683.json",
+      "provenance": "../references/provenance/b72575f4b7541683.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)"
+      ]
+    },
+    {
+      "file_id": "scan_009.pdf",
+      "sha256": "ea706062909bc3ccd3fccff7b78df17469eb544eaccf8ce7d7d52b487485d828",
+      "split": "development",
+      "pdf": "../../facturas/scan_009.pdf",
+      "reading": "../references/stage2/4bc02327ccbceddc.json",
+      "invoice": "../references/stage3/4bc02327ccbceddc.json",
+      "provenance": "../references/provenance/4bc02327ccbceddc.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+        "/issue_date: ambiguous (08/03/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_010.pdf",
+      "sha256": "149bca3ff90d93fd88bd6849403fe32073195d698663b15b2036cb5138f7b546",
+      "split": "development",
+      "pdf": "../../facturas/scan_010.pdf",
+      "reading": "../references/stage2/32ce222394d44343.json",
+      "invoice": "../references/stage3/32ce222394d44343.json",
+      "provenance": "../references/provenance/32ce222394d44343.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+        "/lines/0/description: unreadable (Reparaci�n equipo)"
+      ]
+    },
+    {
+      "file_id": "scan_011.pdf",
+      "sha256": "14db6f53b96b038545d30af3a8ca907007f9a38c9504d555a74f124c36f5915b",
+      "split": "development",
+      "pdf": "../../facturas/scan_011.pdf",
+      "reading": "../references/stage2/3d1d87b19eb40efd.json",
+      "invoice": "../references/stage3/3d1d87b19eb40efd.json",
+      "provenance": "../references/provenance/3d1d87b19eb40efd.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+        "/lines/0/description: unreadable (Reparaci�n equipo)"
+      ]
+    },
+    {
+      "file_id": "scan_012.pdf",
+      "sha256": "51b58f420fbb28e7e9ab11daa7534f86c94c05795cf8839ec2b312e32efbaac0",
+      "split": "development",
+      "pdf": "../../facturas/scan_012.pdf",
+      "reading": "../references/stage2/bbf5ff4578f41622.json",
+      "invoice": "../references/stage3/bbf5ff4578f41622.json",
+      "provenance": "../references/provenance/bbf5ff4578f41622.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (06/05/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_013.pdf",
+      "sha256": "0f3b31e650332230dcbc2a8da9704eef4888c892c4a14e2049a850221f344889",
+      "split": "development",
+      "pdf": "../../facturas/scan_013.pdf",
+      "reading": "../references/stage2/5c4aabd8af3b50ce.json",
+      "invoice": "../references/stage3/5c4aabd8af3b50ce.json",
+      "provenance": "../references/provenance/5c4aabd8af3b50ce.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+        "/issue_date: ambiguous (11/06/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_014.pdf",
+      "sha256": "9d6b47bc5ba1bf956380c6d457c8c7eab9ee13b42b2cdf200c518e258dc78552",
+      "split": "development",
+      "pdf": "../../facturas/scan_014.pdf",
+      "reading": "../references/stage2/4c08358a1b1545a9.json",
+      "invoice": "../references/stage3/4c08358a1b1545a9.json",
+      "provenance": "../references/provenance/4c08358a1b1545a9.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)",
+        "/issue_date: ambiguous (03/05/2026)",
+        "/lines/0/description: unreadable (Reparaci�n equipo)"
+      ]
+    },
+    {
+      "file_id": "scan_015.pdf",
+      "sha256": "c149b50153c87bf2ac0a14100077e604328eff9870b29555307f9b198a63820c",
+      "split": "development",
+      "pdf": "../../facturas/scan_015.pdf",
+      "reading": "../references/stage2/24d9c478701614be.json",
+      "invoice": "../references/stage3/24d9c478701614be.json",
+      "provenance": "../references/provenance/24d9c478701614be.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties."
+      ]
+    },
+    {
+      "file_id": "scan_016.pdf",
+      "sha256": "dae0a41ee6f1aa5cc7ed5e191e5dd071fb28f4be92b46982a50660a53ea63eb1",
+      "split": "development",
+      "pdf": "../../facturas/scan_016.pdf",
+      "reading": "../references/stage2/71046850567e13ec.json",
+      "invoice": "../references/stage3/71046850567e13ec.json",
+      "provenance": "../references/provenance/71046850567e13ec.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/name: unreadable (Mensajer�a R�pida del Sur S.L.)"
+      ]
+    },
+    {
+      "file_id": "scan_017.pdf",
+      "sha256": "a612f1df981f7967156aaf58ae25bd1a43fc6b3ca285e5d7522efc796a43df5a",
+      "split": "development",
+      "pdf": "../../facturas/scan_017.pdf",
+      "reading": "../references/stage2/0646caac2147845b.json",
+      "invoice": "../references/stage3/0646caac2147845b.json",
+      "provenance": "../references/provenance/0646caac2147845b.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (04/03/2026)",
+        "/payment/iban: unreadable (ES2100491500051234567890)",
+        "/supplier/tax_id: unreadable (B46102331)",
+        "/issue_date: unreadable (None)",
+        "/annotations/0/text: unreadable (Documento generado por el sistema de facturacion del proveedor.)"
+      ]
+    },
+    {
+      "file_id": "scan_018.pdf",
+      "sha256": "c59a0bc6553a6a86ba38f0ce30ed57aecb13a418626ec0c549f12835bbaa9869",
+      "split": "development",
+      "pdf": "../../facturas/scan_018.pdf",
+      "reading": "../references/stage2/2e9c01f5e7838e46.json",
+      "invoice": "../references/stage3/2e9c01f5e7838e46.json",
+      "provenance": "../references/provenance/2e9c01f5e7838e46.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/annotations/2/text: unreadable (Electricidad Montcada S.A.\nNIF: A46990201 · Valencia\nCuenta de abono (IBAN): ES35 2038 5778 9830 0076 5410\nFACTURA Nº F26-2203\nFecha: 07/06/2026\nPedido: PO-2026-0720\nCliente: Banco Miralmar S.A. · CIF: A58231074\nServicio mensual 1.040,00\nMantenimiento trimestral 1.040,00\nSuministro pedido 1.040,00\nBase imponible 3.120,00\nIVA 21% 655,20\nTOTAL 3.775,20 EUR\nURGENTE\nDocumento generado por el sistema de facturacion del proveedor.)"
+      ]
+    },
+    {
+      "file_id": "scan_021.pdf",
+      "sha256": "b6a220c2177d4a46b96bab3980bfb90a1918c3a9639b992a571f0704aed3159f",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_021.pdf",
+      "reading": "../references/stage2/77ef910067fea7a8.json",
+      "invoice": "../references/stage3/77ef910067fea7a8.json",
+      "provenance": "../references/provenance/77ef910067fea7a8.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/supplier/tax_id: unreadable (None)",
+        "/invoice_number: unreadable (None)"
+      ]
+    },
+    {
+      "file_id": "scan_022.pdf",
+      "sha256": "dc704b7a7078f7b290d43dcf697852fb5991565a39e59919f4e85a2de904795b",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_022.pdf",
+      "reading": "../references/stage2/34a0c247feef95d0.json",
+      "invoice": "../references/stage3/34a0c247feef95d0.json",
+      "provenance": "../references/provenance/34a0c247feef95d0.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (02/06/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_023.pdf",
+      "sha256": "06a1a3d6ff1a545e7d171b850e99107d6ff37d5fd72152ba2c5ca5e5d8a85fbc",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_023.pdf",
+      "reading": "../references/stage2/d85167d961beca11.json",
+      "invoice": "../references/stage3/d85167d961beca11.json",
+      "provenance": "../references/provenance/d85167d961beca11.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/annotations/2/text: unreadable (Informática Benimámet S.L.\nFACTURA Nº\nTOTAL)",
+        "/supplier/tax_id: unreadable (B96233419)",
+        "/payment/iban: unreadable (ES1800815290070001234567)",
+        "/annotations/0/text: unreadable (Documento generado por el sistema de facturacion del proveedor.)"
+      ]
+    },
+    {
+      "file_id": "scan_025.pdf",
+      "sha256": "7c20bd53318f9e8c80258bcf19807bbde07ed73e81ce8824bfaabe5f070cfb15",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_025.pdf",
+      "reading": "../references/stage2/85072d1b737c2e84.json",
+      "invoice": "../references/stage3/85072d1b737c2e84.json",
+      "provenance": "../references/provenance/85072d1b737c2e84.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/annotations/1/text: unreadable (Electricidad Montcada S.A.\nNIF: A46990201 · Valencia\nCuenta de abono (IBAN): ES35 2038 5778 9830 0076 5410\nFACTURA Nº F26-2203\nFecha: 07/06/2026\nPedido: PO-2026-0720\nCliente: Banco Miralmar S.A. · CIF: A58231074\nServicio mensual 1.040,00\nMantenimiento trimestral 1.040,00\nSuministro pedido 1.040,00\nBase imponible 3.120,00\nIVA 21% 655,20\nTOTAL 3.775,20 EUR\nURGENTE\nDocumento generado por el sistema de facturacion del proveedor.)"
+      ]
+    },
+    {
+      "file_id": "scan_026.pdf",
+      "sha256": "c6811fccbb1492b42b615b3e53051c09aa6da0218d4a0a4ad576e21083b6f143",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_026.pdf",
+      "reading": "../references/stage2/8ad9b26ffea1d155.json",
+      "invoice": "../references/stage3/8ad9b26ffea1d155.json",
+      "provenance": "../references/provenance/8ad9b26ffea1d155.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties."
+      ]
+    },
+    {
+      "file_id": "scan_027.pdf",
+      "sha256": "a8c8cef5de82309ab7ac130c4b1b6217d601cc829d5192b70801d749a2d3e741",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_027.pdf",
+      "reading": "../references/stage2/8557ffb28c9776e6.json",
+      "invoice": "../references/stage3/8557ffb28c9776e6.json",
+      "provenance": "../references/provenance/8557ffb28c9776e6.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (06/04/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_028.pdf",
+      "sha256": "f6c0d68f92e2b06fadc6cfd1e76ee705dba983fe5d551f6e1526950ac840f604",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_028.pdf",
+      "reading": "../references/stage2/3fdd0ae134cb035a.json",
+      "invoice": "../references/stage3/3fdd0ae134cb035a.json",
+      "provenance": "../references/provenance/3fdd0ae134cb035a.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (11/06/2026)"
+      ]
+    },
+    {
+      "file_id": "scan_029.pdf",
+      "sha256": "ed7eaccb3ece7a6af3f27457d0254e216e033ce2aca3329ad53c6d3d38d87c7a",
+      "split": "held_out",
+      "pdf": "../../facturas/scan_029.pdf",
+      "reading": "../references/stage2/3d5e55a880fa175c.json",
+      "invoice": "../references/stage3/3d5e55a880fa175c.json",
+      "provenance": "../references/provenance/3d5e55a880fa175c.json",
+      "stage2_status": "draft",
+      "stage3_status": "draft",
+      "unresolved": [
+        "Every region inspected visually. No values borrowed from other invoices or filenames. U+FFFD marks a damaged glyph explicitly described in uncertainties.",
+        "/issue_date: ambiguous (06/07/2026)"
+      ]
+    }
+  ]
+}

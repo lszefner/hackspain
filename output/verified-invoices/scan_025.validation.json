@@ -1,0 +1,140 @@
+{
+  "status": "needs_review",
+  "checks": {
+    "invoice_schema": true,
+    "reading_schema": true,
+    "evidence_references": true,
+    "factual_leaves_linked": true,
+    "foreground_evidence_only": true,
+    "source_uncertainty_clear": false,
+    "invoice_issues_clear": false,
+    "nonempty_interpretation": true,
+    "invoice_identity_present": true,
+    "invoice_total_present": true,
+    "invoice_lines_present": true,
+    "coverage_accounted": false
+  },
+  "coverage": {
+    "measurement": "OCR block linkage only; not source-image completeness or factual accuracy",
+    "blocks": [
+      {
+        "id": "p1-bg-b1",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b10",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b11",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b12",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b13",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b14",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b15",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b2",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b3",
+        "status": "unresolved"
+      },
+      {
+        "id": "p1-bg-b4",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b5",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b6",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b7",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b8",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-bg-b9",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b1",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b10",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b11",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b12",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b13",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b2",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b3",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b4",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b5",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b6",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b7",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b8",
+        "status": "mapped"
+      },
+      {
+        "id": "p1-fg-b9",
+        "status": "mapped"
+      }
+    ],
+    "total_blocks": 28,
+    "mapped_blocks": 27,
+    "preserved_unmapped_blocks": 0,
+    "unresolved_blocks": 1,
+    "score": 0.9642857142857143
+  },
+  "warnings": []
+}

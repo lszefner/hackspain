@@ -1,0 +1,1170 @@
+{
+  "export": "benchmark/runs/repair-hard-two/export-v1",
+  "limitations": [
+    "These two invoices have been used for development; this is a regression audit, not held-out generalization evidence.",
+    "Draft reference uncertain fields are excluded; core score does not establish every character or annotation.",
+    "Review-assisted output is not automatic extraction accuracy."
+  ],
+  "documents": [
+    {
+      "file_id": "scan_023.pdf",
+      "review_assisted": false,
+      "runtime_status": "needs_review",
+      "core_facts": {
+        "scored": 20,
+        "exact_correct": 16,
+        "normalized_correct": 19,
+        "present": 20,
+        "present_correct": 19,
+        "present_value_recall": 0.95,
+        "nulls": 0,
+        "null_correct": 0,
+        "correct_null_rate": null,
+        "missing": 0,
+        "incorrect": 1,
+        "unsupported_non_null": 0
+      },
+      "core_details": [
+        {
+          "field": "/document_type",
+          "reference": "invoice",
+          "prediction": "invoice",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/invoice_number",
+          "reference": "2026/22608",
+          "prediction": "2026/22608",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/issue_date",
+          "reference": "2026-04-29",
+          "prediction": "2026-04-29",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/purchase_order_reference",
+          "reference": "PO-2026-0726",
+          "prediction": "PO-2026-0726",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/currency",
+          "reference": "EUR",
+          "prediction": "EUR",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/supplier/name",
+          "reference": "Catering Hermanos Pico S.L.",
+          "prediction": "Catering Hermanos Pico S.L.",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/supplier/location",
+          "reference": "Valencia",
+          "prediction": "Valencia",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/customer/name",
+          "reference": "Banco Miralmar S.A.",
+          "prediction": "Banco Miralmar S.A.",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/customer/tax_id",
+          "reference": "A58231074",
+          "prediction": "A58231074",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/totals/taxable_base",
+          "reference": "2050.00",
+          "prediction": "2050",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/totals/total",
+          "reference": "2480.50",
+          "prediction": "2480.5",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/0/description",
+          "reference": "Servicio mensual",
+          "prediction": "Servicio mensual",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/0/amount",
+          "reference": "683.33",
+          "prediction": "683.33",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/1/description",
+          "reference": "Mantenimiento trimestral",
+          "prediction": "Mantenimiento trimestral",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/1/amount",
+          "reference": "683.33",
+          "prediction": "683.33",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/2/description",
+          "reference": "Suministro pedido",
+          "prediction": "Suministro pedido",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/2/amount",
+          "reference": "683.34",
+          "prediction": "683.34",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/taxes/0/label",
+          "reference": "IVA",
+          "prediction": "IVA 21%",
+          "exact": false,
+          "normalized": false,
+          "category": "incorrect"
+        },
+        {
+          "field": "/taxes/0/rate_percent",
+          "reference": "21",
+          "prediction": "21",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/taxes/0/amount",
+          "reference": "430.50",
+          "prediction": "430.5",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        }
+      ],
+      "invoice_score": {
+        "schema_valid": true,
+        "validation_error": null,
+        "failure": null,
+        "fields": {
+          "scored": 33,
+          "exact_correct": 24,
+          "normalized_correct": 27,
+          "present": 24,
+          "present_correct": 21,
+          "present_value_recall": 0.875,
+          "nulls": 6,
+          "null_correct": 6,
+          "correct_null_rate": 1.0,
+          "missing": 2,
+          "incorrect": 1,
+          "unsupported_non_null": 3
+        },
+        "collections": {
+          "lines": {
+            "reference_count": 3,
+            "prediction_count": 3,
+            "aligned": 3,
+            "exact_rows": 3,
+            "correct_rows": 3,
+            "precision": 1.0,
+            "recall": 1.0,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ],
+              [
+                2,
+                2
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": true
+          },
+          "taxes": {
+            "reference_count": 1,
+            "prediction_count": 1,
+            "aligned": 1,
+            "exact_rows": 0,
+            "correct_rows": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": true
+          },
+          "annotations": {
+            "reference_count": 3,
+            "prediction_count": 2,
+            "aligned": 2,
+            "exact_rows": 2,
+            "correct_rows": 2,
+            "precision": 1.0,
+            "recall": 0.6666666666666666,
+            "missing_rows": [
+              1
+            ],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ],
+              [
+                2,
+                1
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": false
+          },
+          "additional_fields": {
+            "reference_count": 0,
+            "prediction_count": 1,
+            "aligned": 0,
+            "exact_rows": 0,
+            "correct_rows": 0,
+            "precision": 0.0,
+            "recall": null,
+            "missing_rows": [],
+            "extra_rows": [
+              0
+            ],
+            "alignment": [],
+            "order_inversions": 0,
+            "order_correct": false
+          }
+        },
+        "details": [
+          {
+            "field": "/document_type",
+            "reference": "invoice",
+            "prediction": "invoice",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/invoice_number",
+            "reference": "2026/22608",
+            "prediction": "2026/22608",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/issue_date",
+            "reference": "2026-04-29",
+            "prediction": "2026-04-29",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/purchase_order_reference",
+            "reference": "PO-2026-0726",
+            "prediction": "PO-2026-0726",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/currency",
+            "reference": "EUR",
+            "prediction": "EUR",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/name",
+            "reference": "Catering Hermanos Pico S.L.",
+            "prediction": "Catering Hermanos Pico S.L.",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/location",
+            "reference": "Valencia",
+            "prediction": "Valencia",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/address",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/name",
+            "reference": "Banco Miralmar S.A.",
+            "prediction": "Banco Miralmar S.A.",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/tax_id",
+            "reference": "A58231074",
+            "prediction": "A58231074",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/location",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/address",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/totals/taxable_base",
+            "reference": "2050.00",
+            "prediction": "2050",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/totals/total",
+            "reference": "2480.50",
+            "prediction": "2480.5",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/description",
+            "reference": "Servicio mensual",
+            "prediction": "Servicio mensual",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/quantity",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/amount",
+            "reference": "683.33",
+            "prediction": "683.33",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/description",
+            "reference": "Mantenimiento trimestral",
+            "prediction": "Mantenimiento trimestral",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/quantity",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/amount",
+            "reference": "683.33",
+            "prediction": "683.33",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/2/description",
+            "reference": "Suministro pedido",
+            "prediction": "Suministro pedido",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/2/quantity",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/2/amount",
+            "reference": "683.34",
+            "prediction": "683.34",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/taxes/0/label",
+            "reference": "IVA",
+            "prediction": "IVA 21%",
+            "exact": false,
+            "normalized": false,
+            "category": "incorrect"
+          },
+          {
+            "field": "/taxes/0/rate_percent",
+            "reference": "21",
+            "prediction": "21",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/taxes/0/amount",
+            "reference": "430.50",
+            "prediction": "430.5",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/annotations/0/kind",
+            "reference": "footer",
+            "prediction": "footer",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/annotations/1/kind",
+            "reference": "note",
+            "prediction": null,
+            "exact": false,
+            "normalized": false,
+            "category": "missing"
+          },
+          {
+            "field": "/annotations/1/text",
+            "reference": "OK",
+            "prediction": null,
+            "exact": false,
+            "normalized": false,
+            "category": "missing"
+          },
+          {
+            "field": "/annotations/2/kind",
+            "reference": "other",
+            "prediction": "other",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/additional_fields/extra/0/label",
+            "reference": null,
+            "prediction": "Cuenta de abono (IBAN)",
+            "exact": false,
+            "normalized": false,
+            "category": "unsupported"
+          },
+          {
+            "field": "/additional_fields/extra/0/normalized_value",
+            "reference": null,
+            "prediction": "ES1800815290070001234567",
+            "exact": false,
+            "normalized": false,
+            "category": "unsupported"
+          },
+          {
+            "field": "/additional_fields/extra/0/raw_value",
+            "reference": null,
+            "prediction": "ES18 0081 5290 0700 0123 4567",
+            "exact": false,
+            "normalized": false,
+            "category": "unsupported"
+          }
+        ],
+        "excluded": [
+          "/annotations/0/text",
+          "/annotations/2/text",
+          "/payment/iban",
+          "/supplier/tax_id"
+        ],
+        "abstention": [
+          {
+            "field": "/annotations/0/text",
+            "abstained": false
+          },
+          {
+            "field": "/annotations/2/text",
+            "abstained": true
+          },
+          {
+            "field": "/payment/iban",
+            "abstained": false
+          },
+          {
+            "field": "/supplier/tax_id",
+            "abstained": false
+          }
+        ],
+        "all_scored_fields_correct": false,
+        "unsupported_definition": "Non-null prediction where complete reference is null; document support requires provenance review."
+      },
+      "checks": {
+        "coverage_accounted": false,
+        "evidence_references": true,
+        "factual_leaves_linked": true,
+        "foreground_evidence_only": true,
+        "invoice_identity_present": true,
+        "invoice_issues_clear": true,
+        "invoice_lines_present": true,
+        "invoice_schema": true,
+        "invoice_total_present": true,
+        "nonempty_interpretation": true,
+        "reading_schema": true,
+        "source_uncertainty_clear": false
+      },
+      "issues": [],
+      "source_sha256": "06a1a3d6ff1a545e7d171b850e99107d6ff37d5fd72152ba2c5ca5e5d8a85fbc",
+      "artifact_hashes": {
+        "checks": "e984d1f5a7ebe604bea189ebfb94f28059d832c9b9f2a05fc3cd2de8da215473",
+        "coverage": "aa688ed278e395a75604e46ed55215c5971dac63cc36aa7415ea5da86f0be8aa",
+        "evidence": "811ace062e33d1f188fe84bbbd44bf597d204182b349f2f2dd321ff111d20f90",
+        "invoice": "5b7ad78311471d244d3330c080488c1a9ec6feccd062949c4a07df7b1a33c66d",
+        "layout": "fc4e2db703156d4464caebb5a61e0924c0e1bdb9fa684b483e09fb9b5da06051",
+        "raw": "485fc5588969d6667e621ca759e478d53e53baf52339b9595c679b2eddd6bb51",
+        "reading": "62b21485f23978dbe542cb27fdcadf2dffff338acbea2da36e447936888f0c02",
+        "warnings": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    },
+    {
+      "file_id": "scan_025.pdf",
+      "review_assisted": false,
+      "runtime_status": "needs_review",
+      "core_facts": {
+        "scored": 20,
+        "exact_correct": 15,
+        "normalized_correct": 20,
+        "present": 20,
+        "present_correct": 20,
+        "present_value_recall": 1.0,
+        "nulls": 0,
+        "null_correct": 0,
+        "correct_null_rate": null,
+        "missing": 0,
+        "incorrect": 0,
+        "unsupported_non_null": 0
+      },
+      "core_details": [
+        {
+          "field": "/document_type",
+          "reference": "invoice",
+          "prediction": "invoice",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/invoice_number",
+          "reference": "2026/27401",
+          "prediction": "2026/27401",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/issue_date",
+          "reference": "2026-03-22",
+          "prediction": "2026-03-22",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/purchase_order_reference",
+          "reference": "PO-2026-0728",
+          "prediction": "PO-2026-0728",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/currency",
+          "reference": "EUR",
+          "prediction": "EUR",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/supplier/name",
+          "reference": "Limpiezas Turia S.L.",
+          "prediction": "Limpiezas Turia S.L.",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/supplier/tax_id",
+          "reference": "B98120774",
+          "prediction": "B98120774",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/supplier/location",
+          "reference": "Valencia",
+          "prediction": "Valencia",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/customer/name",
+          "reference": "Banco Miralmar S.A.",
+          "prediction": "Banco Miralmar S.A.",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/customer/tax_id",
+          "reference": "A58231074",
+          "prediction": "A58231074",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/payment/iban",
+          "reference": "ES4414650100951704302211",
+          "prediction": "ES4414650100951704302211",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/totals/taxable_base",
+          "reference": "640.00",
+          "prediction": "640",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/totals/total",
+          "reference": "774.40",
+          "prediction": "774.4",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/0/description",
+          "reference": "Servicio mensual",
+          "prediction": "Servicio mensual",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/0/amount",
+          "reference": "320.00",
+          "prediction": "320",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/1/description",
+          "reference": "Mantenimiento trimestral",
+          "prediction": "Mantenimiento trimestral",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/lines/1/amount",
+          "reference": "320.00",
+          "prediction": "320",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/taxes/0/label",
+          "reference": "IVA",
+          "prediction": "IVA",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/taxes/0/rate_percent",
+          "reference": "21",
+          "prediction": "21",
+          "exact": true,
+          "normalized": true,
+          "category": "correct"
+        },
+        {
+          "field": "/taxes/0/amount",
+          "reference": "134.40",
+          "prediction": "134.4",
+          "exact": false,
+          "normalized": true,
+          "category": "correct"
+        }
+      ],
+      "invoice_score": {
+        "schema_valid": true,
+        "validation_error": null,
+        "failure": null,
+        "fields": {
+          "scored": 28,
+          "exact_correct": 23,
+          "normalized_correct": 28,
+          "present": 23,
+          "present_correct": 23,
+          "present_value_recall": 1.0,
+          "nulls": 5,
+          "null_correct": 5,
+          "correct_null_rate": 1.0,
+          "missing": 0,
+          "incorrect": 0,
+          "unsupported_non_null": 0
+        },
+        "collections": {
+          "lines": {
+            "reference_count": 2,
+            "prediction_count": 2,
+            "aligned": 2,
+            "exact_rows": 0,
+            "correct_rows": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": true
+          },
+          "taxes": {
+            "reference_count": 1,
+            "prediction_count": 1,
+            "aligned": 1,
+            "exact_rows": 0,
+            "correct_rows": 1,
+            "precision": 1.0,
+            "recall": 1.0,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": true
+          },
+          "annotations": {
+            "reference_count": 2,
+            "prediction_count": 2,
+            "aligned": 2,
+            "exact_rows": 2,
+            "correct_rows": 2,
+            "precision": 1.0,
+            "recall": 1.0,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [
+              [
+                0,
+                0
+              ],
+              [
+                1,
+                1
+              ]
+            ],
+            "order_inversions": 0,
+            "order_correct": true
+          },
+          "additional_fields": {
+            "reference_count": 0,
+            "prediction_count": 0,
+            "aligned": 0,
+            "exact_rows": 0,
+            "correct_rows": 0,
+            "precision": null,
+            "recall": null,
+            "missing_rows": [],
+            "extra_rows": [],
+            "alignment": [],
+            "order_inversions": 0,
+            "order_correct": true
+          }
+        },
+        "details": [
+          {
+            "field": "/document_type",
+            "reference": "invoice",
+            "prediction": "invoice",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/invoice_number",
+            "reference": "2026/27401",
+            "prediction": "2026/27401",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/issue_date",
+            "reference": "2026-03-22",
+            "prediction": "2026-03-22",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/purchase_order_reference",
+            "reference": "PO-2026-0728",
+            "prediction": "PO-2026-0728",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/currency",
+            "reference": "EUR",
+            "prediction": "EUR",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/name",
+            "reference": "Limpiezas Turia S.L.",
+            "prediction": "Limpiezas Turia S.L.",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/tax_id",
+            "reference": "B98120774",
+            "prediction": "B98120774",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/location",
+            "reference": "Valencia",
+            "prediction": "Valencia",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/supplier/address",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/name",
+            "reference": "Banco Miralmar S.A.",
+            "prediction": "Banco Miralmar S.A.",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/tax_id",
+            "reference": "A58231074",
+            "prediction": "A58231074",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/location",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/customer/address",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/payment/iban",
+            "reference": "ES4414650100951704302211",
+            "prediction": "ES4414650100951704302211",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/totals/taxable_base",
+            "reference": "640.00",
+            "prediction": "640",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/totals/total",
+            "reference": "774.40",
+            "prediction": "774.4",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/description",
+            "reference": "Servicio mensual",
+            "prediction": "Servicio mensual",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/quantity",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/0/amount",
+            "reference": "320.00",
+            "prediction": "320",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/description",
+            "reference": "Mantenimiento trimestral",
+            "prediction": "Mantenimiento trimestral",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/quantity",
+            "reference": null,
+            "prediction": null,
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/lines/1/amount",
+            "reference": "320.00",
+            "prediction": "320",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/taxes/0/label",
+            "reference": "IVA",
+            "prediction": "IVA",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/taxes/0/rate_percent",
+            "reference": "21",
+            "prediction": "21",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/taxes/0/amount",
+            "reference": "134.40",
+            "prediction": "134.4",
+            "exact": false,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/annotations/0/kind",
+            "reference": "footer",
+            "prediction": "footer",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/annotations/0/text",
+            "reference": "Documento generado por el sistema de facturacion del proveedor.",
+            "prediction": "Documento generado por el sistema de facturacion del proveedor.",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          },
+          {
+            "field": "/annotations/1/kind",
+            "reference": "other",
+            "prediction": "other",
+            "exact": true,
+            "normalized": true,
+            "category": "correct"
+          }
+        ],
+        "excluded": [
+          "/annotations/1/text"
+        ],
+        "abstention": [
+          {
+            "field": "/annotations/1/text",
+            "abstained": false
+          }
+        ],
+        "all_scored_fields_correct": true,
+        "unsupported_definition": "Non-null prediction where complete reference is null; document support requires provenance review."
+      },
+      "checks": {
+        "coverage_accounted": false,
+        "evidence_references": true,
+        "factual_leaves_linked": false,
+        "foreground_evidence_only": true,
+        "invoice_identity_present": true,
+        "invoice_issues_clear": false,
+        "invoice_lines_present": true,
+        "invoice_schema": true,
+        "invoice_total_present": true,
+        "nonempty_interpretation": true,
+        "reading_schema": true,
+        "source_uncertainty_clear": false
+      },
+      "issues": [
+        {
+          "candidates": [
+            "ES4414650100951704302211"
+          ],
+          "field": "/payment/iban",
+          "kind": "ambiguous",
+          "raw_text": "Cuenta de abono (IBAN): ES44 1465 0100 9517 0430 2211 [unreadable]"
+        }
+      ],
+      "source_sha256": "7c20bd53318f9e8c80258bcf19807bbde07ed73e81ce8824bfaabe5f070cfb15",
+      "artifact_hashes": {
+        "checks": "1371b4d47b24b454218f8730050b5817d4ba92ec7150e214bd554168a502eb53",
+        "coverage": "dba2fd14a5374e05465124d0ad67b27f5c8bf18621ac52167c70466543c73ad2",
+        "evidence": "10a623c71abb7bcd573d34cbdaeff3fd1a39590be6d0f688fa0d627bf531e68c",
+        "invoice": "3db0ed4805ee4795c0cbd202ddd0153422a96b70c6c586b4703764e976d19b2b",
+        "layout": "483ae61eb2a5f1c466acd00e3efd1973c2932414af93af524015c48a35f5a19e",
+        "raw": "a9bfb0fdd8130b9dab4cb83311fd2acdf522aecc5fe9c9a69ca686b5d4d306c0",
+        "reading": "5975fc91ce18673c5ea342b69e8fa58c2703dc3cda2736635ddce3465ee5e2b3",
+        "warnings": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+      }
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "schema_version": "0.1",
+  "file_id": "scan_022.pdf",
+  "document_type": "invoice",
+  "invoice_number": "2026/40155",
+  "issue_date": null,
+  "purchase_order_reference": "PO-2026-0724",
+  "currency": "EUR",
+  "supplier": {
+    "name": "Construcciones Benimaclet S.A.",
+    "tax_id": "A46311208",
+    "location": "Valencia",
+    "address": null
+  },
+  "customer": {
+    "name": "Banco Miralmar S.A.",
+    "tax_id": "A58231074",
+    "location": null,
+    "address": null
+  },
+  "payment": {
+    "iban": "ES8201280011230100044571"
+  },
+  "lines": [
+    {
+      "position": 1,
+      "description": "Servicio mensual",
+      "quantity": null,
+      "amount": "1770.00"
+    },
+    {
+      "position": 2,
+      "description": "Mantenimiento trimestral",
+      "quantity": null,
+      "amount": "1770.00"
+    },
+    {
+      "position": 3,
+      "description": "Suministro pedido",
+      "quantity": null,
+      "amount": "1770.00"
+    }
+  ],
+  "taxes": [
+    {
+      "label": "IVA",
+      "rate_percent": "21",
+      "amount": "1115.10"
+    }
+  ],
+  "totals": {
+    "taxable_base": "5310.00",
+    "total": "6425.10"
+  },
+  "annotations": [
+    {
+      "kind": "footer",
+      "text": "Documento generado por el sistema de facturacion del proveedor."
+    }
+  ],
+  "additional_fields": [],
+  "issues": [
+    {
+      "field": "/issue_date",
+      "kind": "ambiguous",
+      "raw_text": "02/06/2026",
+      "candidates": [
+        "2026-06-02",
+        "2026-02-06"
+      ]
+    }
+  ]
+}

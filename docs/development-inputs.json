@@ -1,0 +1,39 @@
+{
+  "documents": [
+    {
+      "file_id": "2026-01-08_P001.pdf",
+      "path": "../facturas/2026-01-08_P001.pdf",
+      "sha256": "12a5e1eff4299d5bb0816e7d87aff2ba9be39928cf0478081d14067f02d22836"
+    },
+    {
+      "file_id": "2026-01-11_P007.pdf",
+      "path": "../facturas/2026-01-11_P007.pdf",
+      "sha256": "9aa687eb3bb56858e681e5626e1232a11af64c2cb0a1236d0b12068bf41a7407"
+    },
+    {
+      "file_id": "2026-01-12_P002.pdf",
+      "path": "../facturas/2026-01-12_P002.pdf",
+      "sha256": "f77481125c0e301eed174363319250230504aa46e92a0f5316d1f06ded1bd832"
+    },
+    {
+      "file_id": "FA-4666_transportes.pdf",
+      "path": "../facturas/FA-4666_transportes.pdf",
+      "sha256": "e969c76f674d27a6a6452db81db0782806a29dc2079897b566cfd4093b7c7c2b"
+    },
+    {
+      "file_id": "FA-4673_informática.pdf",
+      "path": "../facturas/FA-4673_informática.pdf",
+      "sha256": "e059bd7ceb2eb7e0369ff0aae9fcf83199a2234e65fdaf1d409d330d9b1500cf"
+    },
+    {
+      "file_id": "scan_028.pdf",
+      "path": "../facturas/scan_028.pdf",
+      "sha256": "f6c0d68f92e2b06fadc6cfd1e76ee705dba983fe5d551f6e1526950ac840f604"
+    },
+    {
+      "file_id": "scan_029.pdf",
+      "path": "../facturas/scan_029.pdf",
+      "sha256": "ed7eaccb3ece7a6af3f27457d0254e216e033ce2aca3329ad53c6d3d38d87c7a"
+    }
+  ]
+}
