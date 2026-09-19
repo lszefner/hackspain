@@ -13,6 +13,12 @@ design notes (including `docs/invoice-ruleset-erp-alignment-spec.md`), the machi
 `rules_ingestion/decision_context.schema.json` and the code in
 `rules_ingestion/decision_context.py` / `rules_ingestion/decision_storage.py` are authoritative.
 
+Task 2 adds a separate, opt-in deterministic evaluator and `evaluation-result/1` contract.
+See [Deterministic rule execution specification](deterministic-rule-execution-spec.md)
+for the implemented execution semantics, task-3 packet, and offline commands. The v1
+`evaluate_context` and persistence path described here remain unchanged; do not pass a v2
+execution context to the v1 store or validator.
+
 ## What the boundary is
 
 Extraction output (schema `0.1`, `benchmark/schemas/invoice.json`) is immutable evidence.
