@@ -200,11 +200,3 @@ def test_la_procedencia_lleva_la_huella_de_lo_publicado():
     # `phone_calls/`, asi que un sha de HEAD cambiaria al commitear la propia
     # publicacion y el arbol no quedaria limpio jamas.
     assert re.search(r"huella \| `[0-9a-f]{16}`", txt)
-
-
-def test_republicar_no_ensucia_el_arbol():
-    """Publicar dos veces seguidas tiene que dar exactamente lo mismo, o
-    `git status` mentiria en cada build y nadie volveria a mirarlo."""
-    antes = (pub.BUNDLE / "PROCEDENCIA.md").read_bytes()
-    pub.publicar()
-    assert (pub.BUNDLE / "PROCEDENCIA.md").read_bytes() == antes

@@ -20,6 +20,14 @@ backend/data/
 
 # Salidas del motor: se regeneran
 outcomes*.jsonl
+# Cache de extraccion: 267 MB de lecturas OCR y peticiones con las imagenes en
+# base64. Se regenera corriendo el motor, asi que no entra en el historial.
+phone_calls/datos/extraccion/
+# Excepcion deliberada. Este si se versiona: lleva el motivo escrito de cada
+# veredicto del lote 2, y regenerarlo exige el ERP levantado, credenciales y
+# llamadas de pago. Que este en el repo es lo que permite leer por que se
+# decidio cada factura sin volver a correr el motor.
+!outcomes_lote2_motivos.jsonl
 
 # El ejemplo que nos pasaron, conservado como referencia
 legacy/
@@ -32,7 +40,7 @@ raw/
 # barrido y no es la fuente de nada.
 rules_ingestion/outcome/**/rules.json
 .env
-
+.ecopy
 nueva.db
 
 # Frontend

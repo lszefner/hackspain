@@ -49,6 +49,17 @@ workbook:
         iban: iban
         razon_social: text
         condiciones: text
+      # Lote 2: cuatro proveedores extranjeros (DE, FR, BR, JP). Mismo
+      # encabezado que la hoja, asi que el mapa es uno a uno.
+      merge_csv:
+        - path: "../caja/proveedores_nuevos.csv"
+          columns:
+            id: "ID"
+            razon_social: "Razon Social"
+            nif: "NIF"
+            iban: "IBAN"
+            ciudad: "Ciudad"
+            condiciones: "Condiciones"
 
     # --- Master data: purchase orders ----------------------------------------
     # NOTE: the "Estado" column here is NOT authoritative. The ERP bridge
@@ -69,6 +80,25 @@ workbook:
         nif: nif
         importe_total: importe
         fecha_pedido: fecha
+      # La hoja no trae columna de moneda porque en La Caja no hay mas que una.
+      # El maestro de pedidos es la autoridad declarada sobre order.currency
+      # (ver master_data.capture_master_snapshots), asi que lo afirmamos aqui,
+      # donde queda con procedencia, y no como default dentro del extractor.
+      # Consecuencia: una factura que no imprime la moneda -- 62 de cada 150 en
+      # La Caja -- toma la del pedido en vez de bloquear R3.
+      constants:
+        currency: "EUR"
+      # Lote 2: 40 pedidos nuevos. El CSV trae los nombres ya canonicos, no
+      # los encabezados de la hoja, de ahi que el mapa no sea el mismo.
+      merge_csv:
+        - path: "../caja/pedidos_nuevos.csv"
+          columns:
+            pedido: "pedido"
+            proveedor_id: "proveedor_id"
+            nif: "nif"
+            importe_total: "importe_total"
+            estado_excel: "estado"
+            fecha_pedido: "fecha_pedido"
       authoritative_state_source: "erp"   # documented, consumed at decision time
 
     # --- The master NORM (free text -> rules) --------------------------------

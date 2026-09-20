@@ -83,10 +83,17 @@ def _read_sheet_rows(ws, header_row: int) -> "tuple[list, list]":
     return headers, data
 
 
-def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult) -> None:
+def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult,
+                  base_dir: str = ".") -> None:
     headers, data = _read_sheet_rows(ws, sheet_cfg.get("header_row") or 1)
     col_map: Dict[str, str] = sheet_cfg["columns"]           # canonical -> source header
     norm_map: Dict[str, str] = sheet_cfg.get("normalize", {})
+    # Campos que la hoja no trae pero la fuente afirma igualmente. La Caja no
+    # tiene columna de moneda y sus PDFs a menudo tampoco la imprimen; el
+    # maestro de pedidos SI es autoridad sobre order.currency. Declararlo aqui
+    # lo deja en el registro, con el sha de este fichero en la traza, en vez de
+    # como un default escondido en el codigo.
+    const_map: Dict[str, Any] = sheet_cfg.get("constants", {}) or {}
     key_col = sheet_cfg["key"]
 
     # --- schema discovery ---
@@ -131,6 +138,8 @@ def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult) -> No
             raw_values[canonical] = _cell_safe(value)
             record[canonical] = value
         record = _apply_normalizers(record, norm_map)
+        for canonical, constant in const_map.items():
+            record.setdefault(canonical, constant)
         captured.append({k: _cell_safe(v) for k, v in record.items()})
         provenance.append({"sheet": sheet_cfg["sheet"], "row": row_number,
                            "cells": cells, "raw": raw_values})
@@ -150,6 +159,39 @@ def _load_tabular(ws, sheet_cfg: dict, sheet_key: str, result: LoadResult) -> No
         )
     if blanks:
         result.warnings.append(f"[{sheet_key}] {blanks} row(s) with blank key skipped")
+    # Fuentes incrementales: los CSV que Alberto deja caer junto al Excel
+    # (proveedores_nuevos.csv, pedidos_nuevos.csv del lote del sabado). Se
+    # funden en la MISMA tabla y por la MISMA clave, asi que el resto del
+    # motor no se entera de que un proveedor vino de una hoja o de un CSV.
+    # Cada CSV declara su propio mapa de columnas porque los encabezados no
+    # tienen por que coincidir con los de la hoja.
+    for extra in sheet_cfg.get("merge_csv", []) or []:
+        csv_path = extra["path"]
+        if not os.path.isabs(csv_path):
+            csv_path = os.path.join(base_dir, csv_path)
+        if not os.path.isfile(csv_path):
+            result.warnings.append(
+                f"[{sheet_key}] fuente incremental declarada y ausente: {csv_path}")
+            continue
+        nuevos = 0
+        with open(csv_path, "r", encoding="utf-8-sig", newline="") as fh:
+            for number, raw_row in enumerate(csv.DictReader(fh), start=2):
+                record = {canonical: raw_row.get(header)
+                          for canonical, header in extra["columns"].items()}
+                record = _apply_normalizers(record, norm_map)
+                for canonical, constant in const_map.items():
+                    record.setdefault(canonical, constant)
+                key_val = record.get(key_col)
+                if key_val in (None, ""):
+                    continue
+                captured.append({k: _cell_safe(v) for k, v in record.items()})
+                provenance.append({"sheet": os.path.basename(csv_path),
+                                   "row": number, "cells": {}, "raw": dict(raw_row)})
+                table[str(key_val)] = record
+                nuevos += 1
+        result.warnings.append(
+            f"[{sheet_key}] {nuevos} registro(s) de {os.path.basename(csv_path)}")
+
     result.lookups[sheet_key] = table
     result.source_records[sheet_key] = captured
     result.source_provenance[sheet_key] = provenance
@@ -221,7 +263,7 @@ def load(config_path: str, base_dir: Optional[str] = None) -> LoadResult:
         if sheet_key == "norma":
             _load_norma(ws, sheet_cfg, result)
         else:
-            _load_tabular(ws, sheet_cfg, sheet_key, result)
+            _load_tabular(ws, sheet_cfg, sheet_key, result, base_dir)
 
     wb.close()
     return result

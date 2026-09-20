@@ -7,6 +7,8 @@ import threading
 from decimal import Decimal
 from pathlib import Path
 
+from backend.export_outcomes import REVIEW_NOT_PURCHASED
+
 
 def _default(obj):
     if isinstance(obj, Decimal):
@@ -218,9 +220,9 @@ class PostgresResultsStore:
         failed = (status == 'FAILED' or row['extraction_status'] in ('failed', 'unknown')
                   or (not status and row['run_state'] in ('completed', 'partial', 'failed', 'unknown')))
         return _jsonable(row) | {
-            'estado': 'error' if failed else 'hecha' if status in ('COMPLETED', 'INCOMPLETE', 'DISABLED') else 'procesando',
+            'estado': 'error' if failed else 'hecha' if status in ('COMPLETED', 'INCOMPLETE', *REVIEW_NOT_PURCHASED) else 'procesando',
             'review_status': status, 'attention_required': (
-                row.get('decision') == 'ESCALAR' if status == 'DISABLED' else review.get('attention_required', True)),
+                row.get('decision') == 'ESCALAR' if status in REVIEW_NOT_PURCHASED else review.get('attention_required', True)),
             'error': review.get('error') or row.get('extraction_error') or row.get('run_error'),
             'raw_invoice': None, 'checks': None,
         }

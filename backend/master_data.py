@@ -309,7 +309,12 @@ def capture_master_snapshots(sources_yaml: str, *, captured_at: str, loaded=None
         "proveedores", "supplier_master", supplier_scopes, ("id", "nif"))
     order_scopes = ["order.identity", "order.amount"]
     pedidos_cfg = sheets_cfg.get("pedidos") or {}
-    if "currency" in (pedidos_cfg.get("columns") or {}):
+    # La moneda puede venir de una columna de la hoja o declararse como
+    # constante de la fuente (sources.yaml -> pedidos.constants). Las dos son
+    # afirmaciones del mapping y las dos quedan en el payload del snapshot, asi
+    # que las dos conceden la autoridad.
+    if "currency" in (pedidos_cfg.get("columns") or {}) \
+            or "currency" in (pedidos_cfg.get("constants") or {}):
         order_scopes.append("order.currency")
     snapshots["orders"] = sheet_snapshot(
         "pedidos", "order_master", tuple(order_scopes),

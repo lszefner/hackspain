@@ -16,6 +16,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+# Review statuses that mean no reviewer ran, as opposed to one that ran and
+# returned something. Each states why: the whole run had review disabled, or
+# the evaluator reached a verdict this reviewer cannot change. Neither is a
+# missing review, and neither may be read as a review that passed.
+REVIEW_NOT_PURCHASED = ("DISABLED", "SKIPPED_EVALUATOR_DECISIVE")
+
 
 def decide_output(row: dict | None) -> tuple[str, str]:
     """Pure policy: (output, basis) for one store row."""

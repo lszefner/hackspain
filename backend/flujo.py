@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 from backend.audit_reader import AuditReader
-from backend.export_outcomes import decide_output
+from backend.export_outcomes import REVIEW_NOT_PURCHASED, decide_output
 from rules_ingestion.decision_context import ContextError
 from rules_ingestion.decision_storage import _jsonable
 from rules_ingestion.engine_storage import ArchiveError
@@ -155,6 +155,13 @@ def _revision(engine, row):
     if not record_id:
         if row.get('evaluation_record_id') and (row.get('review_policy') or {}).get('enabled') is False:
             return {'record_id': None, 'status': 'DISABLED', 'reason': 'REVISION_REVIEW_ENABLED=false'}
+        # No reviewer ran because the evaluator's verdict is not one a review
+        # can change: decide_output only consults a review to veto a PAGAR.
+        if (row.get('evaluation_record_id')
+                and (row.get('review_policy') or {}).get('skipped_when') == 'evaluator_decisive'
+                and row.get('decision') in ('NO_PAGAR', 'ESCALAR')):
+            return {'record_id': None, 'status': 'SKIPPED_EVALUATOR_DECISIVE',
+                    'reason': f"evaluator returned {row['decision']}; a review cannot change it"}
         return None
     revision = {'record_id': record_id}
     packet, error = _load(lambda: engine.packet(record_id))
@@ -233,7 +240,7 @@ def flujo(store, file_id: str, en_disco: bool = False) -> dict | None:
                ref=(row or {}).get('evaluation_record_id')),
         _etapa('revisada',
                'hecha' if review_status in ('COMPLETED', 'INCOMPLETE')
-               else 'desactivada' if review_status == 'DISABLED'
+               else 'desactivada' if review_status in REVIEW_NOT_PURCHASED
                else 'error' if review_status == 'FAILED' else 'pendiente',
                ref=(row or {}).get('review_record_id')),
         _etapa('emitida', 'hecha', ref=salida['verdict']),

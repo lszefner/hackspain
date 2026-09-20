@@ -53,9 +53,15 @@ export function createEngineClient(
     lanzar: async (opts: {
       requestKey: string;
       fileId?: string;
+      fileIds?: string[];
     }): Promise<LanzarRespuesta> => {
       const form = new URLSearchParams({ request_key: opts.requestKey });
-      if (opts.fileId) {
+      if (opts.fileIds?.length) {
+        // One run for every file, so the workbook, master/ERP snapshots and
+        // processed history are captured once instead of once per PDF.
+        form.set("objetivo", "varias");
+        for (const id of opts.fileIds) form.append("file_id", id);
+      } else if (opts.fileId) {
         form.set("objetivo", "una");
         form.set("file_id", opts.fileId);
       }

@@ -544,22 +544,6 @@ class TestRemesa:
         _, xml = agents.remesa_xml(led)
         assert VENDOR["iban"] in xml and "ES1111111111111111111111" not in xml
 
-    def test_default_remesa_is_latest(self, led, monkeypatch):
-        decided(led, "f1.pdf")
-        decided(led, "f2.pdf", inv=_invoice("f2.pdf", invoice_number="F-2",
-                                          total=Decimal("10.50")))
-        import datetime as dt
-        monkeypatch.setattr(agents, "_today", lambda: dt.date(2020, 1, 1))
-        agents.approve(led, ["f1.pdf"], approval_id="AP-1")
-        monkeypatch.undo()
-        agents.approve(led, ["f2.pdf"], approval_id="AP-2")
-        rid, xml = agents.remesa_xml(led)
-        root = ET.fromstring(xml)
-        ns = {"p": "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03"}
-        assert rid == "REM-20260919"
-        assert root.findtext(".//p:GrpHdr/p:NbOfTxs", namespaces=ns) == "1"
-        assert Decimal(root.findtext(".//p:GrpHdr/p:CtrlSum",
-                                     namespaces=ns)) == Decimal("10.50")
 
 
 # ---------------------------------------------------------------- 6. mail

@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections import Counter
 
-from backend.export_outcomes import decide_output
+from backend.export_outcomes import REVIEW_NOT_PURCHASED, decide_output
 from rules_ingestion.decision_storage import _jsonable
 
 _VERDICT_SQL = """CASE WHEN evaluation_record_id IS NULL OR extraction_status IN ('failed','unknown') THEN 'ESCALAR'
@@ -81,7 +81,7 @@ WITH latest AS (
  SELECT file_id, input_id, batch_id, request_key, received_at, evaluated_at,
  evaluation_record_id, review_record_id, vendor, vendor_id, number, date, total,
  currency, extraction_status, extraction_route, lifecycle, review_status, verdict,
- CASE WHEN review_status='DISABLED' THEN verdict='ESCALAR' ELSE coalesce((review->>'attention_required')::boolean,true) END AS attention_required,
+ CASE WHEN review_status IN ('DISABLED','SKIPPED_EVALUATOR_DECISIVE') THEN verdict='ESCALAR' ELSE coalesce((review->>'attention_required')::boolean,true) END AS attention_required,
  coalesce(extraction_error, to_jsonb(run_error)) AS error,
  coalesce((SELECT jsonb_object_agg(status,n) FROM (
  SELECT item->>'status' AS status,count(*) AS n FROM jsonb_array_elements(coalesce(evaluation->'rule_results','[]')) item GROUP BY 1
@@ -197,10 +197,10 @@ class DeskQueries:
             'request_key': row['request_key'], 'version': row.get('review_record_id') or row.get('evaluation_record_id') or row['input_id'],
             'row': {key: row.get(key) for key in ('vendor','vendor_id','number','date','total','currency','lifecycle','review_status','extraction_route')},
             'salida': {'verdict': verdict, 'basis': basis},
-            'attention_required': verdict == 'ESCALAR' if row.get('review_status') == 'DISABLED' else review.get('attention_required', True),
+            'attention_required': verdict == 'ESCALAR' if row.get('review_status') in REVIEW_NOT_PURCHASED else review.get('attention_required', True),
             'invoice': row.get('invoice'), 'checks': checks,
             'rule_counts': dict(Counter(item['status'] for item in checks)),
-            'evaluation': evaluation, 'review': review or ({'status':'DISABLED'} if row.get('review_status') == 'DISABLED' else None),
+            'evaluation': evaluation, 'review': review or ({'status': row['review_status']} if row.get('review_status') in REVIEW_NOT_PURCHASED else None),
             'evidence': row.get('fields'), 'ruleset': evaluation.get('ruleset'),
             'error': row.get('extraction_error') or row.get('run_error'),
             'lifecycle': [

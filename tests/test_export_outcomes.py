@@ -140,3 +140,32 @@ class TestProject:
         write_jsonl(rows, out)
         line = out.read_text(encoding="utf-8").strip()
         assert nfc in line and nfd not in line
+
+
+def test_skipping_a_review_the_evaluator_made_moot_cannot_change_the_verdict():
+    """A non-PAGAR verdict is decided without ever reading the review.
+
+    The run therefore stops buying that provider call. This pins the property
+    the saving rests on: for every non-PAGAR decision the deliverable is
+    identical whether a review was purchased, skipped, or absent. If a future
+    change makes decide_output consult the review on these branches, the
+    skipped call would silently alter a verdict and this test fails first.
+    """
+    for decision in ("NO_PAGAR", "ESCALAR"):
+        reviewed = decide_output(_row(decision=decision))
+        skipped = decide_output(_row(
+            decision=decision,
+            review_record_id=None,
+            review_status="SKIPPED_EVALUATOR_DECISIVE",
+            contextual_review=None))
+        assert reviewed == skipped == (decision, "evaluator")
+
+
+def test_a_skipped_review_never_stands_in_for_one_that_ran():
+    """PAGAR still requires a real review; the skip marker must not approve."""
+    output, basis = decide_output(_row(
+        decision="PAGAR",
+        review_record_id=None,
+        review_status="SKIPPED_EVALUATOR_DECISIVE",
+        contextual_review=None))
+    assert (output, basis) == ("ESCALAR", "review_unavailable")

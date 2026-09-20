@@ -18,7 +18,10 @@ def settings(
     cascade = os.getenv("INGESTION_CASCADE", "deterministic-first")
     if cascade not in {"deterministic-first", "vision-only"}:
         raise ValueError("INGESTION_CASCADE must be deterministic-first or vision-only")
-    return {
+    effort = os.getenv("INGESTION_REASONING_EFFORT") or None
+    if effort is not None and effort not in {"low", "medium", "high"}:
+        raise ValueError("INGESTION_REASONING_EFFORT must be low, medium or high")
+    config = {
         "extraction_cascade": cascade,
         "version": VERSION,
         "ocr": ocr,
@@ -48,6 +51,13 @@ def settings(
             os.getenv("INGESTION_PROVIDER_REVISION")
         ),
     }
+    # Absent unless asked for. This dict is hashed into every job's work_key
+    # (ingestion/storage.py builds it from `settings`), so an unconditional key
+    # would change every key and make the whole stored corpus re-extract, at
+    # full price, for a setting nobody turned on.
+    if effort is not None:
+        config["reasoning_effort"] = effort
+    return config
 
 
 def credentials(config: dict, *, needs_ocr: bool = True) -> dict:

@@ -205,6 +205,13 @@ class Handler(BaseHTTPRequestHandler):
         objetivo = (campos.get("objetivo") or [""])[0]
         if objetivo == "una" and campos.get("file_id"):
             file_ids = [campos["file_id"][0]]
+        elif objetivo == "varias" and campos.get("file_id"):
+            # One run for the whole drop. A run's fixed cost -- workbook,
+            # supplier/order snapshots, the ERP capture and the processed
+            # history -- is paid once rather than once per PDF, and the files
+            # extract concurrently instead of each waiting for _procesando.
+            # revisar_lote validates every id; dict.fromkeys dedupes in order.
+            file_ids = list(dict.fromkeys(campos["file_id"]))[:LOTE_TAMANO]
         else:
             estado = get_store().all()
             todas = _facturas(estado)

@@ -256,7 +256,8 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
         run_input = {'schema_version': 'core-engine-run-input/1', 'request_key': request_key,
                      'request_sha256': request_sha, 'signature': signature, 'captured_at': captured_at,
                      'evaluation_date_policy': date_policy,
-                     'review_policy': {'enabled': enabled, 'disabled_output': 'evaluator'},
+                     'review_policy': {'enabled': enabled, 'disabled_output': 'evaluator',
+                                       'skipped_when': 'evaluator_decisive'},
                      'originals': originals, 'rule_sources': source_refs,
                      'ruleset': engine.archive.put(ruleset_bytes, 'decision-source-ruleset', 'application/octet-stream')
                      if ruleset_bytes is not None else None,
@@ -339,6 +340,18 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
 
                 if not enabled:
                     result.update(review_status='DISABLED', attention_required=evaluation['decision'] == 'ESCALAR')
+                    results.append(result)
+                    continue
+
+                # The reviewer is a veto on payment, never an authorisation:
+                # export_outcomes.decide_output only consults it when the
+                # evaluator said PAGAR, and returns the evaluator's own verdict
+                # otherwise. Buying a review for a decision it cannot change
+                # costs a provider call whose answer is discarded by
+                # construction, so the run states the skip instead of paying.
+                if evaluation['decision'] != 'PAGAR':
+                    result.update(review_status='SKIPPED_EVALUATOR_DECISIVE',
+                                  attention_required=evaluation['decision'] == 'ESCALAR')
                     results.append(result)
                     continue
 

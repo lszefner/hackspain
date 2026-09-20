@@ -42,10 +42,18 @@ rules:
   VENDOR:
     enabled: true
     params:
+      # Insatisfacible sobre La Caja: ninguna de las 14 hojas del Excel tiene
+      # columna de estado del proveedor, y sources.yaml no declara ninguna.
+      # Con true, R1 sale BLOCKED (UNUSABLE_INPUT: supplier.active) en el 100%
+      # de las facturas. A2 tampoco lo pide.
       require_active: false
       require_nif_in_master: true
       require_iban_match: true
-      # Caja policy: match the supplier master; do not require a checksum.
+      # A2 dice: "Pagar solo si el NIF esta en el maestro y el IBAN de la
+      # factura coincide con el maestro." Pide PERTENENCIA al maestro, no
+      # validez registral: el digito de control es un bloqueo que la norma no
+      # escribe. Sobre La Caja lo fallan 10 de 11 proveedores (datos
+      # sinteticos), asi que activarlo tumba R1 en 425 de 471 facturas.
       check_nif_control_digit: false
     on_fail: ESCALAR
 
@@ -74,7 +82,10 @@ rules:
     enabled: true
     params:
       allow_future: false
-      # The written norm requires a valid, non-future date, not an age limit.
+      # A5 dice, entera: "La fecha debe ser valida y no futura." No menciona
+      # plazos de pago. Exigirlos aqui hace NEEDS_REVIEW en 458 de 471 (toda
+      # factura anterior a las condiciones del proveedor), por una regla que
+      # la norma no contiene.
       enforce_payment_terms: false
 
   MISSING:

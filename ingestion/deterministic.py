@@ -31,8 +31,28 @@ GATE_POINTERS = (
 )
 
 RE_PO = re.compile(r"\bPO-\d{4}-\d{4}\b")
-RE_IBAN = re.compile(r"\bES\d{2}(?:\s?\d{4}){5}\b")
+# IBAN en su forma internacional (ISO 13616). Antes el patron solo aceptaba ES
+# y el lote 2 trae proveedores aleman, frances, brasileno y japones: sus IBAN
+# venian impresos y se perdian.
+#
+# NO se valida el mod-97. Se probo, y los 11 IBAN del maestro de La Caja lo
+# fallan (son sinteticos), igual que 3 de los 4 nuevos: filtrar por checksum
+# habria tirado casi todos. Lo que si es fiable es la ETIQUETA, presente en
+# 120 de 120 facturas del lote 1 y en 39 de 40 del lote 2, asi que el valor se
+# ancla ahi, igual que el identificador fiscal.
+RE_IBAN = re.compile(r"\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{2,6})+")
+RE_IBAN_LABEL = re.compile(r"\biban\b[\s):.\]-]*")
 RE_NIF = re.compile(r"\b(?:[A-Z]\d{8}|\d{8}[A-Z])\b")
+# El identificador fiscal se ancla en SU ETIQUETA, no en la forma espanola:
+# "NIF", "CIF", "VAT", "USt-ID", "N° TVA", "CNPJ", "Tax ID". El valor va detras
+# y cada pais lo escribe a su manera (DE812345678, 12.345.678/0001-95,
+# 5010401075570), asi que el patron del valor es de forma, no de pais.
+# El separador admite parentesis y puntuacion porque La Caja escribe tanto
+# "NIF: X" como "CUENTA DE ABONO (IBAN): X".
+RE_TAX_LABEL = re.compile(
+    r"\b(?:nif|cif|vat|ust-?\s?id(?:-?nr)?|tva|cnpj|tax\s*id|p\.?\s*iva)\b"
+    r"[\s):.\]-]*")
+RE_TAXID_VALUE = re.compile(r"[A-Z0-9][A-Z0-9.\-/]{5,19}")
 # DD/MM/YYYY is the Spanish convention of this corpus, not MM/DD.
 RE_DATE = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{4})\b")
 RE_DATE_ISO = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
@@ -54,8 +74,11 @@ RE_LEGAL = re.compile(
     r"\b(?:S\.?\s?L\.?\s?U?\.?|S\.?\s?A\.?|S\.?\s?C\.?|S\.?\s?COOP\.?|C\.?\s?B\.?)",
     re.IGNORECASE)
 RE_LEAD = re.compile(r"^\s*[-·•]*\s*")
+# `_flat` quita acentos y baja a minusculas, asi que aqui van ya plegados:
+# "Facture a" (fr), "Rechnungsempfanger" (de), "Faturar a" (pt).
 RE_CUSTOMER = re.compile(
-    r"^\s*[-·•]?\s*(cliente|bill to|destinatario|facturar a)\s*:")
+    r"^\s*[-·•]?\s*(cliente|bill to|destinatario|facturar a"
+    r"|facture a|rechnungsempfanger|faturar a)\s*:")
 RE_NUMBER_LABEL = re.compile(
     r"^\s*[-·•]?\s*"
     r"(factura simplificada no|no de factura|factura no|ref factura"
@@ -151,6 +174,29 @@ def _flat(text: str) -> tuple[str, list[int]]:
             out.append(c)
             amap.append(i)
     return "".join(out), amap
+
+
+def _ibans(line: "_Line") -> list[tuple[str, int, int]]:
+    """Los IBAN de una linea, anclados en su etiqueta: (valor, inicio, fin)."""
+    found = []
+    for label in RE_IBAN_LABEL.finditer(line.flat):
+        start = line.original(label.end())
+        value = RE_IBAN.match(line.text[start:])
+        if value:
+            found.append((value.group().strip(), start + value.start(),
+                          start + value.end()))
+    return found
+
+
+def _tax_ids(line: "_Line") -> list[tuple[str, int, int]]:
+    """Los identificadores fiscales de una linea: (valor, inicio, fin)."""
+    found = []
+    for label in RE_TAX_LABEL.finditer(line.flat):
+        start = line.original(label.end())
+        value = RE_TAXID_VALUE.match(line.text[start:])
+        if value:
+            found.append((value.group(), start + value.start(), start + value.end()))
+    return found
 
 
 class _Line:
@@ -411,13 +457,13 @@ def extract(reading: dict) -> dict:
     iban = None
     seen_iban: dict[str, tuple[_Line, re.Match]] = {}
     for line in lines:
-        for match in RE_IBAN.finditer(line.text):
+        for value, start, end in _ibans(line):
             seen_iban.setdefault(
-                re.sub(r"\s+", "", match.group()).upper(), (line, match))
+                re.sub(r"\s+", "", value).upper(), (line, start, end))
     if len(seen_iban) == 1:
-        line, match = next(iter(seen_iban.values()))
+        line, start, end = next(iter(seen_iban.values()))
         iban = next(iter(seen_iban))
-        put("/payment/iban", line.link(match.start(), match.end()))
+        put("/payment/iban", line.link(start, end))
     elif seen_iban:
         gaps.append("ambiguous_iban")
 
@@ -442,21 +488,20 @@ def extract(reading: dict) -> dict:
                 customer_name = name
                 put("/customer/name",
                     line.link(name_start, name_start + len(name)))
-            tax = RE_NIF.search(line.text)
-            if tax and customer_tax is None:
-                customer_tax = tax.group()
-                put("/customer/tax_id", line.link(tax.start(), tax.end()))
+            taxes = _tax_ids(line)
+            if taxes and customer_tax is None:
+                customer_tax, start, end = taxes[0]
+                put("/customer/tax_id", line.link(start, end))
             continue
         if "cliente" in line.flat:
             continue  # the payer's CIF line is never the supplier's
-        if re.search(r"\b(?:nif|cif)\b", line.flat):
-            for match in RE_NIF.finditer(line.text):
-                supplier_tax_ids.setdefault(match.group(), (line, match))
+        for value, start, end in _tax_ids(line):
+            supplier_tax_ids.setdefault(value, (line, start, end))
     supplier_tax_ids.pop(customer_tax, None)
     if len(supplier_tax_ids) == 1:
-        line, match = next(iter(supplier_tax_ids.values()))
-        supplier_tax = match.group()
-        put("/supplier/tax_id", line.link(match.start(), match.end()))
+        line, start, end = next(iter(supplier_tax_ids.values()))
+        supplier_tax = next(iter(supplier_tax_ids))
+        put("/supplier/tax_id", line.link(start, end))
     elif supplier_tax_ids:
         gaps.append("ambiguous_supplier_tax_id")
 
