@@ -7,7 +7,6 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { ThinkingOrb } from "thinking-orbs";
 import type {
   DeskPanel,
   PanelAction,
@@ -17,7 +16,11 @@ import { labelForEtapa } from "@/lib/desk/ingest-ui";
 import { fold } from "@/lib/desk/fold";
 import type { OutreachDraft } from "@/lib/desk/outreach";
 import type { Ejecucion, Flujo } from "@/lib/engine/types";
+import { AttachMenu, type AttachKind } from "./attach-menu";
 import { EmailDraftDialog } from "./email-draft-dialog";
+import { ProgressRing } from "./progress-ring";
+import { RunPath } from "./run-path";
+import { ThinkPill } from "./think-pill";
 
 type HistoryItem = { role: "user" | "assistant"; content: string };
 type RunStage = {
@@ -68,6 +71,8 @@ type StagedFile = {
   name: string;
   size: number;
   kind: "pdf" | "zip";
+  status: "uploading" | "ready";
+  progress: number;
 };
 
 const BATCH_PHASES = ["Receiving", "Extracting", "Evaluating"] as const;
@@ -526,8 +531,34 @@ export function AgentPage({
   const [thinkLabel, setThinkLabel] = useState(THINK_LABELS[0]);
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const runBusy = useRef(false);
+  const attachAnim = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!staged || staged.status !== "uploading") return;
+    const token = staged.file;
+    const duration = 2200 + Math.min(1800, Math.round(token.size / 12_000));
+    const started = performance.now();
+    const id = window.setInterval(() => {
+      const t = Math.min(1, (performance.now() - started) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      const progress = Math.max(1, Math.round(eased * 100));
+      setStaged((prev) => {
+        if (!prev || prev.file !== token) return prev;
+        if (t >= 1) return { ...prev, progress: 100, status: "ready" };
+        return { ...prev, progress, status: "uploading" };
+      });
+      if (t >= 1) {
+        window.clearInterval(id);
+        attachAnim.current = null;
+      }
+    }, 50);
+    attachAnim.current = id;
+    return () => {
+      window.clearInterval(id);
+      if (attachAnim.current === id) attachAnim.current = null;
+    };
+  }, [staged?.file, staged?.status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1434,13 +1465,22 @@ export function AgentPage({
     void ask(input);
   }
 
-  function onPickFile(list: FileList | null) {
+  function onPickFile(kind: AttachKind, list: FileList | null) {
     const file = list?.[0];
     if (!file) return;
+    if (kind === "image") {
+      pushDesk(
+        "I need a PDF for a live run. A photo or scan is not enough yet — export it as PDF, or drop a zip.",
+      );
+      return;
+    }
     const name = file.name.toLowerCase();
     const isPdf =
-      file.type === "application/pdf" || name.endsWith(".pdf");
+      kind === "pdf" ||
+      file.type === "application/pdf" ||
+      name.endsWith(".pdf");
     const isZip =
+      kind === "zip" ||
       file.type === "application/zip" ||
       file.type === "application/x-zip-compressed" ||
       name.endsWith(".zip");
@@ -1448,15 +1488,27 @@ export function AgentPage({
       pushDesk("I accept one PDF or one zip of PDFs.");
       return;
     }
+
+    if (attachAnim.current != null) {
+      window.clearInterval(attachAnim.current);
+      attachAnim.current = null;
+    }
+
     setStaged({
       file,
       name: file.name,
       size: file.size,
       kind: isZip ? "zip" : "pdf",
+      status: "uploading",
+      progress: 0,
     });
   }
 
-  const canSend = !busy && (Boolean(input.trim()) || Boolean(staged));
+  const attaching = staged?.status === "uploading";
+  const canSend =
+    !busy &&
+    !attaching &&
+    (Boolean(input.trim()) || staged?.status === "ready");
 
   let body: ReactNode;
   if (!chatting) {
@@ -1516,17 +1568,7 @@ export function AgentPage({
                   Desk <time>{now()}</time>
                 </div>
                 <div className="say">
-                  <span className="think">
-                    <span className="orbit" aria-hidden>
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span className="orb-slot" aria-hidden>
-                      <ThinkingOrb size={20} theme="light" />
-                    </span>
-                    <span className="lbl">{thinkLabel}</span>
-                  </span>
+                  <ThinkPill label={thinkLabel} />
                 </div>
               </div>
             );
@@ -1537,47 +1579,11 @@ export function AgentPage({
                 <div className="who">
                   Desk <time>{now()}</time>
                 </div>
-                <div className={`run-card ${msg.status}`}>
-                  <p className="run-title">{msg.title}</p>
-                  <ol className="run-stages">
-                    {msg.stages.map((stage) => (
-                      <li
-                        key={stage.id}
-                        className={
-                          stage.state === "done"
-                            ? "is-done"
-                            : stage.state === "hot"
-                              ? "is-hot"
-                              : "is-pending"
-                        }
-                      >
-                        <span className="run-stage-main">
-                          <span className="mark" aria-hidden />
-                          {stage.label}
-                        </span>
-                        {stage.subtasks?.length ? (
-                          <ol className="run-subtasks">
-                            {stage.subtasks.map((sub) => (
-                              <li
-                                key={sub.id}
-                                className={
-                                  sub.state === "done"
-                                    ? "is-done"
-                                    : sub.state === "hot"
-                                      ? "is-hot"
-                                      : "is-pending"
-                                }
-                              >
-                                <span className="mark" aria-hidden />
-                                {sub.label}
-                              </li>
-                            ))}
-                          </ol>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
+                <RunPath
+                  title={msg.title}
+                  status={msg.status}
+                  stages={msg.stages}
+                />
               </div>
             );
           }
@@ -1719,21 +1725,43 @@ export function AgentPage({
         <div className="composer-in">
           <div className="tray" aria-live="polite">
             {staged ? (
-              <div className="att ok">
-                <span className="ico">{staged.kind === "zip" ? "ZIP" : "PDF"}</span>
+              <div
+                className={`att glass ${staged.status === "ready" ? "ok" : "busy"}`}
+              >
+                {staged.status === "uploading" ? (
+                  <ProgressRing
+                    progress={staged.progress}
+                    size={36}
+                    stroke={2.75}
+                    label="Attaching file"
+                  />
+                ) : (
+                  <span className="ico">
+                    {staged.kind === "zip" ? "ZIP" : "PDF"}
+                  </span>
+                )}
                 <span>
                   <span className="nm">{staged.name}</span>
                   <span className="st">
-                    {formatBytes(staged.size)} ·{" "}
-                    {staged.kind === "zip" ? "zip ready" : "ready"}
+                    {staged.status === "uploading"
+                      ? `${formatBytes(staged.size)} · attaching ${staged.progress}%`
+                      : `${formatBytes(staged.size)} · ${
+                          staged.kind === "zip" ? "zip ready" : "ready"
+                        }`}
                   </span>
                 </span>
                 <button
                   type="button"
                   className="x"
                   aria-label="Remove attachment"
-                  disabled={busy}
-                  onClick={() => setStaged(null)}
+                  disabled={busy || attaching}
+                  onClick={() => {
+                    if (attachAnim.current != null) {
+                      window.clearInterval(attachAnim.current);
+                      attachAnim.current = null;
+                    }
+                    setStaged(null);
+                  }}
                 >
                   ×
                 </button>
@@ -1741,42 +1769,24 @@ export function AgentPage({
             ) : null}
           </div>
           <form className="composer" onSubmit={onSubmit}>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf,.pdf,application/zip,.zip"
-              hidden
-              onChange={(e) => {
-                onPickFile(e.target.files);
-                e.target.value = "";
-              }}
+            <AttachMenu
+              disabled={busy || attaching}
+              hasAttachment={staged?.status === "ready"}
+              onPick={onPickFile}
             />
-            <button
-              type="button"
-              className={`icon-btn ${staged ? "has" : ""}`}
-              disabled={busy}
-              title="Attach one PDF or zip"
-              aria-label="Attach one PDF or zip"
-              onClick={() => fileRef.current?.click()}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M7 3.5v6.2a2 2 0 1 0 4 0V4.8a1.2 1.2 0 1 0-2.4 0v4.4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={
-                staged ? "Add a note, or just send…" : "Ask the desk…"
+                attaching
+                  ? "Attaching…"
+                  : staged
+                    ? "Add a note, or just send…"
+                    : "Ask the desk…"
               }
-              disabled={busy}
+              disabled={busy || attaching}
               aria-label="Message the desk"
               autoComplete="off"
             />
@@ -1803,7 +1813,7 @@ export function AgentPage({
                 key={chip}
                 type="button"
                 className="chip"
-                disabled={busy}
+                disabled={busy || attaching}
                 onClick={() => void ask(chip)}
               >
                 {chip}
@@ -1811,17 +1821,19 @@ export function AgentPage({
             ))}
           </div>
           <p
-            className={`hint ${busy ? "busy" : ""} ${staged && !busy ? "ready" : ""}`}
+            className={`hint ${busy || attaching ? "busy" : ""} ${staged?.status === "ready" && !busy ? "ready" : ""}`}
           >
             {busy
               ? runBusy.current
                 ? "Working through your upload…"
                 : "Working on the live records…"
-              : staged
-                ? staged.kind === "zip"
-                  ? "Zip ready — send for a demo walkthrough (files are staged, not fully engine-run)."
-                  : "One PDF ready — send to run it through the engine."
-                : "Attach one PDF for a live run, or a zip for a staged demo batch. Approve, pay and email are not connected."}
+              : attaching
+                ? "Attaching to the desk…"
+                : staged?.status === "ready"
+                  ? staged.kind === "zip"
+                    ? "Zip ready — send for a demo walkthrough (files are staged, not fully engine-run)."
+                    : "One PDF ready — send to run it through the engine."
+                  : "Attach one PDF for a live run, or a zip for a staged demo batch. Approve, pay and email are not connected."}
           </p>
         </div>
       </div>
