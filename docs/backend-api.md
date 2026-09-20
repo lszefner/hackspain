@@ -9,6 +9,19 @@ serving a request.
 
 ## Running it
 
+For the agent upload flow using the current YAML policy, run `make api-yaml`.
+It compiles `rules_ingestion/profiles/balanced.yaml` and the mapped workbook
+locally, without JEV/LLM rule authoring or historical discovery caches. NIF
+checksum and payment-term enforcement remain disabled by that profile.
+Uncompiled/unsupported conditions retain the evaluator's review behavior.
+Restart this target after editing policy or workbook inputs.
+
+The launcher freezes exact source bytes under ignored `backend/data/yaml-rules/`
+and pins the generated rules for the normal persisted engine. Runs, extraction,
+evaluations, recommendations and canonical audit JSON still persist in Postgres;
+original/source artifacts remain in private Supabase Storage. Contextual review
+is explicitly disabled. This does not clear or retry unknown generation attempts.
+
 ```bash
 uv sync --locked --extra worker --extra backend
 make erp          # terminal 2: local ERP on :8009 (seeds caja/ if needed)
@@ -25,6 +38,9 @@ provider credentials are initialized lazily when a revision is launched.
 
 Environment variables for launching revisions (names only):
 
+- `REVISION_REVIEW_ENABLED` — defaults to `false`. Runs persist disabled review
+  and use the evaluator recommendation; no contextual provider is called.
+  Set `true` explicitly to opt back into review. Recommendations never execute payment.
 - `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_DB_URL` — Postgres +
   private Storage bucket (`SUPABASE_STORAGE_BUCKET`, default
   `invoice-ingestion-private`).

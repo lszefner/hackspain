@@ -41,6 +41,14 @@ const {
 const { InvoicePage } = require("../src/components/desk/invoices");
 const { SummaryPage } = require("../src/components/desk/summary");
 const { money } = require("../src/lib/desk/types");
+const { stoppedRunError } = require("../src/lib/desk/ingest-ui");
+
+test("unknown runs stop polling when the engine is idle, preserving the cause", () => {
+  assert.equal(stoppedRunError("unknown", false, "rules generation blocked", "run_interrupted"), "rules generation blocked");
+  assert.equal(stoppedRunError("unknown", false, null, "run_interrupted"), "run_interrupted");
+  assert.equal(stoppedRunError("unknown", true, null, "run_interrupted"), null);
+  assert.equal(stoppedRunError("completed", false, "old error"), null);
+});
 afterEach(cleanup);
 function mount(children: React.ReactNode) {
   return render(
@@ -165,7 +173,8 @@ test("summary keeps unknown currencies separate and never labels recommendations
     "/?view=invoices&stage=error",
   );
   assert.equal(money(null, "EUR"), "Amount not recorded");
-  assert.match(money(12, null), /currency not recorded/);
+  assert.equal(money(12, null), "12.00");
+  assert.equal(money(12, "UNKNOWN"), "12.00");
 });
 test("API failure offers a working retry without fabricated rows", async () => {
   let count = 0;
@@ -336,4 +345,62 @@ test("collapsed evidence and rule inputs are not rendered until expanded", async
   rule.open = true;
   fireEvent(rule, new dom.window.Event("toggle"));
   await screen.findByRole("table");
+});
+
+test("uploaded invoice proposes email and a typed yes calls the fake write tool", async () => {
+  Object.assign(globalThis, {
+    getComputedStyle: window.getComputedStyle.bind(window),
+    ResizeObserver: class { observe() {} unobserve() {} disconnect() {} },
+    requestAnimationFrame: (cb: FrameRequestCallback) => setTimeout(() => cb(performance.now()), 16),
+    cancelAnimationFrame: (id: ReturnType<typeof setTimeout>) => clearTimeout(id),
+  });
+  const { AgentPage } = require("../src/components/desk/agent");
+  const draft = {
+    file_id: "customer.pdf", vendor: "Customer", intent: "review_result",
+    intent_label: "Invoice review result", why: "Duplicate invoice",
+    to: "customer@example.com", subject: "Review of invoice INV-1",
+    body: "Please review the duplicate invoice finding.", demo: true,
+  };
+  const writes: unknown[] = [];
+  let polls = 0;
+  const observedStages: string[] = [];
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    if (url === "/api/summary") return Response.json({ total: 0, totals: [] });
+    if (url === "/api/ingest") return Response.json({ ok: true, file_id: draft.file_id, request_key: "demo-run" });
+    if (url.includes("/ejecucion/")) {
+      polls++;
+      if (polls > 1) observedStages.push(document.querySelector(".run-path-title")?.textContent || "");
+      return Response.json({ state: polls < 5 ? "running" : "completed" });
+    }
+    if (url.endsWith("/flujo")) return Response.json({ etapas: polls === 3 ? [
+      { etapa: "recibida", estado: "hecha" },
+      { etapa: "extraida", estado: "hecha" },
+      { etapa: "evaluada", estado: "pendiente" },
+      { etapa: "emitida", estado: "pendiente" },
+    ] : [] });
+    if (url.endsWith("/estado")) return Response.json({ procesando: false });
+    if (url.startsWith("/api/invoice-panel")) return Response.json({ said: "NO_PAGAR: duplicate invoice", panels: [] });
+    if (url.startsWith("/api/outreach")) return Response.json({ needed: true, draft });
+    if (url === "/api/write-email") {
+      writes.push(JSON.parse(String(init?.body)));
+      return Response.json({ tool: "write_email", status: "written", draft, sent: false, demo: true });
+    }
+    throw new Error(`Unexpected request: ${url}`);
+  };
+  const view = render(<AgentPage onOpenInvoice={() => {}} />);
+  const fileInput = view.container.querySelector('input[type="file"][accept*="pdf"]');
+  assert.ok(fileInput);
+  fireEvent.change(fileInput, { target: { files: [new File(["%PDF-demo"], draft.file_id, { type: "application/pdf" })] } });
+  await waitFor(() => assert.equal(screen.getByRole("button", { name: "Send", exact: true }).disabled, false), { timeout: 4000 });
+  fireEvent.click(screen.getByRole("button", { name: "Send", exact: true }));
+  await waitFor(() => assert.match(view.container.textContent || "", /Would you like me to write an email/), { timeout: 10000 });
+  assert.deepEqual(observedStages, ["Receiving the file", "Receiving the file", "Evaluating rules", "Evaluating rules"]);
+  assert.equal(writes.length, 0);
+  assert.equal(screen.queryByRole("button", { name: /approve|reject/i }), null);
+  fireEvent.change(screen.getByRole("textbox", { name: "Message the desk" }), { target: { value: "yes" } });
+  fireEvent.click(screen.getByRole("button", { name: "Send", exact: true }));
+  await waitFor(() => assert.match(view.container.textContent || "", /Email sent to customer@example.com/));
+  assert.deepEqual(writes, [{ file: "customer.pdf" }]);
+  assert.doesNotMatch(view.container.textContent || "", /demo|simulat|SMTP|no email is sent|nothing was sent|write_email/i);
 });

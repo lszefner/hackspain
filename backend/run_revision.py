@@ -4,7 +4,6 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
-import mimetypes
 import os
 import re
 import sys
@@ -117,7 +116,9 @@ def run_status(engine, request_key):
 def _sources_from_paths(paths):
     if not isinstance(paths, dict):
         raise TypeError('REVISION_RULE_SOURCES must be a JSON object of names to paths')
-    return [RuleSource(name, Path(path).read_bytes(), mimetypes.guess_type(path)[0] or 'application/octet-stream')
+    # Match generated rule sources: exact opaque bytes, independent of filename
+    # or platform MIME mappings. Artifact identity is content hash plus kind.
+    return [RuleSource(name, Path(path).read_bytes(), 'application/octet-stream')
             for name, path in paths.items()]
 
 
@@ -141,7 +142,7 @@ def _freeze_snapshots(engine, snapshots):
 
 
 def _review_enabled():
-    value = os.environ.get('REVISION_REVIEW_ENABLED', 'true').strip().lower()
+    value = os.environ.get('REVISION_REVIEW_ENABLED', 'false').strip().lower()
     if value not in ('true', 'false', '1', '0'):
         raise ValueError('REVISION_REVIEW_ENABLED must be true/false or 1/0')
     return value in ('true', '1')

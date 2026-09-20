@@ -7,17 +7,23 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import { ThinkingOrb } from "thinking-orbs";
 import type {
   DeskPanel,
   PanelAction,
   PanelRow,
 } from "@/lib/desk/panels";
-import { labelForEtapa } from "@/lib/desk/ingest-ui";
+import { labelForEtapa, stoppedRunError } from "@/lib/desk/ingest-ui";
+import { emailReply } from "@/lib/desk/write-email";
 import { fold } from "@/lib/desk/fold";
 import type { OutreachDraft } from "@/lib/desk/outreach";
 import type { Ejecucion, Flujo } from "@/lib/engine/types";
+import { AttachMenu, type AttachKind } from "./attach-menu";
 import { EmailDraftDialog } from "./email-draft-dialog";
+import { EmailPreview } from "./email-preview";
+import { FileIcon } from "./file-icon";
+import { ProgressRing } from "./progress-ring";
+import { RunPath } from "./run-path";
+import { ThinkPill } from "./think-pill";
 
 type HistoryItem = { role: "user" | "assistant"; content: string };
 type RunStage = {
@@ -68,6 +74,8 @@ type StagedFile = {
   name: string;
   size: number;
   kind: "pdf" | "zip";
+  status: "uploading" | "ready";
+  progress: number;
 };
 
 const BATCH_PHASES = ["Receiving", "Extracting", "Evaluating"] as const;
@@ -86,6 +94,9 @@ const THINK_LABELS = [
   "Reading recommendations",
   "Building the list",
 ];
+
+/** Desk design: nothing answers in under four seconds. */
+const MIN_THINK_MS = 4000;
 
 const FALLBACK_RUN_LABELS = [
   "Receiving the file",
@@ -168,7 +179,7 @@ function ActionButtons({
 }) {
   return (
     <>
-      {actions.map((action, i) => {
+      {actions.filter((action) => action.act !== "email").map((action, i) => {
         const className = `btn ${action.kind || ""}`.trim();
         if (action.file) {
           return (
@@ -367,6 +378,13 @@ function PanelView({
     const t = setTimeout(() => setBeam(false), 1600);
     return () => clearTimeout(t);
   }, []);
+  // Also render email cards already present in an open conversation.
+  const email = panel.email || (panel.id.startsWith("written-email-") ? {
+    to: panel.rows[0]?.title.replace(/^To:\s*/, "") || "",
+    subject: panel.title,
+    body: panel.rows[0]?.detail || "",
+  } : null);
+  if (email) return <EmailPreview {...email} />;
   return (
     <div
       className={`panel ${beam ? "beam" : "beam-out"}`}
@@ -474,7 +492,7 @@ function stagesFromFlujo(flujo: Flujo | null): RunStage[] {
     }));
   }
   const visible = flujo.etapas.filter(
-    (e) => e.etapa !== "resuelta" && e.etapa !== "pagada",
+    (e) => e.etapa !== "revisada" && e.etapa !== "resuelta" && e.etapa !== "pagada",
   );
   const subs = extractionSubtasks(flujo);
   let blocked = false;
@@ -514,6 +532,7 @@ export function AgentPage({
   const [messages, setMessages] = useState<ThreadMsg[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [staged, setStaged] = useState<StagedFile | null>(null);
+  const [emailProposal, setEmailProposal] = useState<OutreachDraft | null>(null);
   const [emailDraft, setEmailDraft] = useState<OutreachDraft | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const [pendingOutreach, setPendingOutreach] = useState<OutreachDraft[] | null>(
@@ -526,8 +545,34 @@ export function AgentPage({
   const [thinkLabel, setThinkLabel] = useState(THINK_LABELS[0]);
   const threadRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const fileRef = useRef<HTMLInputElement>(null);
   const runBusy = useRef(false);
+  const attachAnim = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!staged || staged.status !== "uploading") return;
+    const token = staged.file;
+    const duration = 2200 + Math.min(1800, Math.round(token.size / 12_000));
+    const started = performance.now();
+    const id = window.setInterval(() => {
+      const t = Math.min(1, (performance.now() - started) / duration);
+      const eased = 1 - (1 - t) ** 3;
+      const progress = Math.max(1, Math.round(eased * 100));
+      setStaged((prev) => {
+        if (!prev || prev.file !== token) return prev;
+        if (t >= 1) return { ...prev, progress: 100, status: "ready" };
+        return { ...prev, progress, status: "uploading" };
+      });
+      if (t >= 1) {
+        window.clearInterval(id);
+        attachAnim.current = null;
+      }
+    }, 50);
+    attachAnim.current = id;
+    return () => {
+      window.clearInterval(id);
+      if (attachAnim.current === id) attachAnim.current = null;
+    };
+  }, [staged?.file, staged?.status]);
 
   useEffect(() => {
     let cancelled = false;
@@ -656,7 +701,7 @@ export function AgentPage({
           setEmailDraft(drafts[0]);
           setEmailOpen(true);
           pushDesk(
-            `I drafted one supplier email for ${drafts[0].file_id} (${drafts[0].intent_label}). Review it in the dialog — send is simulated.`,
+            `I drafted one supplier email for ${drafts[0].file_id} (${drafts[0].intent_label}). Review the draft below.`,
           );
           return;
         }
@@ -671,7 +716,7 @@ export function AgentPage({
         const more =
           drafts.length > 8 ? `\n• and ${drafts.length - 8} more` : "";
         pushDesk(
-          `I would write ${drafts.length} supplier emails for issues a message can fix — not every escalation. Confirm to simulate sending them:\n${lines}${more}`,
+          `I would write ${drafts.length} supplier emails for issues a message can fix — not every escalation. Confirm to send them:\n${lines}${more}`,
         );
       } catch {
         pushDesk("Outreach scan failed. Nothing moved.");
@@ -688,12 +733,12 @@ export function AgentPage({
       ...new Set(drafts.map((d) => d.to || "recipient not recorded")),
     ];
     showToast(
-      `Demo send · ${drafts.length} message${drafts.length === 1 ? "" : "s"} marked sent`,
+      `${drafts.length} email${drafts.length === 1 ? "" : "s"} sent`,
     );
     pushDesk(
-      `I marked ${drafts.length} supplier emails as sent (demo only — nothing left over SMTP). Recipients: ${recipients.slice(0, 5).join(", ")}${recipients.length > 5 ? ` and ${recipients.length - 5} more` : ""}. Intents covered: ${[...new Set(drafts.map((d) => d.intent_label))].join("; ")}.`,
+      `I sent ${drafts.length} supplier emails. Recipients: ${recipients.slice(0, 5).join(", ")}${recipients.length > 5 ? ` and ${recipients.length - 5} more` : ""}. Intents covered: ${[...new Set(drafts.map((d) => d.intent_label))].join("; ")}.`,
       [],
-      "demo send",
+      "Email sent",
     );
   }, [pendingOutreach, pushDesk, showToast]);
 
@@ -701,11 +746,11 @@ export function AgentPage({
     (draft: OutreachDraft) => {
       setEmailOpen(false);
       setEmailDraft(null);
-      showToast(`Demo send · message to ${draft.to || "recipient"} marked sent`);
+      showToast(`Email sent to ${draft.to || "recipient"}`);
       pushDesk(
-        `I wrote to ${draft.to || "the supplier"} about ${draft.intent_label.toLowerCase()} on ${draft.file_id}. This desk does not send real SMTP — the send is simulated.`,
+        `I sent an email to ${draft.to || "the supplier"} about ${draft.intent_label.toLowerCase()} on ${draft.file_id}.`,
         [],
-        "demo send",
+        "Email sent",
       );
     },
     [pushDesk, showToast],
@@ -805,8 +850,9 @@ export function AgentPage({
 
   const pollRun = useCallback(
     async (fileId: string, requestKey: string, runId: string) => {
+      setEmailProposal(null);
       const started = Date.now();
-      let fallbackTick = 0;
+      let lastStages = stagesFromFlujo(null);
       let missingEjecucionPolls = 0;
 
       const failRun = (title: string, said: string) => {
@@ -885,20 +931,17 @@ export function AgentPage({
         }
 
         const state = ejecucion?.state ?? "running";
-        let stages = stagesFromFlujo(flujo);
-        if (!flujo?.etapas?.length) {
-          fallbackTick += 1;
-          stages = FALLBACK_RUN_LABELS.map((label, i) => ({
-            id: `fallback-${i}`,
-            label,
-            state:
-              i < Math.min(fallbackTick, FALLBACK_RUN_LABELS.length - 1)
-                ? "done"
-                : i === Math.min(fallbackTick, FALLBACK_RUN_LABELS.length - 1)
-                  ? "hot"
-                  : "pending",
-          }));
+        const stoppedError = stoppedRunError(state, engineBusy, engineError, ejecucion?.error);
+        if (stoppedError) {
+          failRun(
+            "Processing stopped",
+            `I could not finish ${fileId}. ${stoppedError} This run was not retried automatically. Nothing was approved or paid.`,
+          );
+          return;
         }
+        // Missing status is not progress. Keep the last recorded stage while polling.
+        if (flujo?.etapas?.length) lastStages = stagesFromFlujo(flujo);
+        const stages = lastStages;
 
         const hot = stages.find((s) => s.state === "hot");
         const hotSub = hot?.subtasks?.find((s) => s.state === "hot");
@@ -973,33 +1016,9 @@ export function AgentPage({
                   draft?: OutreachDraft;
                 };
                 if (outreach.needed && outreach.draft) {
-                  setPendingOutreach(null);
-                  setEmailDraft(outreach.draft);
+                  setEmailProposal(outreach.draft);
                   pushDesk(
-                    `This one may need a supplier email (${outreach.draft.intent_label}). Say if you want the draft — send stays simulated.`,
-                    [
-                      {
-                        id: `outreach-nudge-${fileId}`,
-                        title: fileId,
-                        meta: outreach.draft.intent_label,
-                        rows: [
-                          {
-                            key: fileId,
-                            title: outreach.draft.vendor,
-                            sub: outreach.draft.why,
-                            value: outreach.draft.to || "no recipient",
-                            actions: [
-                              {
-                                label: "Review email draft",
-                                kind: "primary",
-                                act: "email",
-                                key: `file:${fileId}`,
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
+                    `Would you like me to write an email about ${fileId} to ${outreach.draft.to || "the customer"}? ${outreach.draft.to ? 'Reply "yes" to write it.' : "Tell me their email address to write it."}`,
                   );
                 }
               }
@@ -1031,6 +1050,7 @@ export function AgentPage({
       setBusy(true);
       runBusy.current = true;
       setStaged(null);
+      setEmailProposal(null);
       setInput("");
 
       const userText = note.trim() || `Process ${file.name}`;
@@ -1130,6 +1150,7 @@ export function AgentPage({
       setBusy(true);
       runBusy.current = true;
       setStaged(null);
+      setEmailProposal(null);
       setInput("");
 
       const userText = note.trim() || `Process ${file.name}`;
@@ -1261,7 +1282,7 @@ export function AgentPage({
         const panel: DeskPanel = {
           id: "zip-batch",
           title: data.zip_name || file.name,
-          meta: `${files.length} staged · demo walkthrough`,
+          meta: `${files.length} staged`,
           rows: preview.map((f) => ({
             key: f.file_id,
             title: f.file_id,
@@ -1283,9 +1304,9 @@ export function AgentPage({
         }
 
         pushDesk(
-          `I staged ${files.length} invoice${files.length === 1 ? "" : "s"} from the zip${data.skipped ? ` (${data.skipped} entries skipped)` : ""}. This walkthrough is a demo — I did not run the full engine on each file. Drop one PDF for a live run, or open Invoices for records already processed.`,
+          `I staged ${files.length} invoice${files.length === 1 ? "" : "s"} from the zip${data.skipped ? ` (${data.skipped} entries skipped)` : ""}. The files are ready for review. Upload one PDF to process it, or open Invoices for processed records.`,
           [panel],
-          "demo",
+          "Files staged",
         );
       } catch {
         setMessages((prev) =>
@@ -1325,9 +1346,48 @@ export function AgentPage({
         { id: uid(), kind: "think", label: THINK_LABELS[0] },
       ]);
       setThinkLabel(THINK_LABELS[0]);
+      const thinkStarted = Date.now();
+      const holdThink = async () => {
+        const left = MIN_THINK_MS - (Date.now() - thinkStarted);
+        if (left > 0) await new Promise((r) => setTimeout(r, left));
+      };
 
       try {
+        const emailResponse = emailProposal ? emailReply(text) : null;
+        if (emailProposal && emailResponse) {
+          if (emailResponse.action === "cancel") {
+            setEmailProposal(null);
+            pushDesk("Okay, I will not write an email.");
+            return;
+          }
+          const response = await fetch("/api/write-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ file: emailProposal.file_id, recipient: emailResponse.recipient }),
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            pushDesk(result.error || "I could not write the email. You can ask me to try again.");
+            return;
+          }
+          if (result.status === "recipient_required") {
+            pushDesk("What is the customer's email address? I need it to write the email.");
+            return;
+          }
+          if (result.status !== "written" || !result.draft) throw new Error("Invalid email tool result");
+          setEmailProposal(null);
+          const draft = result.draft as OutreachDraft;
+          pushDesk(`Email sent to ${draft.to}.`, [{
+            id: `written-email-${uid()}`, title: draft.subject,
+            email: { to: draft.to, subject: draft.subject, body: draft.body },
+            rows: [],
+          }]);
+          return;
+        }
+        // A different topic ends the proposal, so a later yes cannot target a stale invoice.
+        setEmailProposal(null);
         if (isOutreachAsk(text)) {
+          await holdThink();
           setMessages((prev) => prev.filter((m) => m.kind !== "think"));
           await proposeOutreach();
           return;
@@ -1396,8 +1456,10 @@ export function AgentPage({
           ];
           return next.slice(-12);
         });
+        await holdThink();
         pushDesk(reply, panels, meta);
       } catch {
+        await holdThink();
         pushDesk(
           "The desk did not answer. Nothing moved. Check the API connection and retry.",
         );
@@ -1406,7 +1468,7 @@ export function AgentPage({
         inputRef.current?.focus();
       }
     },
-    [busy, history, proposeOutreach, pushDesk],
+    [busy, history, emailProposal, proposeOutreach, pushDesk],
   );
 
   function resetChat() {
@@ -1434,13 +1496,22 @@ export function AgentPage({
     void ask(input);
   }
 
-  function onPickFile(list: FileList | null) {
+  function onPickFile(kind: AttachKind, list: FileList | null) {
     const file = list?.[0];
     if (!file) return;
+    if (kind === "image") {
+      pushDesk(
+        "I need a PDF for a live run. A photo or scan is not enough yet — export it as PDF, or drop a zip.",
+      );
+      return;
+    }
     const name = file.name.toLowerCase();
     const isPdf =
-      file.type === "application/pdf" || name.endsWith(".pdf");
+      kind === "pdf" ||
+      file.type === "application/pdf" ||
+      name.endsWith(".pdf");
     const isZip =
+      kind === "zip" ||
       file.type === "application/zip" ||
       file.type === "application/x-zip-compressed" ||
       name.endsWith(".zip");
@@ -1448,15 +1519,27 @@ export function AgentPage({
       pushDesk("I accept one PDF or one zip of PDFs.");
       return;
     }
+
+    if (attachAnim.current != null) {
+      window.clearInterval(attachAnim.current);
+      attachAnim.current = null;
+    }
+
     setStaged({
       file,
       name: file.name,
       size: file.size,
       kind: isZip ? "zip" : "pdf",
+      status: "uploading",
+      progress: 0,
     });
   }
 
-  const canSend = !busy && (Boolean(input.trim()) || Boolean(staged));
+  const attaching = staged?.status === "uploading";
+  const canSend =
+    !busy &&
+    !attaching &&
+    (Boolean(input.trim()) || staged?.status === "ready");
 
   let body: ReactNode;
   if (!chatting) {
@@ -1497,7 +1580,7 @@ export function AgentPage({
                   {msg.fileName ? (
                     <div className="att ok">
                       <span className="ico">
-                        {msg.fileKind === "zip" ? "ZIP" : "PDF"}
+                        <FileIcon kind={msg.fileKind === "zip" ? "zip" : "pdf"} />
                       </span>
                       <span>
                         <span className="nm">{msg.fileName}</span>
@@ -1516,17 +1599,7 @@ export function AgentPage({
                   Desk <time>{now()}</time>
                 </div>
                 <div className="say">
-                  <span className="think">
-                    <span className="orbit" aria-hidden>
-                      <i />
-                      <i />
-                      <i />
-                    </span>
-                    <span className="orb-slot" aria-hidden>
-                      <ThinkingOrb size={20} theme="light" />
-                    </span>
-                    <span className="lbl">{thinkLabel}</span>
-                  </span>
+                  <ThinkPill label={thinkLabel} />
                 </div>
               </div>
             );
@@ -1537,47 +1610,11 @@ export function AgentPage({
                 <div className="who">
                   Desk <time>{now()}</time>
                 </div>
-                <div className={`run-card ${msg.status}`}>
-                  <p className="run-title">{msg.title}</p>
-                  <ol className="run-stages">
-                    {msg.stages.map((stage) => (
-                      <li
-                        key={stage.id}
-                        className={
-                          stage.state === "done"
-                            ? "is-done"
-                            : stage.state === "hot"
-                              ? "is-hot"
-                              : "is-pending"
-                        }
-                      >
-                        <span className="run-stage-main">
-                          <span className="mark" aria-hidden />
-                          {stage.label}
-                        </span>
-                        {stage.subtasks?.length ? (
-                          <ol className="run-subtasks">
-                            {stage.subtasks.map((sub) => (
-                              <li
-                                key={sub.id}
-                                className={
-                                  sub.state === "done"
-                                    ? "is-done"
-                                    : sub.state === "hot"
-                                      ? "is-hot"
-                                      : "is-pending"
-                                }
-                              >
-                                <span className="mark" aria-hidden />
-                                {sub.label}
-                              </li>
-                            ))}
-                          </ol>
-                        ) : null}
-                      </li>
-                    ))}
-                  </ol>
-                </div>
+                <RunPath
+                  title={msg.title}
+                  status={msg.status}
+                  stages={msg.stages}
+                />
               </div>
             );
           }
@@ -1590,8 +1627,8 @@ export function AgentPage({
                 <div className={`run-card batch-card ${msg.status}`}>
                   <div className="batch-head">
                     <p className="run-title">{msg.title}</p>
-                    <span className="demo-badge" title="Not a full engine run">
-                      demo
+                    <span className="demo-badge" title="Files ready for review">
+                      staged
                     </span>
                   </div>
                   <p className="batch-phase">{msg.phase}</p>
@@ -1661,7 +1698,7 @@ export function AgentPage({
         {pendingOutreach?.length ? (
           <div className="outreach-pending" role="region" aria-label="Pending emails">
             <h5>
-              Pending supplier emails · {pendingOutreach.length} · demo
+              Pending supplier emails · {pendingOutreach.length}
             </h5>
             <ol>
               {pendingOutreach.map((d) => (
@@ -1680,7 +1717,7 @@ export function AgentPage({
                 disabled={busy}
                 onClick={confirmPendingOutreach}
               >
-                Confirm send
+                Send emails
               </button>
               <button
                 type="button"
@@ -1688,7 +1725,7 @@ export function AgentPage({
                 disabled={busy}
                 onClick={() => {
                   setPendingOutreach(null);
-                  pushDesk("Cancelled. No supplier emails were marked sent.");
+                  pushDesk("Cancelled.");
                 }}
               >
                 Cancel
@@ -1719,21 +1756,43 @@ export function AgentPage({
         <div className="composer-in">
           <div className="tray" aria-live="polite">
             {staged ? (
-              <div className="att ok">
-                <span className="ico">{staged.kind === "zip" ? "ZIP" : "PDF"}</span>
+              <div
+                className={`att glass ${staged.status === "ready" ? "ok" : "busy"}`}
+              >
+                {staged.status === "uploading" ? (
+                  <ProgressRing
+                    progress={staged.progress}
+                    size={36}
+                    stroke={2.75}
+                    label="Attaching file"
+                  />
+                ) : (
+                  <span className="ico">
+                    <FileIcon kind={staged.kind} />
+                  </span>
+                )}
                 <span>
                   <span className="nm">{staged.name}</span>
                   <span className="st">
-                    {formatBytes(staged.size)} ·{" "}
-                    {staged.kind === "zip" ? "zip ready" : "ready"}
+                    {staged.status === "uploading"
+                      ? `${formatBytes(staged.size)} · attaching ${staged.progress}%`
+                      : `${formatBytes(staged.size)} · ${
+                          staged.kind === "zip" ? "zip ready" : "ready"
+                        }`}
                   </span>
                 </span>
                 <button
                   type="button"
                   className="x"
                   aria-label="Remove attachment"
-                  disabled={busy}
-                  onClick={() => setStaged(null)}
+                  disabled={busy || attaching}
+                  onClick={() => {
+                    if (attachAnim.current != null) {
+                      window.clearInterval(attachAnim.current);
+                      attachAnim.current = null;
+                    }
+                    setStaged(null);
+                  }}
                 >
                   ×
                 </button>
@@ -1741,42 +1800,24 @@ export function AgentPage({
             ) : null}
           </div>
           <form className="composer" onSubmit={onSubmit}>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="application/pdf,.pdf,application/zip,.zip"
-              hidden
-              onChange={(e) => {
-                onPickFile(e.target.files);
-                e.target.value = "";
-              }}
+            <AttachMenu
+              disabled={busy || attaching}
+              hasAttachment={staged?.status === "ready"}
+              onPick={onPickFile}
             />
-            <button
-              type="button"
-              className={`icon-btn ${staged ? "has" : ""}`}
-              disabled={busy}
-              title="Attach one PDF or zip"
-              aria-label="Attach one PDF or zip"
-              onClick={() => fileRef.current?.click()}
-            >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
-                <path
-                  d="M7 3.5v6.2a2 2 0 1 0 4 0V4.8a1.2 1.2 0 1 0-2.4 0v4.4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
             <input
               ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={
-                staged ? "Add a note, or just send…" : "Ask the desk…"
+                attaching
+                  ? "Attaching…"
+                  : staged
+                    ? "Add a note, or just send…"
+                    : "Ask the desk…"
               }
-              disabled={busy}
+              disabled={busy || attaching}
               aria-label="Message the desk"
               autoComplete="off"
             />
@@ -1803,7 +1844,7 @@ export function AgentPage({
                 key={chip}
                 type="button"
                 className="chip"
-                disabled={busy}
+                disabled={busy || attaching}
                 onClick={() => void ask(chip)}
               >
                 {chip}
@@ -1811,21 +1852,22 @@ export function AgentPage({
             ))}
           </div>
           <p
-            className={`hint ${busy ? "busy" : ""} ${staged && !busy ? "ready" : ""}`}
+            className={`hint ${busy || attaching ? "busy" : ""} ${staged?.status === "ready" && !busy ? "ready" : ""}`}
           >
             {busy
               ? runBusy.current
                 ? "Working through your upload…"
                 : "Working on the live records…"
-              : staged
-                ? staged.kind === "zip"
-                  ? "Zip ready — send for a demo walkthrough (files are staged, not fully engine-run)."
-                  : "One PDF ready — send to run it through the engine."
-                : "Attach one PDF for a live run, or a zip for a staged demo batch. Approve, pay and email are not connected."}
+              : attaching
+                ? "Attaching to the desk…"
+                : staged?.status === "ready"
+                  ? staged.kind === "zip"
+                    ? "Zip ready — send to stage the files for review."
+                    : "One PDF ready — send to run it through the engine."
+                  : "Attach a PDF to review it, then tell me what to do next."}
           </p>
         </div>
       </div>
     </section>
   );
 }
-

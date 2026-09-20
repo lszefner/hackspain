@@ -74,8 +74,11 @@ erp-login: ## Request and print a local ERP session token.
 	@printf '\n'
 
 API_PORT ?= 8010
+.PHONY: api-yaml
 api: ## Start the engine JSON API on port 8010 (needs Supabase env; see docs/backend-api.md).
 	@$(CON_ENV) uv run --locked --extra worker --extra backend python -m backend.server --port $(API_PORT)
+api-yaml: ## Start API with current YAML/workbook rules compiled locally; contextual review disabled.
+	@$(CON_ENV) uv run --locked --extra worker --extra backend python -m backend.yaml_api --port $(API_PORT)
 api-status: ## Check that the engine API is running.
 	@curl --fail --silent --show-error "http://127.0.0.1:$(API_PORT)/api/salud"
 	@printf '\n'
@@ -112,4 +115,3 @@ eval-score-live: ## Same with live JEV + DeepSeek (needs keys).
 e2e-fixtures: eval-fixtures
 e2e-score: eval-score
 e2e-score-live: eval-score-live
-
