@@ -288,6 +288,8 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
         extraction_started = time.monotonic()
         await pipeline.run(batch)
         timings['extraction_seconds'] = time.monotonic() - extraction_started
+        emit('revision_stage', stage='extraction_done', request_key=request_key,
+             latency_seconds=timings['extraction_seconds'], count=len(file_ids))
         rows_by_file = {}
         for row in repo.results(batch['id']):
             if row['file_name'] not in documents or row['interpreter'] != config['interpreter']:
@@ -296,6 +298,13 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
         results = []
         review_slots = asyncio.Semaphore(3)
         decisions_started = time.monotonic()
+        history_started = time.monotonic()
+        history_all = await asyncio.to_thread(
+            store.processed_history_snapshot, captured_at=captured_at)
+        timings['history_seconds'] = time.monotonic() - history_started
+        emit('revision_stage', stage='history_ready', request_key=request_key,
+             latency_seconds=timings['history_seconds'],
+             count=len(history_all.payload.get('records') or []))
         for name in file_ids:
             result = {'file_id': name, 'evaluation_record_id': None, 'review_record_id': None,
                       'evaluation_date': None, 'error': None}
@@ -318,12 +327,15 @@ async def revisar_lote(file_ids: list[str], *, request_key: str | None = None,
                         result['evaluation_date_fallback'] = True
                 result['evaluation_date'] = file_date
                 current = dict(snapshots)
-                current['processed'] = await asyncio.to_thread(
-                    store.processed_history_snapshot, captured_at=captured_at)
+                # Reuse one history snapshot for the whole run. Main keeps
+                # same-filename submissions in history (no per-file exclude).
+                current['processed'] = history_all
                 evaluation = await asyncio.to_thread(engine.evaluate, input_id=str(row['input_id']), interpreter=config['interpreter'],
                                              ruleset=ruleset_bytes, rule_sources=rule_sources, snapshots=current,
                                              evaluation_date=file_date, captured_at=captured_at)
                 result.update(evaluation_record_id=evaluation['record_id'], decision=evaluation['decision'])
+                emit('revision_stage', stage='evaluation_done', request_key=request_key,
+                     file_id=name, decision=evaluation['decision'])
 
                 if not enabled:
                     result.update(review_status='DISABLED', attention_required=evaluation['decision'] == 'ESCALAR')

@@ -146,6 +146,20 @@ const INTENTS: [string, string[]][] = [
       "nos deb",
     ],
   ],
+  [
+    "outreach",
+    [
+      "email supplier",
+      "email suppliers",
+      "write to supplier",
+      "write to suppliers",
+      "correo",
+      "notify supplier",
+      "notify suppliers",
+      "message the supplier",
+      "ask the supplier",
+    ],
+  ],
 ];
 
 const FILE_RE = /([\w./\-\u00c0-\u024f]+\.pdf)/i;
@@ -153,6 +167,15 @@ const STUB = "Not connected yet — nothing will move";
 
 function stubAct(label: string, act: string, kind?: PanelAction["kind"], key?: string): PanelAction {
   return { label, act, kind, key, title: STUB };
+}
+
+function emailAct(key?: string): PanelAction {
+  return {
+    label: "Email supplier",
+    act: "email",
+    key,
+    title: "Opens a draft — send is simulated",
+  };
 }
 
 export function routeIntent(text: string): string | null {
@@ -264,14 +287,14 @@ function clusterActions(key: string, verdict: string): PanelAction[] {
     return [
       stubAct("Approve", "approve", "primary", key),
       stubAct("Reject", "reject", "danger", key),
-      stubAct("Email supplier", "email", undefined, key),
+      emailAct(key),
       stubAct("Defer", "defer", "quiet", key),
     ];
   }
   if (verdict === "PAGAR") {
     return [stubAct("Approve", "approve", "primary", key)];
   }
-  return [stubAct("Notify", "notify_blocked", undefined, key)];
+  return [emailAct(key)];
 }
 
 function buildClusterPanel(
@@ -373,7 +396,7 @@ async function buildBlocked(): Promise<{ panel: DeskPanel; facts: Record<string,
     data.matched,
     "NO_PAGAR",
     [
-      stubAct("Notify suppliers", "notify_blocked", "primary"),
+      { label: "Email suppliers", act: "email", kind: "primary", title: "Opens drafts — send is simulated" },
       { label: "See the rules", ask: "what rules are running" },
     ],
   );
@@ -384,7 +407,7 @@ async function buildBlocked(): Promise<{ panel: DeskPanel; facts: Record<string,
       matched: data.matched,
       shown: data.rows.length,
       by_currency: sumTotals(data.rows),
-      note: "Recommendation NO_PAGAR. Nothing was paid or blocked in a bank sense.",
+      note: "Recommendation NO_PAGAR. Supplier email drafts are simulated.",
     },
   };
 }
@@ -571,7 +594,7 @@ export async function buildDossierPanel(fileId: string): Promise<{ panel: DeskPa
         actions: [
           stubAct("Approve", "approve", "primary", `file:${fileId}`),
           stubAct("Reject", "reject", "danger", `file:${fileId}`),
-          stubAct("Email supplier", "email", undefined, `file:${fileId}`),
+          emailAct(`file:${fileId}`),
           { label: "Open full history", file: fileId },
         ],
       },
@@ -585,6 +608,7 @@ export async function buildDossierPanel(fileId: string): Promise<{ panel: DeskPa
     actions: [
       stubAct("Approve", "approve", "primary", `file:${fileId}`),
       stubAct("Reject", "reject", "danger", `file:${fileId}`),
+      emailAct(`file:${fileId}`),
       { label: "Open full history", kind: "primary", file: fileId },
     ],
   };
@@ -715,5 +739,6 @@ WHAT TO SAY
 HARD RULES
 - Every figure, supplier, invoice id and date must come from the FACTS JSON. If it is not there, say you do not have it.
 - Never invent, estimate or re-round a number.
-- Never claim you paid, approved, emailed, deferred, uploaded, or changed a rule. Those actions are not connected.
+- Never claim you paid, approved, deferred, uploaded, or changed a rule. Those actions are not connected.
+- You may draft supplier emails from recorded issues. Sending from this desk is simulated — say so if you mention a send.
 - Recommendations (PAGAR / ESCALAR / NO_PAGAR) are not payments or approvals.`;

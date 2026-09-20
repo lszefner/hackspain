@@ -263,6 +263,43 @@ a.btn{text-decoration:none;display:inline-block}
 .run-subtasks li.is-done .mark{background:var(--pay)}
 .run-subtasks li.is-hot .mark{background:var(--load);box-shadow:0 0 0 2px color-mix(in srgb,var(--load) 16%,transparent)}
 
+.batch-card .batch-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.batch-card .run-title{margin:0}
+.demo-badge{flex:none;font:600 9px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 7px}
+.batch-phase{margin:0 0 10px;font-size:11.5px;color:var(--load)}
+.batch-card.done .batch-phase{color:var(--pay)}
+.batch-card.failed .batch-phase{color:var(--no)}
+.batch-files{list-style:none;padding:0;margin:0;display:grid;gap:4px;max-height:220px;overflow:auto}
+.batch-files li{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--faint)}
+.batch-files li .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.batch-files li.is-done{color:var(--ink)}
+.batch-files li.is-hot{color:var(--load);font-weight:520}
+.batch-files .mark{width:6px;height:6px;border-radius:50%;background:var(--line2);flex:none}
+.batch-files li.is-done .mark{background:var(--pay)}
+.batch-files li.is-hot .mark{background:var(--load);box-shadow:0 0 0 3px color-mix(in srgb,var(--load) 18%,transparent)}
+
+.email-draft-dialog{font-family:var(--sans)}
+.email-draft-fields{display:grid;gap:10px;margin:4px 0 2px}
+.email-draft-fields label{display:grid;gap:4px}
+.email-draft-fields span{font-size:11px;font-weight:500;color:var(--mut)}
+.email-draft-fields input,.email-draft-fields textarea{
+  width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);
+  color:var(--ink);font:inherit;font-size:13px;padding:9px 11px;outline:none}
+.email-draft-fields textarea{resize:vertical;min-height:160px;line-height:1.45}
+.email-draft-fields input:focus,.email-draft-fields textarea:focus{border-color:var(--line2)}
+.email-draft-why{margin:0;font-size:11.5px;color:var(--mut);line-height:1.4}
+
+.desk-toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:60;
+  background:var(--ink);color:#fff;font-size:13px;font-weight:500;padding:10px 16px;border-radius:999px;
+  box-shadow:var(--shadow-lift);animation:enter .28s var(--ease) both;max-width:min(520px,92vw);text-align:center}
+.outreach-pending{margin-top:10px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.outreach-pending h5{margin:0 0 8px;font-size:12px;font-weight:560}
+.outreach-pending ol{list-style:none;padding:0;margin:0 0 12px;display:grid;gap:8px;max-height:240px;overflow:auto}
+.outreach-pending li{font-size:12px;color:var(--mut);line-height:1.35}
+.outreach-pending li strong{display:block;color:var(--ink);font-weight:560}
+.outreach-pending .acts{display:flex;gap:8px;flex-wrap:wrap}
+
 .composer{display:flex;gap:6px;align-items:center;background:var(--panel);border:1px solid var(--line);
   border-radius:16px;padding:6px 6px 6px 8px;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .25s}
 .composer:focus-within{border-color:var(--line2);box-shadow:var(--shadow-lift)}

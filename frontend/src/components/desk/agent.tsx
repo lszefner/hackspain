@@ -14,7 +14,10 @@ import type {
   PanelRow,
 } from "@/lib/desk/panels";
 import { labelForEtapa } from "@/lib/desk/ingest-ui";
+import { fold } from "@/lib/desk/fold";
+import type { OutreachDraft } from "@/lib/desk/outreach";
 import type { Ejecucion, Flujo } from "@/lib/engine/types";
+import { EmailDraftDialog } from "./email-draft-dialog";
 
 type HistoryItem = { role: "user" | "assistant"; content: string };
 type RunStage = {
@@ -24,7 +27,13 @@ type RunStage = {
   subtasks?: { id: string; label: string; state: "pending" | "hot" | "done" }[];
 };
 type ThreadMsg =
-  | { id: string; kind: "user"; text: string; fileName?: string }
+  | {
+      id: string;
+      kind: "user";
+      text: string;
+      fileName?: string;
+      fileKind?: "pdf" | "zip";
+    }
   | {
       id: string;
       kind: "desk";
@@ -41,14 +50,33 @@ type ThreadMsg =
       title: string;
       status: "running" | "done" | "failed";
       stages: RunStage[];
+    }
+  | {
+      id: string;
+      kind: "batch";
+      title: string;
+      status: "running" | "done" | "failed";
+      phase: string;
+      items: {
+        file_id: string;
+        state: "pending" | "hot" | "done";
+      }[];
     };
 
-type StagedFile = { file: File; name: string; size: number };
+type StagedFile = {
+  file: File;
+  name: string;
+  size: number;
+  kind: "pdf" | "zip";
+};
+
+const BATCH_PHASES = ["Receiving", "Extracting", "Evaluating"] as const;
 
 const CHIPS = [
   "What needs my judgement?",
   "Ready to pay today",
   "Do not pay",
+  "Email suppliers that need a reply",
   "Day report",
   "What rules are running?",
 ];
@@ -81,6 +109,23 @@ function formatBytes(n: number) {
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function isOutreachAsk(text: string) {
+  const t = fold(text);
+  if (t.includes("email suppliers that need")) return true;
+  const wantsMail =
+    t.includes("email") ||
+    t.includes("correo") ||
+    t.includes("write to") ||
+    t.includes("notify supplier") ||
+    t.includes("notify suppliers");
+  const aboutSuppliers =
+    t.includes("supplier") ||
+    t.includes("suppliers") ||
+    t.includes("proveedor") ||
+    t.includes("proveedores");
+  return wantsMail && aboutSuppliers;
 }
 
 function tokenise(text: string) {
@@ -469,6 +514,12 @@ export function AgentPage({
   const [messages, setMessages] = useState<ThreadMsg[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [staged, setStaged] = useState<StagedFile | null>(null);
+  const [emailDraft, setEmailDraft] = useState<OutreachDraft | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [pendingOutreach, setPendingOutreach] = useState<OutreachDraft[] | null>(
+    null,
+  );
+  const [toast, setToast] = useState<string | null>(null);
   const [hello, setHello] = useState(
     "I worked the recorded invoices. Ask what needs your judgement, or attach one PDF.",
   );
@@ -509,7 +560,13 @@ export function AgentPage({
   useEffect(() => {
     const el = threadRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages, busy]);
+  }, [messages, busy, pendingOutreach]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const id = setTimeout(() => setToast(null), 4200);
+    return () => clearTimeout(id);
+  }, [toast]);
 
   useEffect(() => {
     if (!busy || runBusy.current) return;
@@ -531,9 +588,166 @@ export function AgentPage({
     [],
   );
 
+  const showToast = useCallback((message: string) => {
+    setToast(message);
+  }, []);
+
+  const openSingleDraft = useCallback(async (fileId: string) => {
+    try {
+      const res = await fetch(
+        `/api/outreach?file=${encodeURIComponent(fileId)}`,
+        { cache: "no-store" },
+      );
+      const data = (await res.json().catch(() => ({}))) as {
+        needed?: boolean;
+        draft?: OutreachDraft;
+        reason?: string;
+        error?: string;
+      };
+      if (!res.ok) {
+        pushDesk(
+          `I could not build an email draft for ${fileId}. ${data.error || "Try again."}`,
+        );
+        return;
+      }
+      if (!data.needed || !data.draft) {
+        pushDesk(
+          data.reason ||
+            `Nothing on ${fileId} looks like a supplier email would fix it.`,
+        );
+        return;
+      }
+      setEmailDraft(data.draft);
+      setEmailOpen(true);
+    } catch {
+      pushDesk(`I could not reach outreach for ${fileId}. Nothing moved.`);
+    }
+  }, [pushDesk]);
+
+  const proposeOutreach = useCallback(
+    async (files?: string[]) => {
+      try {
+        const res = await fetch("/api/outreach", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(files?.length ? { files } : { limit: 25 }),
+        });
+        const data = (await res.json().catch(() => ({}))) as {
+          drafts?: OutreachDraft[];
+          error?: string;
+        };
+        if (!res.ok) {
+          pushDesk(
+            data.error ||
+              "I could not scan invoices for supplier outreach. Nothing moved.",
+          );
+          return;
+        }
+        const drafts = Array.isArray(data.drafts) ? data.drafts : [];
+        if (!drafts.length) {
+          pushDesk(
+            "I checked the escalated invoices. None of them have a clear supplier-fixable issue for an email — I will not invent one.",
+          );
+          setPendingOutreach(null);
+          return;
+        }
+        if (drafts.length === 1) {
+          setPendingOutreach(null);
+          setEmailDraft(drafts[0]);
+          setEmailOpen(true);
+          pushDesk(
+            `I drafted one supplier email for ${drafts[0].file_id} (${drafts[0].intent_label}). Review it in the dialog — send is simulated.`,
+          );
+          return;
+        }
+        setPendingOutreach(drafts);
+        const lines = drafts
+          .slice(0, 8)
+          .map(
+            (d) =>
+              `• ${d.file_id} → ${d.to || "recipient not recorded"} · ${d.intent_label}`,
+          )
+          .join("\n");
+        const more =
+          drafts.length > 8 ? `\n• and ${drafts.length - 8} more` : "";
+        pushDesk(
+          `I would write ${drafts.length} supplier emails for issues a message can fix — not every escalation. Confirm to simulate sending them:\n${lines}${more}`,
+        );
+      } catch {
+        pushDesk("Outreach scan failed. Nothing moved.");
+      }
+    },
+    [pushDesk],
+  );
+
+  const confirmPendingOutreach = useCallback(() => {
+    if (!pendingOutreach?.length) return;
+    const drafts = pendingOutreach;
+    setPendingOutreach(null);
+    const recipients = [
+      ...new Set(drafts.map((d) => d.to || "recipient not recorded")),
+    ];
+    showToast(
+      `Demo send · ${drafts.length} message${drafts.length === 1 ? "" : "s"} marked sent`,
+    );
+    pushDesk(
+      `I marked ${drafts.length} supplier emails as sent (demo only — nothing left over SMTP). Recipients: ${recipients.slice(0, 5).join(", ")}${recipients.length > 5 ? ` and ${recipients.length - 5} more` : ""}. Intents covered: ${[...new Set(drafts.map((d) => d.intent_label))].join("; ")}.`,
+      [],
+      "demo send",
+    );
+  }, [pendingOutreach, pushDesk, showToast]);
+
+  const sendSingleDraft = useCallback(
+    (draft: OutreachDraft) => {
+      setEmailOpen(false);
+      setEmailDraft(null);
+      showToast(`Demo send · message to ${draft.to || "recipient"} marked sent`);
+      pushDesk(
+        `I wrote to ${draft.to || "the supplier"} about ${draft.intent_label.toLowerCase()} on ${draft.file_id}. This desk does not send real SMTP — the send is simulated.`,
+        [],
+        "demo send",
+      );
+    },
+    [pushDesk, showToast],
+  );
+
+  const filesForActionKey = useCallback(
+    (key?: string) => {
+      if (!key) return [] as string[];
+      if (key.startsWith("file:")) return [key.slice(5)];
+      const panels = messages
+        .filter(
+          (m): m is Extract<ThreadMsg, { kind: "desk" }> => m.kind === "desk",
+        )
+        .flatMap((m) => m.panels);
+      for (const panel of panels) {
+        for (const row of panel.rows) {
+          if (row.key === key && row.table?.rows?.length) {
+            return row.table.rows.map((r) => r.file_id);
+          }
+        }
+      }
+      return [];
+    },
+    [messages],
+  );
+
   const runAction = useCallback(
     async (action: PanelAction) => {
       if (!action.act) return;
+      if (action.act === "email") {
+        const files = filesForActionKey(action.key);
+        if (files.length === 1) {
+          await openSingleDraft(files[0]);
+          return;
+        }
+        if (files.length > 1) {
+          await proposeOutreach(files);
+          return;
+        }
+        await proposeOutreach();
+        return;
+      }
       try {
         const res = await fetch("/api/action", {
           method: "POST",
@@ -553,7 +767,7 @@ export function AgentPage({
         pushDesk("Nothing moved after all. The action request failed.", []);
       }
     },
-    [pushDesk],
+    [filesForActionKey, openSingleDraft, proposeOutreach, pushDesk],
   );
 
   const handleUi = useCallback(
@@ -748,6 +962,50 @@ export function AgentPage({
                 `I finished ${fileId}. Open the summary below — approval and payment are not connected.`,
               Array.isArray(data.panels) ? data.panels : [],
             );
+            try {
+              const outreachRes = await fetch(
+                `/api/outreach?file=${encodeURIComponent(fileId)}`,
+                { cache: "no-store" },
+              );
+              if (outreachRes.ok) {
+                const outreach = (await outreachRes.json()) as {
+                  needed?: boolean;
+                  draft?: OutreachDraft;
+                };
+                if (outreach.needed && outreach.draft) {
+                  setPendingOutreach(null);
+                  setEmailDraft(outreach.draft);
+                  pushDesk(
+                    `This one may need a supplier email (${outreach.draft.intent_label}). Say if you want the draft — send stays simulated.`,
+                    [
+                      {
+                        id: `outreach-nudge-${fileId}`,
+                        title: fileId,
+                        meta: outreach.draft.intent_label,
+                        rows: [
+                          {
+                            key: fileId,
+                            title: outreach.draft.vendor,
+                            sub: outreach.draft.why,
+                            value: outreach.draft.to || "no recipient",
+                            actions: [
+                              {
+                                label: "Review email draft",
+                                kind: "primary",
+                                act: "email",
+                                key: `file:${fileId}`,
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  );
+                }
+              }
+            } catch {
+              /* nudge is optional */
+            }
           } else {
             pushDesk(
               `I finished processing ${fileId}, but the summary card is not ready yet. Open it from Invoices.`,
@@ -779,7 +1037,13 @@ export function AgentPage({
       const runId = uid();
       setMessages((prev) => [
         ...prev,
-        { id: uid(), kind: "user", text: userText, fileName: file.name },
+        {
+          id: uid(),
+          kind: "user",
+          text: userText,
+          fileName: file.name,
+          fileKind: "pdf",
+        },
         {
           id: runId,
           kind: "run",
@@ -859,6 +1123,195 @@ export function AgentPage({
     [busy, pollRun, pushDesk],
   );
 
+  const runZipBatch = useCallback(
+    async (file: File, note: string) => {
+      if (busy) return;
+      setChatting(true);
+      setBusy(true);
+      runBusy.current = true;
+      setStaged(null);
+      setInput("");
+
+      const userText = note.trim() || `Process ${file.name}`;
+      const batchId = uid();
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: uid(),
+          kind: "user",
+          text: userText,
+          fileName: file.name,
+          fileKind: "zip",
+        },
+        {
+          id: batchId,
+          kind: "batch",
+          title: "Opening the zip",
+          status: "running",
+          phase: "Staging PDFs on disk",
+          items: [],
+        },
+      ]);
+
+      try {
+        const body = new FormData();
+        body.set("file", file);
+        const res = await fetch("/api/ingest-zip", { method: "POST", body });
+        const data = (await res.json().catch(() => ({}))) as {
+          ok?: boolean;
+          error?: string;
+          files?: { file_id: string; bytes: number }[];
+          staged?: number;
+          skipped?: number;
+          zip_name?: string;
+        };
+
+        if (!res.ok || !data.ok || !data.files?.length) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === batchId && m.kind === "batch"
+                ? {
+                    ...m,
+                    status: "failed",
+                    title: "Could not open the zip",
+                    phase: data.error || `HTTP ${res.status}`,
+                  }
+                : m,
+            ),
+          );
+          pushDesk(
+            data.error === "no_pdfs_in_zip"
+              ? "That zip had no usable PDFs. Nothing was staged."
+              : `I could not stage the zip (${data.error || res.status}). Nothing moved.`,
+          );
+          return;
+        }
+
+        const files = data.files;
+        const pace = Math.min(400, Math.max(150, Math.round(20000 / files.length)));
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === batchId && m.kind === "batch"
+              ? {
+                  ...m,
+                  title: `Working through the zip · ${files.length}`,
+                  phase: BATCH_PHASES[0],
+                  items: files.map((f) => ({
+                    file_id: f.file_id,
+                    state: "pending" as const,
+                  })),
+                }
+              : m,
+          ),
+        );
+
+        for (let i = 0; i < files.length; i++) {
+          const fileId = files[i].file_id;
+          for (let p = 0; p < BATCH_PHASES.length; p++) {
+            setMessages((prev) =>
+              prev.map((m) =>
+                m.id === batchId && m.kind === "batch"
+                  ? {
+                      ...m,
+                      title: fileId,
+                      phase: BATCH_PHASES[p],
+                      items: m.items.map((item, idx) => ({
+                        ...item,
+                        state:
+                          idx < i ? "done" : idx === i ? "hot" : "pending",
+                      })),
+                    }
+                  : m,
+              ),
+            );
+            setThinkLabel(`${BATCH_PHASES[p]} · ${fileId}`);
+            await new Promise((r) => setTimeout(r, Math.round(pace / BATCH_PHASES.length)));
+          }
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === batchId && m.kind === "batch"
+                ? {
+                    ...m,
+                    items: m.items.map((item, idx) => ({
+                      ...item,
+                      state: idx <= i ? "done" : "pending",
+                    })),
+                  }
+                : m,
+            ),
+          );
+        }
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === batchId && m.kind === "batch"
+              ? {
+                  ...m,
+                  status: "done",
+                  title: `Staged ${files.length} invoices`,
+                  phase: "Demo walkthrough finished",
+                  items: m.items.map((item) => ({ ...item, state: "done" })),
+                }
+              : m,
+          ),
+        );
+
+        const preview = files.slice(0, 10);
+        const more = files.length - preview.length;
+        const panel: DeskPanel = {
+          id: "zip-batch",
+          title: data.zip_name || file.name,
+          meta: `${files.length} staged · demo walkthrough`,
+          rows: preview.map((f) => ({
+            key: f.file_id,
+            title: f.file_id,
+            sub: `${Math.max(1, Math.round(f.bytes / 1024))} KB · staged only`,
+            value: "—",
+            state: "unseen" as const,
+          })),
+          actions: [
+            { label: "Open Invoices", kind: "primary", ui: "invoices" },
+          ],
+        };
+        if (more > 0) {
+          panel.rows.push({
+            key: "more",
+            title: `And ${more} more`,
+            sub: "Staged on disk — not engine-evaluated in this walkthrough",
+            value: String(more),
+          });
+        }
+
+        pushDesk(
+          `I staged ${files.length} invoice${files.length === 1 ? "" : "s"} from the zip${data.skipped ? ` (${data.skipped} entries skipped)` : ""}. This walkthrough is a demo — I did not run the full engine on each file. Drop one PDF for a live run, or open Invoices for records already processed.`,
+          [panel],
+          "demo",
+        );
+      } catch {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === batchId && m.kind === "batch"
+              ? {
+                  ...m,
+                  status: "failed",
+                  title: "Zip upload failed",
+                  phase: "Nothing was staged",
+                }
+              : m,
+          ),
+        );
+        pushDesk(
+          "The zip did not reach the desk. Nothing was saved or processed.",
+        );
+      } finally {
+        runBusy.current = false;
+        setBusy(false);
+        inputRef.current?.focus();
+      }
+    },
+    [busy, pushDesk],
+  );
+
   const ask = useCallback(
     async (raw: string) => {
       const text = raw.trim();
@@ -874,6 +1327,12 @@ export function AgentPage({
       setThinkLabel(THINK_LABELS[0]);
 
       try {
+        if (isOutreachAsk(text)) {
+          setMessages((prev) => prev.filter((m) => m.kind !== "think"));
+          await proposeOutreach();
+          return;
+        }
+
         const res = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -947,7 +1406,7 @@ export function AgentPage({
         inputRef.current?.focus();
       }
     },
-    [busy, history, pushDesk],
+    [busy, history, proposeOutreach, pushDesk],
   );
 
   function resetChat() {
@@ -959,13 +1418,17 @@ export function AgentPage({
     setInput("");
     setBusy(false);
     runBusy.current = false;
+    setPendingOutreach(null);
+    setEmailOpen(false);
+    setEmailDraft(null);
     inputRef.current?.focus();
   }
 
   function onSubmit(e: FormEvent) {
     e.preventDefault();
     if (staged) {
-      void runInvoice(staged.file, input);
+      if (staged.kind === "zip") void runZipBatch(staged.file, input);
+      else void runInvoice(staged.file, input);
       return;
     }
     void ask(input);
@@ -974,14 +1437,23 @@ export function AgentPage({
   function onPickFile(list: FileList | null) {
     const file = list?.[0];
     if (!file) return;
-    if (
-      file.type !== "application/pdf" &&
-      !file.name.toLowerCase().endsWith(".pdf")
-    ) {
-      pushDesk("I only accept a single PDF for now.");
+    const name = file.name.toLowerCase();
+    const isPdf =
+      file.type === "application/pdf" || name.endsWith(".pdf");
+    const isZip =
+      file.type === "application/zip" ||
+      file.type === "application/x-zip-compressed" ||
+      name.endsWith(".zip");
+    if (!isPdf && !isZip) {
+      pushDesk("I accept one PDF or one zip of PDFs.");
       return;
     }
-    setStaged({ file, name: file.name, size: file.size });
+    setStaged({
+      file,
+      name: file.name,
+      size: file.size,
+      kind: isZip ? "zip" : "pdf",
+    });
   }
 
   const canSend = !busy && (Boolean(input.trim()) || Boolean(staged));
@@ -1024,7 +1496,9 @@ export function AgentPage({
                   {msg.text ? <div className="bubble">{msg.text}</div> : null}
                   {msg.fileName ? (
                     <div className="att ok">
-                      <span className="ico">PDF</span>
+                      <span className="ico">
+                        {msg.fileKind === "zip" ? "ZIP" : "PDF"}
+                      </span>
                       <span>
                         <span className="nm">{msg.fileName}</span>
                         <span className="st">attached</span>
@@ -1107,6 +1581,45 @@ export function AgentPage({
               </div>
             );
           }
+          if (msg.kind === "batch") {
+            return (
+              <div key={msg.id} className="msg">
+                <div className="who">
+                  Desk <time>{now()}</time>
+                </div>
+                <div className={`run-card batch-card ${msg.status}`}>
+                  <div className="batch-head">
+                    <p className="run-title">{msg.title}</p>
+                    <span className="demo-badge" title="Not a full engine run">
+                      demo
+                    </span>
+                  </div>
+                  <p className="batch-phase">{msg.phase}</p>
+                  {msg.items.length ? (
+                    <ol className="batch-files">
+                      {msg.items.map((item) => (
+                        <li
+                          key={item.file_id}
+                          className={
+                            item.state === "done"
+                              ? "is-done"
+                              : item.state === "hot"
+                                ? "is-hot"
+                                : "is-pending"
+                          }
+                        >
+                          <span className="mark" aria-hidden />
+                          <span className="nm">{item.file_id}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="batch-phase">Reading the archive…</p>
+                  )}
+                </div>
+              </div>
+            );
+          }
           return (
             <div key={msg.id} className="msg">
               <div className="who">
@@ -1145,19 +1658,75 @@ export function AgentPage({
             </div>
           );
         })}
+        {pendingOutreach?.length ? (
+          <div className="outreach-pending" role="region" aria-label="Pending emails">
+            <h5>
+              Pending supplier emails · {pendingOutreach.length} · demo
+            </h5>
+            <ol>
+              {pendingOutreach.map((d) => (
+                <li key={d.file_id}>
+                  <strong>
+                    {d.file_id} · {d.intent_label}
+                  </strong>
+                  To {d.to || "recipient not recorded"} — {d.subject}
+                </li>
+              ))}
+            </ol>
+            <div className="acts">
+              <button
+                type="button"
+                className="btn primary"
+                disabled={busy}
+                onClick={confirmPendingOutreach}
+              >
+                Confirm send
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={busy}
+                onClick={() => {
+                  setPendingOutreach(null);
+                  pushDesk("Cancelled. No supplier emails were marked sent.");
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {body}
+
+      <EmailDraftDialog
+        open={emailOpen}
+        draft={emailDraft}
+        onOpenChange={(open) => {
+          setEmailOpen(open);
+          if (!open) setEmailDraft(null);
+        }}
+        onSend={sendSingleDraft}
+      />
+      {toast ? (
+        <div className="desk-toast" role="status">
+          {toast}
+        </div>
+      ) : null}
 
       <div className="composer-wrap">
         <div className="composer-in">
           <div className="tray" aria-live="polite">
             {staged ? (
               <div className="att ok">
-                <span className="ico">PDF</span>
+                <span className="ico">{staged.kind === "zip" ? "ZIP" : "PDF"}</span>
                 <span>
                   <span className="nm">{staged.name}</span>
-                  <span className="st">{formatBytes(staged.size)} · ready</span>
+                  <span className="st">
+                    {formatBytes(staged.size)} ·{" "}
+                    {staged.kind === "zip" ? "zip ready" : "ready"}
+                  </span>
                 </span>
                 <button
                   type="button"
@@ -1175,7 +1744,7 @@ export function AgentPage({
             <input
               ref={fileRef}
               type="file"
-              accept="application/pdf,.pdf"
+              accept="application/pdf,.pdf,application/zip,.zip"
               hidden
               onChange={(e) => {
                 onPickFile(e.target.files);
@@ -1186,8 +1755,8 @@ export function AgentPage({
               type="button"
               className={`icon-btn ${staged ? "has" : ""}`}
               disabled={busy}
-              title="Attach one PDF"
-              aria-label="Attach one PDF"
+              title="Attach one PDF or zip"
+              aria-label="Attach one PDF or zip"
               onClick={() => fileRef.current?.click()}
             >
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden>
@@ -1246,11 +1815,13 @@ export function AgentPage({
           >
             {busy
               ? runBusy.current
-                ? "Processing with the live engine…"
+                ? "Working through your upload…"
                 : "Working on the live records…"
               : staged
-                ? "One PDF ready — send to run it through the engine."
-                : "Attach one PDF to process, or ask about recorded invoices. Approve, pay and email are not connected."}
+                ? staged.kind === "zip"
+                  ? "Zip ready — send for a demo walkthrough (files are staged, not fully engine-run)."
+                  : "One PDF ready — send to run it through the engine."
+                : "Attach one PDF for a live run, or a zip for a staged demo batch. Approve, pay and email are not connected."}
           </p>
         </div>
       </div>
