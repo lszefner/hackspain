@@ -22,6 +22,16 @@ publication and fresh ERP capture. This demonstrates a warm invoice below
 five seconds, **not** a cold-start or p95 latency guarantee. New unseen source
 blobs, ERP refreshes, network variation and vision fallback can take longer.
 
+## Current API read path
+
+The backend now stores audit JSON in Postgres unconditionally; no storage-mode
+environment variable is needed.
+API GET requests use Postgres payloads only, including historical JSON already
+stored there, with no Storage fallback or evaluator replay. Original/source
+verification remains available through the core CLI. See
+[Postgres-only API reads](postgres-api-reads.md) for query budgets and limits.
+The timing measurements above predate this API read optimization.
+
 ## Configuration
 
 The launcher exports configuration; application code never loads dotenv.
@@ -29,7 +39,6 @@ The local `.env` has these values, without changing credential values:
 
 ```dotenv
 REVISION_REVIEW_ENABLED=false
-REVISION_JSON_STORAGE=postgres
 REVISION_RULESET_RUN_KEY=e2e-1d-221545
 ```
 

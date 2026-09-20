@@ -149,7 +149,10 @@ def _history_observation(name: str, bundle: alignment.ContextBundle) -> dict:
         if not isinstance(row, dict):
             complete = False
             continue
-        if name == "processed" and row.get("file_id") == context["file_id"]:
+        # Absent policy preserves historical audits; new backend snapshots
+        # include all submissions, even when the filename is unchanged.
+        if (name == "processed" and row.get("file_id") == context["file_id"]
+                and payload.get("same_file_policy") != "include"):
             continue
         number, supplier = row.get("invoice_number"), row.get("supplier_id")
         key_valid = isinstance(number, str) and bool(number) and isinstance(supplier, str) and bool(supplier)
@@ -166,13 +169,34 @@ def _history_observation(name: str, bundle: alignment.ContextBundle) -> dict:
         # problem; a currency that is absent is not.
         malformed = currency is not None and not (
             isinstance(currency, str) and re.fullmatch(r"[A-Z]{3}", currency))
-        if not key_valid or not soft_valid or malformed:
+        # An incomplete historical row only blocks absence when it could
+        # still match this invoice. A known unequal key component rules out
+        # that conjunction; missing unrelated fields must not poison every
+        # subsequent invoice in the batch.
+        hard_excluded = any(
+            isinstance(value, str) and bool(value) and usable(fields[key])
+            and value != fields[key]["value"]
+            for key, value in (("invoice.number", number), ("supplier.id", supplier)))
+        invoice_total = None
+        if usable(fields["invoice.total"]):
+            invoice_total = decimal(fields["invoice.total"]["value"])
+        soft_excluded = (total is not None and invoice_total is not None and total != invoice_total)
+        issued = row.get("issue_date")
+        try:
+            date_valid = isinstance(issued, str) and date.fromisoformat(issued).isoformat() == issued
+        except ValueError:
+            date_valid = False
+        soft_excluded = soft_excluded or (
+            date_valid and usable(fields["invoice.issue_date"])
+            and issued != fields["invoice.issue_date"]["value"])
+        if ((not key_valid and not hard_excluded)
+                or (not soft_valid and not soft_excluded) or malformed):
             complete = False
         hard = key_valid and hard_ready and number == fields["invoice.number"]["value"] and supplier == fields["supplier.id"]["value"]
         invoice_currency = (fields.get("invoice.currency") or {}).get("value")
         different = (currency is not None and invoice_currency is not None
                      and currency != invoice_currency)
-        soft = key_valid and soft_valid and soft_ready and total == decimal(fields["invoice.total"]["value"]) and row["issue_date"] == fields["invoice.issue_date"]["value"] and not different
+        soft = soft_valid and soft_ready and total == decimal(fields["invoice.total"]["value"]) and row["issue_date"] == fields["invoice.issue_date"]["value"] and not different
         ref = {"source": name, "pointer": f"/records/{index}"}
         if hard:
             out["hard_matches"].append(ref)

@@ -18,14 +18,15 @@ from urllib.parse import parse_qs, unquote, urlparse
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from backend.results_store import PostgresResultsStore  # noqa: E402
-from backend.run_revision import (  # noqa: E402
+from backend.results_store import PostgresResultsStore
+from backend.run_revision import (
     FACTURAS_DIR,
     revisar_lote_sync,
-    run_status,
 )
+from rules_ingestion.decision_context import ContextError
 
 STORE = None
+_store_lock = threading.Lock()
 LOTE_TAMANO = 20
 
 _estado_lock = threading.Lock()
@@ -35,22 +36,30 @@ _ultimo_error = None
 
 def get_store():
     global STORE
-    if STORE is None:
-        from rules_ingestion.engine import InvoiceDecisionEngine
+    with _store_lock:
+        if STORE is None:
+            from rules_ingestion.engine_storage import EngineRepository
 
-        STORE = PostgresResultsStore(InvoiceDecisionEngine.from_supabase())
+            repository = EngineRepository()
+            try:
+                repository.preflight()
+            except Exception:
+                repository.close()
+                raise
+            STORE = PostgresResultsStore(repository=repository)
     return STORE
 
 
-def _facturas() -> list[str]:
-    return sorted({p.name for p in FACTURAS_DIR.glob("*.pdf")} | set(get_store().all()))
+def _facturas(estado=None) -> list[str]:
+    estado = get_store().all() if estado is None else estado
+    return sorted({p.name for p in FACTURAS_DIR.glob("*.pdf")} | set(estado))
 
 
 def _lanzar_en_fondo(file_ids: list[str], request_key: str) -> None:
     global _procesando, _ultimo_error
     try:
         revisar_lote_sync(file_ids, store=get_store(), request_key=request_key)
-    except Exception as exc:  # keep the API alive; surface the error instead of crashing the thread
+    except Exception as exc:  # noqa: BLE001 - report background failures to the API
         _ultimo_error = type(exc).__name__
     finally:
         with _estado_lock:
@@ -58,8 +67,8 @@ def _lanzar_en_fondo(file_ids: list[str], request_key: str) -> None:
 
 
 def _resumen() -> dict:
-    todas = _facturas()
     estado = get_store().all()
+    todas = _facturas(estado)
     conteo = {"pendiente": 0, "procesando": 0, "hecha": 0, "error": 0}
     decisiones = {"PAGAR": 0, "ESCALAR": 0, "NO_PAGAR": 0}
     facturas = []
@@ -115,9 +124,11 @@ class Handler(BaseHTTPRequestHandler):
         elif url.path.startswith('/api/ejecucion/'):
             key = unquote(url.path[len('/api/ejecucion/'):])
             try:
-                self._json(200, run_status(get_store().engine, key))
+                self._json(200, get_store().run_status(key))
             except KeyError:
                 self._json(404, {'error': 'run_not_found'})
+            except ContextError as exc:
+                self._json(503, {'error': getattr(exc, 'code', 'postgres_audit_invalid')})
         elif url.path == "/api/estado":
             self._json(200, {"procesando": _procesando, "error": _ultimo_error})
         else:
@@ -147,8 +158,8 @@ class Handler(BaseHTTPRequestHandler):
         if objetivo == "una" and campos.get("file_id"):
             file_ids = [campos["file_id"][0]]
         else:
-            todas = _facturas()
             estado = get_store().all()
+            todas = _facturas(estado)
             pendientes = [f for f in todas if estado.get(f, {}).get("estado") not in ("hecha",)]
             file_ids = pendientes[:LOTE_TAMANO]
         if not file_ids:
@@ -165,7 +176,11 @@ class Handler(BaseHTTPRequestHandler):
         if Path(file_id).name != file_id or '/' in file_id or '\\' in file_id:
             self._json(422, {'error': 'invalid_file_id'})
             return
-        row = get_store().get(file_id)
+        try:
+            row = get_store().get(file_id)
+        except ContextError as exc:
+            self._json(503, {'error': getattr(exc, 'code', 'postgres_audit_invalid')})
+            return
         if row is None and not (FACTURAS_DIR / file_id).is_file():
             self._json(404, {"error": "factura_no_encontrada"})
             return
@@ -207,23 +222,17 @@ class Handler(BaseHTTPRequestHandler):
                 "facturas_dir": str(FACTURAS_DIR), "facturas_en_disco": 0,
                 "procesando": _procesando, "error": None}
         try:
-            engine = get_store().engine
+            repository = get_store().repository
             try:
-                engine.repository.preflight()
+                repository.preflight()
                 body["postgres"] = True
             except Exception as exc:  # noqa: BLE001 - health probe must not raise
                 body["error"] = type(exc).__name__
             try:
-                engine.storage.preflight()
-                body["storage_bucket"] = True
-            except Exception as exc:  # noqa: BLE001 - health probe must not raise
-                body["storage_bucket"] = False
-                body["error"] = body["error"] or type(exc).__name__
-            try:
                 body["facturas_en_disco"] = sum(1 for _ in FACTURAS_DIR.glob("*.pdf"))
             except OSError as exc:
                 body["error"] = body["error"] or type(exc).__name__
-            body["ok"] = body["postgres"] and body["storage_bucket"] is not False
+            body["ok"] = body["postgres"]
         except Exception as exc:  # noqa: BLE001 - health probe must not raise
             body["error"] = type(exc).__name__
         self._json(200, body)

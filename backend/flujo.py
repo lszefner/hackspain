@@ -8,7 +8,9 @@ failing the whole response.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 
+from backend.audit_reader import AuditReader
 from backend.export_outcomes import decide_output
 from rules_ingestion.decision_context import ContextError
 from rules_ingestion.decision_storage import _jsonable
@@ -40,14 +42,20 @@ def _etapa(etapa, estado, at=None, ref=None):
 
 
 def _trabajos(repo, row):
-    jobs, error = _load(lambda: repo.list_jobs(row['batch_id']))
+    jobs, error = _load(lambda: repo.extraction_trace(row['input_id'], api_projection=True))
     if error:
         return {'error': error}
     trabajos = []
     for job in jobs or []:
         if str(job.get('input_id')) != str(row['input_id']):
             continue
-        attempts, _ = _load(lambda job=job: repo.list_attempts(job['id']))
+        attempts = job['attempts']
+        # JSON aggregation preserves values but PostgreSQL may trim timestamp
+        # fractional zeros. Keep the previous datetime.isoformat API format.
+        for attempt in attempts:
+            for key in ('started_at', 'finished_at'):
+                if attempt.get(key):
+                    attempt[key] = datetime.fromisoformat(attempt[key]).isoformat()
         trabajo = {key: _jsonable(job.get(key)) for key in _JOB_KEYS}
         trabajo['id'] = _jsonable(job.get('id'))
         trabajo['artifact_id'] = _jsonable(job.get('artifact_id'))
@@ -67,14 +75,9 @@ def _ejecucion(engine, repo, row):
                  'error': row.get('run_error'), 'captured_at': None,
                  'evaluation_date_policy': None, 'rule_generation': None,
                  'snapshots': None}
-    run, error = _load(lambda: repo.get_run(request_key))
-    if error:
-        ejecucion['artifact_error'] = error
+    if not row.get('run_input_artifact_id'):
         return ejecucion
-    if not run or not run.get('input_artifact_id'):
-        return ejecucion
-    frozen, error = _load(lambda: engine._json(
-        engine.archive.ref(str(run['input_artifact_id']))))
+    frozen, error = _load(lambda: engine.json(str(row['run_input_artifact_id'])))
     if error:
         ejecucion['artifact_error'] = error
         return ejecucion
@@ -94,8 +97,7 @@ def _ejecucion(engine, repo, row):
 
 def _extraccion(engine, repo, row):
     if row.get('outcome_artifact_id'):
-        outcome, error = _load(lambda: engine._json(engine.archive.ref(
-            str(row['outcome_artifact_id']))))
+        outcome, error = _load(lambda: engine.json(str(row['outcome_artifact_id'])))
     else:
         outcome, error = None, None
     outcome = outcome or {}
@@ -125,12 +127,12 @@ def _evaluacion(engine, row):
     if not record_id:
         return None
     evaluacion = {'record_id': record_id}
-    packet, error = _load(lambda: engine.load(record_id))
+    packet, error = _load(lambda: engine.packet(record_id))
     if error:
         evaluacion['error'] = error
         return evaluacion
-    resultado, error = _load(lambda: engine._json(packet['evaluation']))
-    context, context_error = _load(lambda: engine._json(packet['context']))
+    resultado, error = _load(lambda: engine.json(packet['evaluation']))
+    context, context_error = _load(lambda: engine.json(packet['context']))
     evaluacion.update({
         'evaluation_id': packet.get('evaluation_id'),
         'evaluation_date': packet.get('evaluation_date'),
@@ -155,12 +157,12 @@ def _revision(engine, row):
             return {'record_id': None, 'status': 'DISABLED', 'reason': 'REVISION_REVIEW_ENABLED=false'}
         return None
     revision = {'record_id': record_id}
-    packet, error = _load(lambda: engine.load(record_id))
+    packet, error = _load(lambda: engine.packet(record_id))
     if error:
         revision['error'] = error
         return revision
-    review, error = _load(lambda: engine._json(packet['review']))
-    config, _ = _load(lambda: engine._json(packet['review_config']))
+    review, error = _load(lambda: engine.json(packet['review']))
+    config, _ = _load(lambda: engine.json(packet['review_config']))
     review = review or {}
     revision.update({
         'status': review.get('status'),
@@ -176,8 +178,7 @@ def _revision(engine, row):
 
 
 def flujo(store, file_id: str, en_disco: bool = False) -> dict | None:
-    engine = store.engine
-    repo = engine.repository
+    repo = store.repository
     rows = repo.latest_results(file_id)
     row = _jsonable(rows[0]) if rows else None
     if row is None and not en_disco:
@@ -189,6 +190,7 @@ def flujo(store, file_id: str, en_disco: bool = False) -> dict | None:
     evaluacion = None
     revision = None
     if row is not None:
+        engine = AuditReader(repo).prepare(row)
         identidad = {'input_id': row.get('input_id'),
                      'batch_id': row.get('batch_id'),
                      'sha256': row.get('content_hash'),
@@ -203,6 +205,15 @@ def flujo(store, file_id: str, en_disco: bool = False) -> dict | None:
         salida = {'verdict': 'ESCALAR', 'basis': 'not_processed'}
     else:
         verdict, basis = decide_output(row)
+        audit_error = (
+            (ejecucion or {}).get('artifact_error')
+            or (extraccion or {}).get('error')
+            or (evaluacion or {}).get('error')
+            or ((evaluacion or {}).get('resultado') or {}).get('code')
+            or ((evaluacion or {}).get('fuentes') or {}).get('code')
+            or (revision or {}).get('error'))
+        if audit_error and row.get('evaluation_record_id'):
+            verdict, basis = 'ESCALAR', 'audit_unavailable'
         salida = {'verdict': verdict, 'basis': basis}
 
     review_status = (revision or {}).get('status') or (

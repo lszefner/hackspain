@@ -80,6 +80,8 @@ def plan_rule(rule: dict, context: dict) -> dict:
         if set(params) - allowed:
             errors.append("UNKNOWN_PARAMETER")
         effective = {**DEFAULTS[canonical], **params}
+        if canonical == "AMOUNT" and effective.get("order_currency_policy", "explicit") not in ("explicit", "invoice"):
+            errors.append("INVALID_PARAMETER")
         for flag in registry.FLAG_DEPENDENCIES[canonical]:
             if flag in effective and type(effective[flag]) is not bool:
                 errors.append("INVALID_FLAG")
@@ -306,6 +308,15 @@ def _vat(frame):
 
 def _monetary(frame, names, calculate, code, description):
     currency_names = list(dict.fromkeys("order.currency" if name.startswith("order.") else "invoice.currency" for name in names))
+    invoice_denomination = (
+        "order.currency" in currency_names
+        and frame.plan["params"].get("order_currency_policy") == "invoice"
+        and frame.fields["order.currency"]["state"] in ("missing", "unavailable")
+    )
+    if invoice_denomination:
+        # This is an explicit comparison policy, not a manufactured master
+        # currency fact. Missing/uncertain invoice currency still blocks.
+        currency_names.remove("order.currency")
     values = [frame.value(name) for name in names]
     currencies = [frame.value(name) for name in currency_names]
     used = names + currency_names
@@ -326,6 +337,8 @@ def _monetary(frame, names, calculate, code, description):
               f"{description}: difference {format(difference, 'f')} EUR; tolerance {format(tolerance, 'f')} EUR.",
               used, "absolute_difference_lte", values, format(difference, "f"))
     frame.traces[-1]["tolerance"] = format(tolerance, "f")
+    if invoice_denomination:
+        frame.traces[-1]["explanation"] += " The frozen order_currency_policy compares the unlabelled order amount in the invoice's explicitly evidenced EUR denomination; order.currency remains absent."
 
 
 def _duplicates(frame):

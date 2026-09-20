@@ -177,9 +177,31 @@ class ResultsStore:
 
 
 class PostgresResultsStore:
-    def __init__(self, engine):
-        self.engine = engine
+    def __init__(self, engine=None, *, repository=None):
+        self._engine = engine
+        self.repository = repository if repository is not None else engine.repository
+        self._engine_lock = threading.Lock()
         self._history_cache: dict[str, dict] = {}
+
+    @property
+    def engine(self):
+        # Storage is only initialized when a caller starts ingestion/verification.
+        with self._engine_lock:
+            if self._engine is None:
+                import os
+
+                from ingestion.storage import SupabaseStorage
+                from rules_ingestion.engine import InvoiceDecisionEngine
+
+                storage = SupabaseStorage(bucket=os.environ.get('SUPABASE_STORAGE_BUCKET', 'invoice-ingestion-private'))
+                storage.preflight()
+                self._engine = InvoiceDecisionEngine(self.repository, storage)
+            return self._engine
+
+    def run_status(self, request_key):
+        from backend.audit_reader import AuditReader
+
+        return AuditReader(self.repository).run_status(request_key)
 
     @staticmethod
     def _project(row):
@@ -201,19 +223,22 @@ class PostgresResultsStore:
         }
 
     def all(self):
-        return {row['file_id']: self._project(row) for row in self.engine.repository.latest_results()}
+        return {row['file_id']: self._project(row) for row in self.repository.latest_results(summary=True)}
 
     def get(self, file_id):
         from rules_ingestion.decision_context import project_legacy
 
-        rows = self.engine.repository.latest_results(file_id)
+        rows = self.repository.latest_results(file_id)
         if not rows:
             return None
+        from backend.audit_reader import AuditReader
+
+        reader = AuditReader(self.repository).prepare(rows[0])
         row = self._project(rows[0])
         if row['evaluation_record_id']:
-            packet = self.engine.load(row['evaluation_record_id'])
-            context = self.engine._json(packet['context'])
-            evaluation = self.engine._json(packet['evaluation'])
+            packet = reader.packet(row['evaluation_record_id'])
+            context = reader.json(packet['context'])
+            evaluation = reader.json(packet['evaluation'])
             invoice, _master = project_legacy(context)
             checks = [{'rule_id': result['rule_id'],
                        'verdict': {'PASS': 'PASS', 'VIOLATED': 'FAIL'}.get(result['status'], 'NEEDS_REVIEW'),
@@ -222,15 +247,18 @@ class PostgresResultsStore:
                        decision_context=_dumps(context), context_receipt=_dumps(packet),
                        evaluation_result=evaluation)
         if row['review_record_id']:
-            review_packet = self.engine.load(row['review_record_id'])
-            row['contextual_review'] = self.engine._json(review_packet['review'])
+            review_packet = reader.packet(row['review_record_id'])
+            row['contextual_review'] = reader.json(review_packet['review'])
         return row
 
-    def _history_record(self, record_id):
+    def _history_record(self, record_id, reader=None):
         record = self._history_cache.get(record_id)
         if record is None:
-            packet = self.engine.archive.load_packet(record_id)
-            context = self.engine._json(packet['context'])
+            from backend.audit_reader import AuditReader
+
+            reader = reader or AuditReader(self.repository)
+            packet = reader.packet(record_id)
+            context = reader.json(packet['context'])
             fields = context['fields']
             record = {'file_id': context['file_id'], 'context_id': context['context_id']}
             for name, field in (('invoice_number', 'invoice.number'), ('supplier_id', 'supplier.id'),
@@ -242,11 +270,25 @@ class PostgresResultsStore:
         return record
 
     def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
+        from backend.audit_reader import AuditReader
         from rules_ingestion.decision_context import SourceSnapshot
 
-        records = [dict(self._history_record(row['record_id']))
-                   for row in self.engine.repository.processed_records(exclude_file_id)]
-        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True},
+        rows = self.repository.processed_records(exclude_file_id)
+        missing = [row['record_id'] for row in rows if row['record_id'] not in self._history_cache]
+        # Bounded batches avoid two remote reads per historical invoice.
+        # Only the small verified history projection survives each batch.
+        for start in range(0, len(missing), 64):
+            reader = AuditReader(self.repository)
+            ids = missing[start:start + 64]
+            for row in self.repository.audit_records(ids):
+                reader.records[row['record_id']] = row
+                reader.artifacts[str(row['artifact_id'])] = row['artifact']
+            reader.prefetch([reader.packet(record_id)['context']['artifact_id'] for record_id in ids])
+            for record_id in ids:
+                self._history_record(record_id, reader)
+        records = [dict(self._history_record(row['record_id'])) for row in rows]
+        return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True,
+                                                      'same_file_policy': 'include'},
                               captured_at=captured_at, asserted_by='core-engine-postgres',
                               authoritative_for=('history.processed',), availability='available',
                               scope='Every invoice La Caja submits is evaluated by this engine; '

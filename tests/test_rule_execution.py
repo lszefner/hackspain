@@ -142,7 +142,7 @@ def test_erp_paid_survives_other_blockers_and_runs_all_rules():
     assert not result["completeness"]["evaluation_complete"]
 
 
-def test_pending_is_not_a_duplicate_and_self_exclusion():
+def test_legacy_history_preserves_self_exclusion_for_replay():
     snapshots = fixtures.make_snapshots()
     snapshots["processed"] = history(rows=[record(file_id="f-clean")])
     _, result = run([rule("DUPLICATES")], snapshots=snapshots)
@@ -150,6 +150,23 @@ def test_pending_is_not_a_duplicate_and_self_exclusion():
     snapshots["paid"] = history("paid", rows=[record(file_id="f-clean")])
     _, result = run([rule("DUPLICATES")], snapshots=snapshots)
     assert result["preliminary_decision"] == "NO_PAGAR"
+
+
+@pytest.mark.parametrize('same_invoice', [True, False])
+def test_new_history_matches_invoice_identity_not_filename(same_invoice):
+    from dataclasses import replace
+
+    snapshots = fixtures.make_snapshots()
+    prior = record(file_id='f-clean', invoice_number='INV-1' if same_invoice else 'OTHER')
+    source = history(rows=[prior])
+    snapshots['processed'] = replace(source, payload={**source.payload, 'same_file_policy': 'include'})
+    bundle, result = run([rule('DUPLICATES')], snapshots=snapshots)
+    assert result['preliminary_decision'] == ('NO_PAGAR' if same_invoice else 'ESCALAR')
+    assert bool(bundle.context['history_observations']['processed']['hard_matches']) is same_invoice
+    codes = {reason['code'] for reason in result['decision_reasons']}
+    assert ('DUPLICATE_SUBMISSION' in codes) is same_invoice
+    if same_invoice:
+        assert all('paid' not in reason['explanation'].lower() for reason in result['decision_reasons'])
 
 
 @pytest.mark.parametrize("kind", ["processed", "paid"])
@@ -450,7 +467,7 @@ assert "rules_ingestion.codegen" not in sys.modules
 assert "rules_ingestion.classify" not in sys.modules
 '''
     result = subprocess.run([sys.executable, '-c', code], cwd=Path(__file__).resolve().parents[1],
-                            capture_output=True, text=True, timeout=30)
+                            capture_output=True, text=True, timeout=30, check=False)
     assert result.returncode == 0, result.stderr
 
 
@@ -515,6 +532,59 @@ def test_record_without_currency_keeps_history_complete():
         total="999.00", currency=None)])
     bundle, _result = run([rule("DUPLICATES")], snapshots=snapshots)
     assert bundle.context["history_observations"]["processed"]["coverage"] == "complete"
+
+
+def test_incomplete_unrelated_history_does_not_block_every_invoice():
+    snapshots = fixtures.make_snapshots()
+    snapshots["processed"] = history(rows=[record(
+        invoice_number="OTHER", supplier_id=None, total="999.00", issue_date=None)])
+    bundle, result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert bundle.context["history_observations"]["processed"]["coverage"] == "complete"
+    assert result["preliminary_decision"] == "PAGAR"
+
+
+def test_incomplete_possible_history_match_remains_blocked():
+    snapshots = fixtures.make_snapshots()
+    snapshots["processed"] = history(rows=[record(
+        invoice_number="OTHER", supplier_id=None, issue_date=None)])
+    bundle, result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert bundle.context["history_observations"]["processed"]["coverage"] == "partial"
+    assert result["preliminary_decision"] == "ESCALAR"
+
+
+def test_soft_history_match_does_not_require_supplier_identity():
+    snapshots = fixtures.make_snapshots()
+    snapshots["processed"] = history(rows=[record(invoice_number="OTHER", supplier_id=None)])
+    bundle, result = run([rule("DUPLICATES")], snapshots=snapshots)
+    assert bundle.context["history_observations"]["processed"]["soft_matches"]
+    assert result["preliminary_decision"] == "ESCALAR"
+
+
+@pytest.mark.parametrize('currency,decision', [(None, 'ESCALAR'), ('EUR', 'PAGAR'), ('USD', 'ESCALAR')])
+def test_explicit_invoice_currency_can_denominate_unlabelled_order(currency, decision):
+    snapshots = fixtures.make_snapshots()
+    from dataclasses import replace
+    orders = snapshots['orders']
+    payload = copy.deepcopy(orders.payload)
+    for row in payload['records']:
+        row.pop('currency', None)
+    snapshots['orders'] = replace(orders, payload=payload)
+    bundle, result = run([rule('AMOUNT', {'order_currency_policy': 'invoice'})],
+                         invoice=fixtures.make_invoice(currency=currency), snapshots=snapshots)
+    assert result['preliminary_decision'] == decision
+    assert bundle.context['fields']['order.currency']['value'] is None
+
+
+def test_invoice_currency_policy_does_not_override_explicit_order_currency():
+    snapshots = fixtures.make_snapshots()
+    from dataclasses import replace
+    orders = snapshots['orders']
+    payload = copy.deepcopy(orders.payload)
+    for row in payload['records']:
+        row['currency'] = 'USD'
+    snapshots['orders'] = replace(orders, payload=payload)
+    _, result = run([rule('AMOUNT', {'order_currency_policy': 'invoice'})], snapshots=snapshots)
+    assert result['preliminary_decision'] == 'ESCALAR'
 
 
 def test_soft_match_currency_rules():

@@ -21,10 +21,77 @@ from rules_ingestion.engine import InvoiceDecisionEngine
 
 runtime = backend_runtime
 
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('json_storage', ['storage', 'postgres'])
+async def test_native_batch_audit_survives_restart_without_review(runtime, monkeypatch, json_storage):
+    engine, kwargs, calls, _, _ = runtime
+    if json_storage == 'storage':
+        # Reproduce historical Storage-addressed rows without retaining a
+        # Storage write option in the public backend.
+        from ingestion.json_storage import PostgresJsonStorage
+        object_key = PostgresJsonStorage.object_key
+        monkeypatch.setattr(PostgresJsonStorage, 'object_key',
+                            lambda self, *args: object_key(self, *args).removeprefix('postgres/'))
+    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
+    source = rr.ROOT / 'caja_de_alberto/v1/facturas/2026-01-08_P001.pdf'
+    originals = source.read_bytes()
+    names = ['invoice.pdf', 'second.pdf']
+    for name in names:
+        Path(kwargs['input_dir'], name).write_bytes(originals)
+
+    result = await rr.revisar_lote(names, **kwargs)
+    assert result['state'] == 'completed'
+    assert result['revision_counts'] == {'stored': 2, 'failed': 0}
+    assert calls == {'read': 0, 'interpret': 0, 'generate': 1}
+    assert kwargs['review_provider'].calls == 0
+    for name in names:
+        Path(kwargs['input_dir'], name).unlink()
+
+    # New repository/storage instances must recover every audit section using
+    # persisted bytes, without local PDFs or request-scoped artifact caches.
+    from rules_ingestion.engine_storage import EngineRepository
+
+    fresh = InvoiceDecisionEngine(EngineRepository(engine.repository.dsn), SupabaseStorage(
+        url='https://storage.invalid', key='test-only', client=engine.storage.client))
+    try:
+        store = PostgresResultsStore(fresh)
+        assert rr.run_status(fresh, kwargs['request_key']) == result
+        assert set(store.all()) == set(names)
+        for name in names:
+            row = store.get(name)
+            assert row['estado'] == 'hecha'
+            assert row['review_status'] == 'DISABLED'
+            assert row['review_record_id'] is None
+            packet = fresh.load(row['evaluation_record_id'])
+            assert fresh.archive.get(packet['original']) == originals
+            provenance = fresh._json(packet['extraction_provenance'])
+            assert {job['provider'] for job in provenance['jobs']} == {'native-text', 'deterministic'}
+            assert all(len(job['attempts']) == 1 for job in provenance['jobs'])
+            view = flujo(store, name)
+            assert view['extraccion']['ruta'] == 'deterministic'
+            assert len(view['extraccion']['trabajos']) == 2
+            assert all(job['intentos'] for job in view['extraccion']['trabajos'])
+            assert view['evaluacion']['resultado'] == row['evaluation_result']
+            assert view['evaluacion']['fuentes']
+            assert view['evaluacion']['rule_source_lineage']['sources']
+            assert view['ejecucion']['review_policy']['enabled'] is False
+            assert view['revision']['status'] == 'DISABLED'
+            assert view['salida']['verdict'] == row['decision']
+    finally:
+        fresh.repository.close()
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize('json_storage', ['storage', 'postgres'])
 async def test_review_disabled_is_durable_and_uses_evaluator(runtime, monkeypatch, json_storage):
-    monkeypatch.setenv('REVISION_JSON_STORAGE', json_storage)
+    if json_storage == 'storage':
+        # Reproduce historical Storage-addressed rows without retaining a
+        # Storage write option in the public backend.
+        from ingestion.json_storage import PostgresJsonStorage
+        object_key = PostgresJsonStorage.object_key
+        monkeypatch.setattr(PostgresJsonStorage, 'object_key',
+                            lambda self, *args: object_key(self, *args).removeprefix('postgres/'))
     engine, kwargs, calls, _, _ = runtime
     provider = kwargs.pop('review_provider')
     monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
@@ -144,7 +211,6 @@ def test_verified_bytes_cached_only_inside_session(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_real_deterministic_invoice_with_network_latency(runtime, monkeypatch, capsys):
-    monkeypatch.setenv('REVISION_JSON_STORAGE', 'postgres')
     engine, kwargs, calls, _, _ = runtime
     source = rr.ROOT / 'caja/facturas/2026-01-08_P001.pdf'
     if not source.is_file():
@@ -229,7 +295,6 @@ async def test_stored_run_rules_pin_never_regenerates(runtime, monkeypatch):
 @pytest.mark.asyncio
 async def test_compact_json_review_and_corruption_detection(runtime, monkeypatch):
     engine, kwargs, _, _, _ = runtime
-    monkeypatch.setenv('REVISION_JSON_STORAGE', 'postgres')
     result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
     review_id = result['files'][0]['review_record_id']
     review = engine.load(review_id)
@@ -249,7 +314,6 @@ async def test_ingestion_reader_understands_compact_outcomes(runtime, monkeypatc
     from ingestion.pipeline import Pipeline
     from ingestion.storage import PostgresRepository
     engine, kwargs, _, _, _ = runtime
-    monkeypatch.setenv('REVISION_JSON_STORAGE', 'postgres')
     monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
     result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
     repository = PostgresRepository(engine.repository.dsn)
@@ -286,15 +350,14 @@ def test_paid_completion_keeps_lease_and_artifact_guards(runtime):
 
 
 @pytest.mark.asyncio
-async def test_storage_mode_can_change_without_rewriting_immutable_artifacts(runtime, monkeypatch):
+async def test_backend_always_stores_audit_json_in_postgres(runtime, monkeypatch):
     engine, kwargs, _, _, _ = runtime
-    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
-    monkeypatch.setenv('REVISION_JSON_STORAGE', 'postgres')
-    first = await rr.revisar_lote(['invoice.pdf'], **kwargs)
-    first_packet = engine.load(first['files'][0]['evaluation_record_id'])
+    # A stale launcher setting cannot reactivate the removed alternative.
     monkeypatch.setenv('REVISION_JSON_STORAGE', 'storage')
-    kwargs['request_key'] = 'storage-mode-changed'
-    second = await rr.revisar_lote(['invoice.pdf'], **kwargs)
-    assert second['state'] == 'completed'
-    second_packet = engine.load(second['files'][0]['evaluation_record_id'])
-    assert first_packet['context_schema'] == second_packet['context_schema']
+    result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert result['state'] == 'completed'
+    packet = engine.load(result['files'][0]['evaluation_record_id'])
+    assert packet['evaluation']['object_key'].startswith('postgres/')
+    run = engine.repository.get_run(kwargs['request_key'])
+    frozen = engine._json(engine.archive.ref(str(run['input_artifact_id'])))
+    assert frozen['signature']['json_storage'] == 'postgres'
