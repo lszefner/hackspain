@@ -31,8 +31,9 @@ contexto seguro; `localhost` sí lo es.
 Tres niveles, y se cae de uno al siguiente sin que nadie lo note:
 
 1. **ElevenLabs**, si hay `ELEVENLABS_API_KEY` en el entorno. Voz neural
-   castellana — **Inés**, peninsular, *calm, friendly*. Es la única que no
-   suena a contestador, y el agente se presenta con su nombre.
+   española — **[Marco](https://elevenlabs.io/voices/woeaOojf4khJahry1fqM)**,
+   voz masculina, grave y natural. El agente se presenta como Marco.
+   El bundle web incluye las 9 frases de la demo grabadas con Marco.
 2. **`say` de macOS** (Mónica). Si no hay clave, es la voz. Y si la hay pero
    ElevenLabs falla a mitad de llamada —cuota agotada, sin red—, es el
    respaldo antes de rendirse: lo que Mónica ya tenía cacheado sale al
@@ -51,7 +52,7 @@ echo 'ELEVENLABS_API_KEY=sk_...' >> .env
 
 make voces                                    # precalienta todo lo que dirá
 ./venv/bin/python -m phone_calls.voz --listar # motores, voces y cuál elige
-./venv/bin/python -m phone_calls.voz --probar # audiciona Marina, Sofía e Inés
+./venv/bin/python -m phone_calls.voz --probar # audiciona Marina, Sofía, Inés y Marco
 ```
 
 Medido: precalentar con `multilingual_v2` son ~2,3 s por frase — medio minuto
@@ -191,6 +192,18 @@ parser tolerante en vez de esquivarlo.
 
 ## En Vercel
 
+Para abrir `/phone_calls` con `npm run dev` en `frontend/`, arranca también
+la API de llamadas desde la raíz del repositorio:
+
+```bash
+uv run --locked --extra worker --extra backend python -m phone_calls.servidor --voz 11l:woeaOojf4khJahry1fqM
+```
+
+Next en desarrollo redirige los turnos y el audio local al puerto 8011.
+No ejecuta las Functions de Python de Vercel. La demo usa los datos exportados
+y no requiere el backend de facturas ni Supabase. Las frases cacheadas no
+requieren una clave de ElevenLabs; generar frases nuevas sí.
+
 La centralita también vive en el despliegue, en `/phone_calls`. No es un
 puerto, es la misma página:
 
@@ -214,7 +227,7 @@ máquina que levantó el servidor. En HTTPS funciona desde el móvil.
 despliega, y `tests/test_publicacion_web.py` lo comprueba con un grep. El
 audio son los mp3 que `make voces` ya dejó en `.voz/`, copiados a
 `public/phone_calls/voz/` y servidos por el CDN con el hash en la URL. Las 9
-frases de las tres llamadas grabadas están al completo con Inés; lo que se
+frases de las tres llamadas grabadas están al completo con Marco; lo que se
 improvise fuera del guion lo dirá la voz del navegador, que es el peldaño 3
 de siempre.
 

@@ -516,7 +516,7 @@ def _generica(exp: dict) -> dict:
 # ------------------------------------------------------ maquina de estados
 # Quien coge el telefono. Coincide a proposito con la voz que lo dice:
 # presentarse con un nombre y sonar a otro se nota en dos segundos.
-AGENTE = "Inés"
+AGENTE = "Marco"
 
 SALUDO = (f"Contabilidad de proveedores, buenos días. Le atiende {AGENTE}. "
           f"¿Me dice el nombre de su empresa?")

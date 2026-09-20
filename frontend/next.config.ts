@@ -18,7 +18,11 @@ const nextConfig: NextConfig = {
 
   async rewrites() {
     return {
-      beforeFiles: [],
+      // next dev does not execute Vercel's Python functions.
+      beforeFiles: process.env.NODE_ENV === "development" ? [
+        { source: "/api/centralita/turno", destination: "http://127.0.0.1:8011/api/turno" },
+        { source: "/api/voz/:fichero", destination: "http://127.0.0.1:8011/api/voz/:fichero" },
+      ] : [],
       afterFiles: [
         // No es una página de Next: es la misma página que sirve `make
         // centralita` en el 8011, publicada tal cual en public/ por `make

@@ -303,10 +303,12 @@ def test_el_nombre_resuelve_al_motor():
     assert voz.nombre_voz("11l:" + voz.VOCES_11L["Marina"]) == "Marina (ElevenLabs)"
 
 
-def test_el_agente_se_llama_como_la_voz():
-    """Presentarse con un nombre y sonar a otro se nota en dos segundos."""
+def test_la_voz_por_defecto_es_marco(monkeypatch):
+    """La voz seleccionada y la identidad del agente coinciden."""
     from phone_calls.guion import AGENTE
-    assert AGENTE == voz.VOZ_11L
+    monkeypatch.setenv("ELEVENLABS_API_KEY", "sk_prueba")
+    assert voz.mejor_voz() == "11l:woeaOojf4khJahry1fqM"
+    assert AGENTE == voz.VOZ_11L == "Marco"
 
 
 # Palabras que el motor de voz acentuaria en la silaba equivocada si van sin
