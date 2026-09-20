@@ -42,7 +42,7 @@ REVISION_REVIEW_ENABLED=false
 REVISION_RULESET_RUN_KEY=e2e-1d-221545
 ```
 
-- Review defaults to enabled when unset. `false`/`0` disables the provider and
+- Review defaults to disabled when unset. `false`/`0` disables the provider and
   uses the deterministic evaluator's result directly, including `PAGAR`.
   `DISABLED` is a run policy, not a reviewer verdict. There is no payment action.
   Re-enabling review later cannot reinterpret past runs' output policies.

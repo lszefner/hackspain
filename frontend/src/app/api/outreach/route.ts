@@ -102,6 +102,6 @@ export async function POST(request: Request) {
     drafts,
     skipped,
     demo: true,
-    note: "Drafts only. Sending from this desk is simulated — nothing leaves over SMTP.",
+    note: "Email drafts ready for review.",
   });
 }

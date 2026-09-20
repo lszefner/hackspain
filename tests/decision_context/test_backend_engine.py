@@ -24,6 +24,7 @@ from tests.test_core_engine_review import ScriptedProvider
 def runtime(db, tmp_path, monkeypatch):
     from rules_ingestion import build_rules
 
+    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'true')
     repository = EngineRepository(db.dsn)
     storage = SupabaseStorage(url='https://storage.invalid', key='test-only', client=_Client())
     engine = InvoiceDecisionEngine(repository, storage)
@@ -82,6 +83,34 @@ def runtime(db, tmp_path, monkeypatch):
               'review_provider': ScriptedProvider()}
     yield engine, kwargs, calls, rules, workbook
     repository.close()
+
+
+@pytest.mark.asyncio
+async def test_default_run_disables_review(runtime, monkeypatch):
+    monkeypatch.delenv('REVISION_REVIEW_ENABLED', raising=False)
+    engine, kwargs, _, _, _ = runtime
+    result = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert result['state'] == 'completed'
+    assert kwargs['review_provider'].calls == 0
+    assert PostgresResultsStore(engine).get('invoice.pdf')['review_status'] == 'DISABLED'
+
+
+@pytest.mark.asyncio
+async def test_yaml_pinned_run_reuses_existing_source_metadata(runtime, monkeypatch, tmp_path):
+    from backend.yaml_api import prepare
+
+    engine, kwargs, calls, _, _ = runtime
+    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
+    first = await rr.revisar_lote(['invoice.pdf'], **kwargs)
+    assert first['state'] == 'completed'
+    config = prepare(Path(kwargs['sources_yaml']), rr.ROOT / 'rules_ingestion/profiles/balanced.yaml',
+                     tmp_path / 'compiled')
+    for key, value in config.items():
+        monkeypatch.setenv(key, value)
+    result = await rr.revisar_lote(['invoice.pdf'], **(kwargs | {'request_key': 'yaml-after-generated'}))
+    assert result['state'] == 'completed'
+    assert calls['generate'] == 1
+    assert PostgresResultsStore(engine).get('invoice.pdf')['review_status'] == 'DISABLED'
 
 
 @pytest.mark.asyncio

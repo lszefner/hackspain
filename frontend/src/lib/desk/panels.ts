@@ -45,6 +45,7 @@ export type PanelRow = {
 export type DeskPanel = {
   id: string;
   title: string;
+  email?: { to: string; subject: string; body: string };
   meta?: string;
   rows: PanelRow[];
   actions?: PanelAction[];
@@ -169,15 +170,6 @@ function stubAct(label: string, act: string, kind?: PanelAction["kind"], key?: s
   return { label, act, kind, key, title: STUB };
 }
 
-function emailAct(key?: string): PanelAction {
-  return {
-    label: "Email supplier",
-    act: "email",
-    key,
-    title: "Opens a draft — send is simulated",
-  };
-}
-
 export function routeIntent(text: string): string | null {
   const t = fold(text);
   // Prefer explicit stop language over the substring "pay" inside "do not pay".
@@ -285,16 +277,13 @@ async function fetchInvoices(action: string): Promise<Invoices> {
 function clusterActions(key: string, verdict: string): PanelAction[] {
   if (verdict === "ESCALAR") {
     return [
-      stubAct("Approve", "approve", "primary", key),
-      stubAct("Reject", "reject", "danger", key),
-      emailAct(key),
       stubAct("Defer", "defer", "quiet", key),
     ];
   }
   if (verdict === "PAGAR") {
-    return [stubAct("Approve", "approve", "primary", key)];
+    return [];
   }
-  return [emailAct(key)];
+  return [];
 }
 
 function buildClusterPanel(
@@ -370,7 +359,6 @@ async function buildPayments(): Promise<{ panel: DeskPanel; facts: Record<string
     data.matched,
     "PAGAR",
     [
-      stubAct(`Approve all ${data.matched}`, "pay_all", "primary"),
       stubAct("Download the SEPA file", "sepa"),
       { label: "What needs my judgement?", ask: "what needs my judgement" },
     ],
@@ -396,7 +384,6 @@ async function buildBlocked(): Promise<{ panel: DeskPanel; facts: Record<string,
     data.matched,
     "NO_PAGAR",
     [
-      { label: "Email suppliers", act: "email", kind: "primary", title: "Opens drafts — send is simulated" },
       { label: "See the rules", ask: "what rules are running" },
     ],
   );
@@ -592,9 +579,6 @@ export async function buildDossierPanel(fileId: string): Promise<{ panel: DeskPa
           ],
         },
         actions: [
-          stubAct("Approve", "approve", "primary", `file:${fileId}`),
-          stubAct("Reject", "reject", "danger", `file:${fileId}`),
-          emailAct(`file:${fileId}`),
           { label: "Open full history", file: fileId },
         ],
       },
@@ -606,9 +590,6 @@ export async function buildDossierPanel(fileId: string): Promise<{ panel: DeskPa
       })),
     ],
     actions: [
-      stubAct("Approve", "approve", "primary", `file:${fileId}`),
-      stubAct("Reject", "reject", "danger", `file:${fileId}`),
-      emailAct(`file:${fileId}`),
       { label: "Open full history", kind: "primary", file: fileId },
     ],
   };

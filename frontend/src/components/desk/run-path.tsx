@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
 
 export type PathStage = {
   id: string;
@@ -16,56 +16,28 @@ type Props = {
 };
 
 export function RunPath({ title, status, stages }: Props) {
-  const hotIndex = Math.max(
-    0,
-    stages.findIndex((s) => s.state === "hot"),
-  );
-  const activeIndex =
-    status === "done"
-      ? stages.length - 1
-      : status === "failed"
-        ? Math.max(
-            0,
-            stages.findIndex((s) => s.state !== "done"),
-          )
-        : hotIndex >= 0
-          ? hotIndex
-          : stages.findIndex((s) => s.state === "done") + 1;
-
-  const safeIndex = Math.min(
-    stages.length - 1,
-    Math.max(0, activeIndex < 0 ? 0 : activeIndex),
-  );
+  const hotIndex = stages.findIndex((s) => s.state === "hot");
+  const nextIndex = stages.findIndex((s) => s.state !== "done");
+  const safeIndex = Math.max(0, Math.min(stages.length - 1,
+    status === "done" || nextIndex === -1 ? stages.length - 1
+      : hotIndex >= 0 ? hotIndex : nextIndex));
   const active = stages[safeIndex];
-  const [enterKey, setEnterKey] = useState(active?.id ?? "0");
-
-  useEffect(() => {
-    setEnterKey(`${active?.id ?? safeIndex}-${active?.state ?? "pending"}`);
-  }, [active?.id, active?.state, safeIndex]);
-
-  const progress =
-    stages.length <= 1
-      ? status === "done"
-        ? 100
-        : 12
-      : Math.round(
-          ((stages.filter((s) => s.state === "done").length +
-            (status === "running" && active?.state === "hot" ? 0.45 : 0)) /
-            stages.length) *
-            100,
-        );
+  const progress = stages.length <= 1 ? (status === "done" ? 100 : 0)
+    : safeIndex / (stages.length - 1) * 100;
+  const heading = status === "running" ? active?.label || title : title;
+  const detail = title !== heading ? title : null;
 
   return (
     <div className={`run-path ${status}`} role="status">
       <div className="run-path-head">
-        <p className="run-path-title">{active?.label ?? title}</p>
+        <p className="run-path-title">{heading}</p>
         <span className="run-path-meta">
-          {safeIndex + 1}/{stages.length}
+          {stages.length ? `${safeIndex + 1} of ${stages.length}` : ""}
         </span>
       </div>
 
-      <div className="run-path-stage" key={enterKey}>
-        <p className="run-path-copy">{title}</p>
+      <div className="run-path-stage">
+        {detail ? <p className="run-path-copy">{detail}</p> : null}
         {active?.subtasks?.length ? (
           <ul className="run-path-subs">
             {active.subtasks.map((sub) => (
@@ -87,9 +59,9 @@ export function RunPath({ title, status, stages }: Props) {
         ) : null}
       </div>
 
-      <div className="run-path-rail" aria-hidden>
+      <div className="run-path-rail" aria-hidden style={{ "--stage-count": Math.max(1, stages.length) } as CSSProperties}>
         <div className="run-path-track">
-          <i style={{ width: `${Math.min(100, Math.max(8, progress))}%` }} />
+          <i style={{ width: `${progress}%` }} />
         </div>
         <ol className="run-path-nodes">
           {stages.map((stage, i) => (
@@ -105,7 +77,7 @@ export function RunPath({ title, status, stages }: Props) {
               title={stage.label}
             >
               <span className="node" />
-              <span className="node-lbl">{stage.label}</span>
+              <span className="node-lbl">{({ recibida: "Receive", extraida: "Extract", evaluada: "Evaluate", emitida: "Recommend", "fallback-0": "Receive", "fallback-1": "Extract", "fallback-2": "Evaluate", "fallback-3": "Recommend" } as Record<string, string>)[stage.id] || stage.label}</span>
             </li>
           ))}
         </ol>

@@ -47,10 +47,9 @@ export function EmailDraftDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="email-draft-dialog max-w-xl border-[var(--line)] bg-[var(--panel)] text-[var(--ink)] sm:rounded-xl">
         <DialogHeader>
-          <DialogTitle className="text-[15px]">Supplier email draft</DialogTitle>
+          <DialogTitle className="text-[15px]">Supplier email</DialogTitle>
           <DialogDescription className="text-[12.5px] text-[var(--mut)]">
-            {draft.intent_label} · {draft.file_id}. Demo send only — nothing
-            leaves over SMTP.
+            {draft.intent_label} · {draft.file_id}
           </DialogDescription>
         </DialogHeader>
         <div className="email-draft-fields">

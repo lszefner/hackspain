@@ -1,6 +1,7 @@
 import type { Detail } from "./types";
 
 export type OutreachIntent =
+  | "review_result"
   | "clarify_tax_id"
   | "clarify_amount"
   | "clarify_currency"
@@ -21,6 +22,7 @@ export type OutreachDraft = {
 };
 
 const INTENT_LABEL: Record<OutreachIntent, string> = {
+  review_result: "Invoice review result",
   clarify_tax_id: "Wrong or missing tax ID",
   clarify_amount: "Amount does not match",
   clarify_currency: "Currency missing or unclear",
@@ -144,8 +146,6 @@ function field(detail: Detail, ...keys: string[]): string {
 }
 
 function defaultRecipient(detail: Detail): string {
-  const override = process.env.DESK_EMAIL_TO?.trim();
-  if (override) return override;
   const fromInvoice =
     field(detail, "vendor_email", "supplier.email", "email") || "";
   return fromInvoice;
@@ -166,6 +166,11 @@ function buildBody(
     "not recorded";
 
   switch (intent) {
+    case "review_result":
+      return {
+        subject: `Review of invoice ${number}`,
+        body: `Hello ${vendor},\n\nOur review of invoice ${number} returned ${detail.salida?.verdict || detail.row?.verdict}.\n\n${why}\n\nPlease review these findings and let us know if you have additional information.\n\nAccounts payable`,
+      };
     case "clarify_tax_id":
       return {
         subject: `Tax ID check — invoice ${number}`,
@@ -230,25 +235,14 @@ function buildBody(
 
 /** Decide whether this invoice warrants a supplier email, and draft it. */
 export function classifyOutreach(detail: Detail): OutreachDraft | null {
-  // Clean pay recommendations with no failed checks: no outreach.
-  const failed = failedChecks(detail);
   const verdict = detail.salida?.verdict || detail.row?.verdict;
-  if (verdict === "PAGAR" && failed.length === 0 && !detail.attention_required) {
-    return null;
-  }
-
-  // Pure duplicates / do-not-pay without a supplier-fixable field issue: skip.
-  const blob = evidenceBlob(detail);
-  if (
-    /(duplicate|duplicad|same invoice number)/.test(blob) &&
-    !(/(tax_id|nif|iban|amount|currency|purchase_order|pedido)/.test(blob) &&
-      /(missing|mismatch|unusable|wrong)/.test(blob))
-  ) {
-    return null;
-  }
-
-  const picked = pickIntent(blob);
-  if (!picked) return null;
+  if (verdict !== "ESCALAR" && verdict !== "NO_PAGAR") return null;
+  const picked = pickIntent(evidenceBlob(detail)) || {
+    intent: "review_result" as const,
+    why: detail.row?.reason || failedChecks(detail).map((c) =>
+      textOf(c.explanation || c.reason)).filter(Boolean).join("\n") ||
+      "The review requires follow-up. No detailed reason was recorded.",
+  };
 
   const { subject, body } = buildBody(picked.intent, detail, picked.why);
   return {

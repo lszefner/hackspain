@@ -56,7 +56,7 @@ test("buildPanelBundle queue panel uses live invoice shape", async () => {
     assert.equal(bundle.panels[0].rows[0].title, "Acme");
     assert.equal(bundle.panels[0].rows[0].lead, "2");
     assert.ok(bundle.panels[0].actions?.some((a) => a.ui === "invoices"));
-    assert.ok(bundle.panels[0].rows[0].actions?.some((a) => a.act === "approve"));
+    assert.ok(!bundle.panels[0].rows[0].actions?.some((a) => a.act === "approve" || a.act === "reject"));
   } finally {
     mock.restoreAll();
   }

@@ -21,7 +21,13 @@ async def test_read_models_use_persisted_data_without_storage(runtime):  # noqa:
     engine, kwargs, calls, _, _ = runtime
     await rr.revisar_lote(['invoice.pdf'], **kwargs)
     before = dict(calls)
-    desk = DeskQueries(PostgresResultsStore(engine))
+    # Match the API's cold store, where accessing .engine initializes Storage.
+    class ReadOnlyStore(PostgresResultsStore):
+        @property
+        def engine(self):
+            raise AssertionError('UI query initialized the ingestion engine')
+
+    desk = DeskQueries(ReadOnlyStore(repository=engine.repository))
     def forbidden(*args, **kwargs):
         raise AssertionError('UI query attempted an artifact download')
     engine.storage.get = forbidden

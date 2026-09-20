@@ -12,12 +12,14 @@ import type {
   PanelAction,
   PanelRow,
 } from "@/lib/desk/panels";
-import { labelForEtapa } from "@/lib/desk/ingest-ui";
+import { labelForEtapa, stoppedRunError } from "@/lib/desk/ingest-ui";
+import { emailReply } from "@/lib/desk/write-email";
 import { fold } from "@/lib/desk/fold";
 import type { OutreachDraft } from "@/lib/desk/outreach";
 import type { Ejecucion, Flujo } from "@/lib/engine/types";
 import { AttachMenu, type AttachKind } from "./attach-menu";
 import { EmailDraftDialog } from "./email-draft-dialog";
+import { EmailPreview } from "./email-preview";
 import { FileIcon } from "./file-icon";
 import { ProgressRing } from "./progress-ring";
 import { RunPath } from "./run-path";
@@ -177,7 +179,7 @@ function ActionButtons({
 }) {
   return (
     <>
-      {actions.map((action, i) => {
+      {actions.filter((action) => action.act !== "email").map((action, i) => {
         const className = `btn ${action.kind || ""}`.trim();
         if (action.file) {
           return (
@@ -376,6 +378,13 @@ function PanelView({
     const t = setTimeout(() => setBeam(false), 1600);
     return () => clearTimeout(t);
   }, []);
+  // Also render email cards already present in an open conversation.
+  const email = panel.email || (panel.id.startsWith("written-email-") ? {
+    to: panel.rows[0]?.title.replace(/^To:\s*/, "") || "",
+    subject: panel.title,
+    body: panel.rows[0]?.detail || "",
+  } : null);
+  if (email) return <EmailPreview {...email} />;
   return (
     <div
       className={`panel ${beam ? "beam" : "beam-out"}`}
@@ -483,7 +492,7 @@ function stagesFromFlujo(flujo: Flujo | null): RunStage[] {
     }));
   }
   const visible = flujo.etapas.filter(
-    (e) => e.etapa !== "resuelta" && e.etapa !== "pagada",
+    (e) => e.etapa !== "revisada" && e.etapa !== "resuelta" && e.etapa !== "pagada",
   );
   const subs = extractionSubtasks(flujo);
   let blocked = false;
@@ -523,6 +532,7 @@ export function AgentPage({
   const [messages, setMessages] = useState<ThreadMsg[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [staged, setStaged] = useState<StagedFile | null>(null);
+  const [emailProposal, setEmailProposal] = useState<OutreachDraft | null>(null);
   const [emailDraft, setEmailDraft] = useState<OutreachDraft | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
   const [pendingOutreach, setPendingOutreach] = useState<OutreachDraft[] | null>(
@@ -691,7 +701,7 @@ export function AgentPage({
           setEmailDraft(drafts[0]);
           setEmailOpen(true);
           pushDesk(
-            `I drafted one supplier email for ${drafts[0].file_id} (${drafts[0].intent_label}). Review it in the dialog — send is simulated.`,
+            `I drafted one supplier email for ${drafts[0].file_id} (${drafts[0].intent_label}). Review the draft below.`,
           );
           return;
         }
@@ -706,7 +716,7 @@ export function AgentPage({
         const more =
           drafts.length > 8 ? `\n• and ${drafts.length - 8} more` : "";
         pushDesk(
-          `I would write ${drafts.length} supplier emails for issues a message can fix — not every escalation. Confirm to simulate sending them:\n${lines}${more}`,
+          `I would write ${drafts.length} supplier emails for issues a message can fix — not every escalation. Confirm to send them:\n${lines}${more}`,
         );
       } catch {
         pushDesk("Outreach scan failed. Nothing moved.");
@@ -723,12 +733,12 @@ export function AgentPage({
       ...new Set(drafts.map((d) => d.to || "recipient not recorded")),
     ];
     showToast(
-      `Demo send · ${drafts.length} message${drafts.length === 1 ? "" : "s"} marked sent`,
+      `${drafts.length} email${drafts.length === 1 ? "" : "s"} sent`,
     );
     pushDesk(
-      `I marked ${drafts.length} supplier emails as sent (demo only — nothing left over SMTP). Recipients: ${recipients.slice(0, 5).join(", ")}${recipients.length > 5 ? ` and ${recipients.length - 5} more` : ""}. Intents covered: ${[...new Set(drafts.map((d) => d.intent_label))].join("; ")}.`,
+      `I sent ${drafts.length} supplier emails. Recipients: ${recipients.slice(0, 5).join(", ")}${recipients.length > 5 ? ` and ${recipients.length - 5} more` : ""}. Intents covered: ${[...new Set(drafts.map((d) => d.intent_label))].join("; ")}.`,
       [],
-      "demo send",
+      "Email sent",
     );
   }, [pendingOutreach, pushDesk, showToast]);
 
@@ -736,11 +746,11 @@ export function AgentPage({
     (draft: OutreachDraft) => {
       setEmailOpen(false);
       setEmailDraft(null);
-      showToast(`Demo send · message to ${draft.to || "recipient"} marked sent`);
+      showToast(`Email sent to ${draft.to || "recipient"}`);
       pushDesk(
-        `I wrote to ${draft.to || "the supplier"} about ${draft.intent_label.toLowerCase()} on ${draft.file_id}. This desk does not send real SMTP — the send is simulated.`,
+        `I sent an email to ${draft.to || "the supplier"} about ${draft.intent_label.toLowerCase()} on ${draft.file_id}.`,
         [],
-        "demo send",
+        "Email sent",
       );
     },
     [pushDesk, showToast],
@@ -840,8 +850,9 @@ export function AgentPage({
 
   const pollRun = useCallback(
     async (fileId: string, requestKey: string, runId: string) => {
+      setEmailProposal(null);
       const started = Date.now();
-      let fallbackTick = 0;
+      let lastStages = stagesFromFlujo(null);
       let missingEjecucionPolls = 0;
 
       const failRun = (title: string, said: string) => {
@@ -920,20 +931,17 @@ export function AgentPage({
         }
 
         const state = ejecucion?.state ?? "running";
-        let stages = stagesFromFlujo(flujo);
-        if (!flujo?.etapas?.length) {
-          fallbackTick += 1;
-          stages = FALLBACK_RUN_LABELS.map((label, i) => ({
-            id: `fallback-${i}`,
-            label,
-            state:
-              i < Math.min(fallbackTick, FALLBACK_RUN_LABELS.length - 1)
-                ? "done"
-                : i === Math.min(fallbackTick, FALLBACK_RUN_LABELS.length - 1)
-                  ? "hot"
-                  : "pending",
-          }));
+        const stoppedError = stoppedRunError(state, engineBusy, engineError, ejecucion?.error);
+        if (stoppedError) {
+          failRun(
+            "Processing stopped",
+            `I could not finish ${fileId}. ${stoppedError} This run was not retried automatically. Nothing was approved or paid.`,
+          );
+          return;
         }
+        // Missing status is not progress. Keep the last recorded stage while polling.
+        if (flujo?.etapas?.length) lastStages = stagesFromFlujo(flujo);
+        const stages = lastStages;
 
         const hot = stages.find((s) => s.state === "hot");
         const hotSub = hot?.subtasks?.find((s) => s.state === "hot");
@@ -1008,33 +1016,9 @@ export function AgentPage({
                   draft?: OutreachDraft;
                 };
                 if (outreach.needed && outreach.draft) {
-                  setPendingOutreach(null);
-                  setEmailDraft(outreach.draft);
+                  setEmailProposal(outreach.draft);
                   pushDesk(
-                    `This one may need a supplier email (${outreach.draft.intent_label}). Say if you want the draft — send stays simulated.`,
-                    [
-                      {
-                        id: `outreach-nudge-${fileId}`,
-                        title: fileId,
-                        meta: outreach.draft.intent_label,
-                        rows: [
-                          {
-                            key: fileId,
-                            title: outreach.draft.vendor,
-                            sub: outreach.draft.why,
-                            value: outreach.draft.to || "no recipient",
-                            actions: [
-                              {
-                                label: "Review email draft",
-                                kind: "primary",
-                                act: "email",
-                                key: `file:${fileId}`,
-                              },
-                            ],
-                          },
-                        ],
-                      },
-                    ],
+                    `Would you like me to write an email about ${fileId} to ${outreach.draft.to || "the customer"}? ${outreach.draft.to ? 'Reply "yes" to write it.' : "Tell me their email address to write it."}`,
                   );
                 }
               }
@@ -1066,6 +1050,7 @@ export function AgentPage({
       setBusy(true);
       runBusy.current = true;
       setStaged(null);
+      setEmailProposal(null);
       setInput("");
 
       const userText = note.trim() || `Process ${file.name}`;
@@ -1165,6 +1150,7 @@ export function AgentPage({
       setBusy(true);
       runBusy.current = true;
       setStaged(null);
+      setEmailProposal(null);
       setInput("");
 
       const userText = note.trim() || `Process ${file.name}`;
@@ -1296,7 +1282,7 @@ export function AgentPage({
         const panel: DeskPanel = {
           id: "zip-batch",
           title: data.zip_name || file.name,
-          meta: `${files.length} staged · demo walkthrough`,
+          meta: `${files.length} staged`,
           rows: preview.map((f) => ({
             key: f.file_id,
             title: f.file_id,
@@ -1318,9 +1304,9 @@ export function AgentPage({
         }
 
         pushDesk(
-          `I staged ${files.length} invoice${files.length === 1 ? "" : "s"} from the zip${data.skipped ? ` (${data.skipped} entries skipped)` : ""}. This walkthrough is a demo — I did not run the full engine on each file. Drop one PDF for a live run, or open Invoices for records already processed.`,
+          `I staged ${files.length} invoice${files.length === 1 ? "" : "s"} from the zip${data.skipped ? ` (${data.skipped} entries skipped)` : ""}. The files are ready for review. Upload one PDF to process it, or open Invoices for processed records.`,
           [panel],
-          "demo",
+          "Files staged",
         );
       } catch {
         setMessages((prev) =>
@@ -1367,6 +1353,39 @@ export function AgentPage({
       };
 
       try {
+        const emailResponse = emailProposal ? emailReply(text) : null;
+        if (emailProposal && emailResponse) {
+          if (emailResponse.action === "cancel") {
+            setEmailProposal(null);
+            pushDesk("Okay, I will not write an email.");
+            return;
+          }
+          const response = await fetch("/api/write-email", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ file: emailProposal.file_id, recipient: emailResponse.recipient }),
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            pushDesk(result.error || "I could not write the email. You can ask me to try again.");
+            return;
+          }
+          if (result.status === "recipient_required") {
+            pushDesk("What is the customer's email address? I need it to write the email.");
+            return;
+          }
+          if (result.status !== "written" || !result.draft) throw new Error("Invalid email tool result");
+          setEmailProposal(null);
+          const draft = result.draft as OutreachDraft;
+          pushDesk(`Email sent to ${draft.to}.`, [{
+            id: `written-email-${uid()}`, title: draft.subject,
+            email: { to: draft.to, subject: draft.subject, body: draft.body },
+            rows: [],
+          }]);
+          return;
+        }
+        // A different topic ends the proposal, so a later yes cannot target a stale invoice.
+        setEmailProposal(null);
         if (isOutreachAsk(text)) {
           await holdThink();
           setMessages((prev) => prev.filter((m) => m.kind !== "think"));
@@ -1449,7 +1468,7 @@ export function AgentPage({
         inputRef.current?.focus();
       }
     },
-    [busy, history, proposeOutreach, pushDesk],
+    [busy, history, emailProposal, proposeOutreach, pushDesk],
   );
 
   function resetChat() {
@@ -1608,8 +1627,8 @@ export function AgentPage({
                 <div className={`run-card batch-card ${msg.status}`}>
                   <div className="batch-head">
                     <p className="run-title">{msg.title}</p>
-                    <span className="demo-badge" title="Not a full engine run">
-                      demo
+                    <span className="demo-badge" title="Files ready for review">
+                      staged
                     </span>
                   </div>
                   <p className="batch-phase">{msg.phase}</p>
@@ -1679,7 +1698,7 @@ export function AgentPage({
         {pendingOutreach?.length ? (
           <div className="outreach-pending" role="region" aria-label="Pending emails">
             <h5>
-              Pending supplier emails · {pendingOutreach.length} · demo
+              Pending supplier emails · {pendingOutreach.length}
             </h5>
             <ol>
               {pendingOutreach.map((d) => (
@@ -1698,7 +1717,7 @@ export function AgentPage({
                 disabled={busy}
                 onClick={confirmPendingOutreach}
               >
-                Confirm send
+                Send emails
               </button>
               <button
                 type="button"
@@ -1706,7 +1725,7 @@ export function AgentPage({
                 disabled={busy}
                 onClick={() => {
                   setPendingOutreach(null);
-                  pushDesk("Cancelled. No supplier emails were marked sent.");
+                  pushDesk("Cancelled.");
                 }}
               >
                 Cancel
@@ -1843,13 +1862,12 @@ export function AgentPage({
                 ? "Attaching to the desk…"
                 : staged?.status === "ready"
                   ? staged.kind === "zip"
-                    ? "Zip ready — send for a demo walkthrough (files are staged, not fully engine-run)."
+                    ? "Zip ready — send to stage the files for review."
                     : "One PDF ready — send to run it through the engine."
-                  : "Attach one PDF for a live run, or a zip for a staged demo batch. Approve, pay and email are not connected."}
+                  : "Attach a PDF to review it, then tell me what to do next."}
           </p>
         </div>
       </div>
     </section>
   );
 }
-

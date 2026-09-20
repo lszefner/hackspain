@@ -121,7 +121,9 @@ def params(query):
 class DeskQueries:
     def __init__(self, store):
         self.store = store
-        self.repo = store.engine.repository
+        # Read-only queries must not initialize the ingestion engine: its lazy
+        # setup preflights Storage, which is unnecessary for Postgres reads.
+        self.repo = store.repository
 
     def invoices(self, query):
         p = params(query)
