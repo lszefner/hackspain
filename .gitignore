@@ -18,16 +18,18 @@ benchmark/review/pages/
 .claude_erp.log
 backend/data/
 
-# Salidas del motor: se regeneran
+# Salidas del motor: las sueltas de una corrida cualquiera se regeneran
 outcomes*.jsonl
+# Las tres entregas si se versionan. Regenerarlas exige el ERP levantado,
+# credenciales y llamadas de pago, asi que tenerlas aqui es lo que permite
+# leer que se decidio -- y en la de motivos, por que -- sin correr el motor.
+!outcomes.jsonl
+!outcomes_lote2.jsonl
+!outcomes_lote2_motivos.jsonl
+
 # Cache de extraccion: 267 MB de lecturas OCR y peticiones con las imagenes en
 # base64. Se regenera corriendo el motor, asi que no entra en el historial.
 phone_calls/datos/extraccion/
-# Excepcion deliberada. Este si se versiona: lleva el motivo escrito de cada
-# veredicto del lote 2, y regenerarlo exige el ERP levantado, credenciales y
-# llamadas de pago. Que este en el repo es lo que permite leer por que se
-# decidio cada factura sin volver a correr el motor.
-!outcomes_lote2_motivos.jsonl
 
 # El ejemplo que nos pasaron, conservado como referencia
 legacy/
