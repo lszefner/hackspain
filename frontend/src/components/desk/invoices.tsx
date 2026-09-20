@@ -1,7 +1,20 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import { useSearchParams } from "next/navigation";
-import { RefreshCw } from "lucide-react";
+import {
+  BookOpen,
+  Building2,
+  Monitor,
+  Package,
+  RefreshCw,
+  Send,
+  Shield,
+  Sparkles,
+  Truck,
+  UtensilsCrossed,
+  Zap,
+  type LucideProps,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -14,6 +27,54 @@ import {
   type Invoices,
 } from "@/lib/desk/types";
 import { useResource, Loading, Failure, Pages } from "./resource";
+
+const STAGES = [
+  ["", "All stages"],
+  ["processed", "Processed"],
+  ["extracted", "Extracted"],
+  ["processing", "Processing"],
+  ["error", "Errors"],
+] as const;
+
+const SUPPLIER_ICONS: {
+  match: RegExp;
+  Icon: ComponentType<LucideProps>;
+  tint: string;
+}[] = [
+  { match: /catering|restaur|comida|food|hotel/i, Icon: UtensilsCrossed, tint: "tint-meal" },
+  { match: /transport|guadaira|logist|flete/i, Icon: Truck, tint: "tint-haul" },
+  { match: /mensaj|courier|env[ií]o|postal|mail/i, Icon: Send, tint: "tint-post" },
+  { match: /limpiez|clean|higiene/i, Icon: Sparkles, tint: "tint-clean" },
+  { match: /papel|office|ruzafa|print|ofim[aá]tica/i, Icon: BookOpen, tint: "tint-paper" },
+  { match: /suminist|supply|levante|material/i, Icon: Package, tint: "tint-supply" },
+  { match: /inform[aá]tica|software|tech|digital/i, Icon: Monitor, tint: "tint-post" },
+  { match: /electric|montcada|energ/i, Icon: Zap, tint: "tint-haul" },
+  { match: /segurid|alcores|vigil/i, Icon: Shield, tint: "tint-meal" },
+  { match: /construc|obras|benimac/i, Icon: Building2, tint: "tint-paper" },
+  { match: /clim[aá]tica|aire|hvac/i, Icon: Sparkles, tint: "tint-clean" },
+  { match: /consult|documental|aljarafe/i, Icon: BookOpen, tint: "tint-supply" },
+];
+
+function supplierMark(name: string) {
+  const hit = SUPPLIER_ICONS.find(({ match }) => match.test(name));
+  if (hit) return hit;
+  const hue = [...name].reduce((n, c) => n + c.charCodeAt(0), 0) % 6;
+  return {
+    Icon: Building2,
+    tint: (["tint-meal", "tint-haul", "tint-post", "tint-clean", "tint-paper", "tint-supply"] as const)[
+      hue
+    ],
+  };
+}
+
+function countKey(value: string) {
+  return value === "PAGAR"
+    ? "PAY"
+    : value === "ESCALAR"
+      ? "ESCALATE"
+      : "DO NOT PAY";
+}
+
 export function InvoicePage({
   onSelect,
 }: {
@@ -23,7 +84,7 @@ export function InvoicePage({
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [action, setAction] = useState("");
-  const [stage, setStage] = useState(params.get("stage") ?? "processed");
+  const [stage, setStage] = useState(params.get("stage") ?? "");
   const [page, setPage] = useState(1);
   const [revision, setRevision] = useState(0);
   useEffect(() => {
@@ -47,55 +108,62 @@ export function InvoicePage({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <label className="live-filter">
-          Stage{" "}
-          <select
-            value={stage}
-            onChange={(e) => {
-              setStage(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">All recorded</option>
-            <option value="processed">Processed</option>
-            <option value="extracted">Extracted</option>
-            <option value="processing">Processing</option>
-            <option value="error">Errors</option>
-          </select>
-        </label>
-        <Button
-          className="btn"
-          disabled={isValidating}
-          onClick={() => {
-            setRevision((v) => v + 1);
-            void mutate();
-          }}
-        >
-          <RefreshCw size={13} />
-          Refresh
-        </Button>
-        <div className="seg" aria-label="Recommendation">
-          {actions.map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              className={action === value ? "on" : ""}
-              aria-pressed={action === value}
-              onClick={() => {
-                setAction(value);
+        <div className="inv-tools">
+          <div className="seg inv-rec" aria-label="Recommendation">
+            {actions.map(([value, label]) => {
+              const n =
+                value && data
+                  ? (data.counts?.[countKey(value)] ?? 0)
+                  : data?.matched;
+              return (
+                <button
+                  key={value || "all"}
+                  type="button"
+                  className={action === value ? "on" : ""}
+                  aria-pressed={action === value}
+                  onClick={() => {
+                    setAction(value);
+                    setPage(1);
+                  }}
+                >
+                  <span className="seg-lbl">{label}</span>
+                  {n != null ? <span className="seg-n">{n}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          <label className="inv-stage">
+            <span className="inv-stage-lbl">Stage</span>
+            <select
+              value={stage}
+              aria-label="Stage"
+              onChange={(e) => {
+                setStage(e.target.value);
                 setPage(1);
               }}
             >
-              {label}
-              {value && data
-                ? ` · ${data.counts?.[value === "PAGAR" ? "PAY" : value === "ESCALAR" ? "ESCALATE" : "DO NOT PAY"] ?? 0}`
-                : ""}
-            </button>
-          ))}
+              {STAGES.map(([value, label]) => (
+                <option key={value || "all"} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <Button
+            className="btn inv-refresh"
+            disabled={isValidating}
+            onClick={() => {
+              setRevision((v) => v + 1);
+              void mutate();
+            }}
+          >
+            <RefreshCw size={13} />
+            Refresh
+          </Button>
+          <span className="inv-count" aria-live="polite">
+            {data ? `${data.matched} / ${data.grand}` : ""}
+          </span>
         </div>
-        <span className="inv-count" aria-live="polite">
-          {data ? `${data.matched} / ${data.grand} invoices` : ""}
-        </span>
       </div>
       <div className="scroll" aria-busy={isValidating}>
         {error ? (
@@ -145,6 +213,7 @@ function SupplierLane({
   onSelect: (file: string) => void;
 }) {
   const [open, setOpen] = useState(false);
+  const { Icon, tint } = supplierMark(lane.name);
   return (
     <div className={`lane ${open ? "open" : ""}`}>
       <button
@@ -153,35 +222,37 @@ function SupplierLane({
         aria-expanded={open}
         onClick={() => setOpen(!open)}
       >
-        <span className="cv2" />
+        <span className="cv2" aria-hidden />
+        <span className={`prov ${tint}`} aria-hidden>
+          <Icon size={14} strokeWidth={2.2} />
+        </span>
         <span className="who3">
           <span className="nm2">{lane.name}</span>
           <span className="sub2">
-            {lane.count} ·{" "}
+            {lane.count}
+            {" · "}
             {lane.currency === "UNKNOWN"
-              ? "currency not recorded"
+              ? "no currency"
               : lane.currency}
             {lane.missing_amounts
-              ? ` · ${lane.missing_amounts} missing amounts`
+              ? ` · ${lane.missing_amounts} missing`
               : ""}
           </span>
         </span>
         <span className="figs">
           {(
             [
-              ["pay", "Recommend pay", lane.pay_total, lane.pay_n],
+              ["pay", "Pay", lane.pay_total, lane.pay_n],
               ["rev", "Review", lane.review_total, lane.review_n],
-              ["stop", "Do not pay", lane.nopay_total, lane.nopay_n],
+              ["stop", "Hold", lane.nopay_total, lane.nopay_n],
             ] as const
           ).map(([kind, label, total, n]) => (
             <span key={kind} className={`fig ${kind}`}>
               <span className="lbl2">{label}</span>
-              <span className={`amt ${n === 0 ? "zero" : ""}`}>
-                {lane.currency === "UNKNOWN"
-                  ? "—"
-                  : money(total, lane.currency)}
+              <span className={`amt ${n === 0 || total == null ? "zero" : ""}`}>
+                {total == null ? "—" : money(total, lane.currency)}
               </span>
-              <span className="n2">{n} invoices</span>
+              <span className="n2">{n}</span>
             </span>
           ))}
         </span>
@@ -228,8 +299,8 @@ function SupplierInvoices({
           <span>Number</span>
           <span>Issued</span>
           <span>Amount</span>
-          <span>Recommendation</span>
-          <span>Reason / stage</span>
+          <span>Rec.</span>
+          <span>Reason</span>
         </div>
         {data.rows.map((row) => (
           <button
@@ -243,7 +314,9 @@ function SupplierInvoices({
             </span>
             <span className="n">{row.number ?? "Not recorded"}</span>
             <span className="d">{row.date ?? "—"}</span>
-            <span className="a">{money(row.total, row.currency)}</span>
+            <span className="a">
+              {row.total == null ? "—" : money(row.total, row.currency)}
+            </span>
             <span className={`k ${actionClass(row.verdict)}`}>
               {actionName(row.verdict)}
             </span>

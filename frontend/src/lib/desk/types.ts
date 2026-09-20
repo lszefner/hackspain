@@ -96,14 +96,18 @@ export function actionClass(value: string) {
 }
 export function money(value: number | string | null, currency: string | null) {
   if (value == null) return "Amount not recorded";
+  const amount = Number(value);
   if (!currency || currency === "UNKNOWN")
-    return `${Number(value).toFixed(2)} · currency not recorded`;
+    return new Intl.NumberFormat("en-GB", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
   try {
     return new Intl.NumberFormat("en-GB", {
       style: "currency",
       currency,
-    }).format(Number(value));
+    }).format(amount);
   } catch {
-    return `${Number(value).toFixed(2)} ${currency}`;
+    return `${amount.toFixed(2)} ${currency}`;
   }
 }

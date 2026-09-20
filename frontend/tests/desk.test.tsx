@@ -173,7 +173,8 @@ test("summary keeps unknown currencies separate and never labels recommendations
     "/?view=invoices&stage=error",
   );
   assert.equal(money(null, "EUR"), "Amount not recorded");
-  assert.match(money(12, null), /currency not recorded/);
+  assert.equal(money(12, null), "12.00");
+  assert.equal(money(12, "UNKNOWN"), "12.00");
 });
 test("API failure offers a working retry without fabricated rows", async () => {
   let count = 0;

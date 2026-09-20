@@ -144,9 +144,12 @@ class DeskQueries:
  count(*) FILTER (WHERE verdict='PAGAR') AS pay_n,
  count(*) FILTER (WHERE verdict='ESCALAR') AS review_n,
  count(*) FILTER (WHERE verdict='NO_PAGAR') AS nopay_n,
- CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='PAGAR'),0) END AS pay_total,
- CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='ESCALAR'),0) END AS review_total,
- CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='NO_PAGAR'),0) END AS nopay_total,
+ CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='PAGAR'),0)
+      ELSE sum(total) FILTER (WHERE verdict='PAGAR') END AS pay_total,
+ CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='ESCALAR'),0)
+      ELSE sum(total) FILTER (WHERE verdict='ESCALAR') END AS review_total,
+ CASE WHEN currency IS NOT NULL THEN coalesce(sum(total) FILTER (WHERE verdict='NO_PAGAR'),0)
+      ELSE sum(total) FILTER (WHERE verdict='NO_PAGAR') END AS nopay_total,
  count(*) FILTER (WHERE total IS NULL) AS missing_amounts
  FROM filtered GROUP BY vendor_id,currency
  ) SELECT (SELECT count(*) FROM compact) AS grand,
@@ -168,7 +171,7 @@ class DeskQueries:
  coalesce((SELECT jsonb_object_agg(lifecycle,n) FROM (SELECT lifecycle,count(*) n FROM compact GROUP BY lifecycle) s),'{}') AS lifecycle,
  coalesce((SELECT jsonb_agg(to_jsonb(s)) FROM (
  SELECT coalesce(currency,'UNKNOWN') AS currency, verdict,count(*) AS n,
- CASE WHEN currency IS NOT NULL THEN sum(total) END AS total,count(*) FILTER (WHERE total IS NULL) AS missing_amounts
+ sum(total) AS total,count(*) FILTER (WHERE total IS NULL) AS missing_amounts
  FROM compact GROUP BY currency,verdict ORDER BY currency,verdict) s),'[]') AS totals
 """, params({})))
 
