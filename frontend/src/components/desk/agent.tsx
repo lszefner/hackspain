@@ -18,6 +18,7 @@ import type { OutreachDraft } from "@/lib/desk/outreach";
 import type { Ejecucion, Flujo } from "@/lib/engine/types";
 import { AttachMenu, type AttachKind } from "./attach-menu";
 import { EmailDraftDialog } from "./email-draft-dialog";
+import { FileIcon } from "./file-icon";
 import { ProgressRing } from "./progress-ring";
 import { RunPath } from "./run-path";
 import { ThinkPill } from "./think-pill";
@@ -91,6 +92,9 @@ const THINK_LABELS = [
   "Reading recommendations",
   "Building the list",
 ];
+
+/** Desk design: nothing answers in under four seconds. */
+const MIN_THINK_MS = 4000;
 
 const FALLBACK_RUN_LABELS = [
   "Receiving the file",
@@ -1356,9 +1360,15 @@ export function AgentPage({
         { id: uid(), kind: "think", label: THINK_LABELS[0] },
       ]);
       setThinkLabel(THINK_LABELS[0]);
+      const thinkStarted = Date.now();
+      const holdThink = async () => {
+        const left = MIN_THINK_MS - (Date.now() - thinkStarted);
+        if (left > 0) await new Promise((r) => setTimeout(r, left));
+      };
 
       try {
         if (isOutreachAsk(text)) {
+          await holdThink();
           setMessages((prev) => prev.filter((m) => m.kind !== "think"));
           await proposeOutreach();
           return;
@@ -1427,8 +1437,10 @@ export function AgentPage({
           ];
           return next.slice(-12);
         });
+        await holdThink();
         pushDesk(reply, panels, meta);
       } catch {
+        await holdThink();
         pushDesk(
           "The desk did not answer. Nothing moved. Check the API connection and retry.",
         );
@@ -1549,7 +1561,7 @@ export function AgentPage({
                   {msg.fileName ? (
                     <div className="att ok">
                       <span className="ico">
-                        {msg.fileKind === "zip" ? "ZIP" : "PDF"}
+                        <FileIcon kind={msg.fileKind === "zip" ? "zip" : "pdf"} />
                       </span>
                       <span>
                         <span className="nm">{msg.fileName}</span>
@@ -1737,7 +1749,7 @@ export function AgentPage({
                   />
                 ) : (
                   <span className="ico">
-                    {staged.kind === "zip" ? "ZIP" : "PDF"}
+                    <FileIcon kind={staged.kind} />
                   </span>
                 )}
                 <span>
