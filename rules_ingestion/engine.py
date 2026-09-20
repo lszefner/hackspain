@@ -107,7 +107,12 @@ class InvoiceDecisionEngine:
 
     def evaluate(self, *, input_id: str, interpreter: str, ruleset: bytes,
                  rule_sources: list[RuleSource], snapshots: dict[str, SourceSnapshot],
-                 evaluation_date: str, captured_at: str) -> dict:
+                 evaluation_date: str, captured_at: str,
+                 correction_request_key: str | None = None) -> dict:
+        if correction_request_key is not None:
+            correction = self.repository.get_run(correction_request_key)
+            if correction is None or correction['state'] != 'running':
+                raise ContextError('correction requires a running durable intent')
         if not isinstance(ruleset, bytes) or not ruleset:
             raise ContextError('exact ruleset bytes are required')
         if not rule_sources or any(
@@ -189,6 +194,8 @@ class InvoiceDecisionEngine:
             'context': context_ref,
             'sources': source_refs,
         }
+        if correction_request_key is not None:
+            packet['correction_request_key'] = correction_request_key
         return self.archive.save_packet(packet)
 
     def _materialize(self, packet):

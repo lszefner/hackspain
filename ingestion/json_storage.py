@@ -36,6 +36,10 @@ class PostgresJsonStorage:
             return StorageRef(digest(data), key, len(data), content_type, kind)
         return self.storage.put(data, kind, content_type)
 
+    def put_raw(self, data, kind, content_type='application/octet-stream'):
+        """Archive provider bytes verbatim, including empty/non-JSON errors."""
+        return self.storage.put(data, kind, content_type)
+
     def remember_persisted(self, row):
         if row['object_key'].startswith('postgres/'):
             data = canonical_bytes(row['payload'])

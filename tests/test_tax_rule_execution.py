@@ -212,11 +212,11 @@ def test_real_balanced_profile_completes_with_authoritative_inputs():
 
 # 'active' is not authoritative: the balanced profile treats "proveedor activo"
 # as presence in the supplier master, so a missing status column must not escalate.
-@pytest.mark.parametrize('missing', ['order_currency', 'history'])
+@pytest.mark.parametrize('missing', ['invoice_currency', 'history'])
 def test_balanced_profile_still_requires_authoritative_data(missing):
     invoice, snapshots = identity()
-    if missing == 'order_currency':
-        snapshots['orders'].payload['records'][0].pop('currency')
+    if missing == 'invoice_currency':
+        invoice['currency'] = None
     else:
         snapshots['processed'] = history(rows=[], availability='partial', complete=False)
     _, result = run(balanced_rules(), invoice=invoice, snapshots=snapshots)

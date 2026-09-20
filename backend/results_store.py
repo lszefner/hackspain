@@ -251,11 +251,14 @@ class PostgresResultsStore:
             row['contextual_review'] = reader.json(review_packet['review'])
         return row
 
-    def _history_record(self, record_id):
+    def _history_record(self, record_id, reader=None):
         record = self._history_cache.get(record_id)
         if record is None:
-            packet = self.engine.archive.load_packet(record_id)
-            context = self.engine._json(packet['context'])
+            from backend.audit_reader import AuditReader
+
+            reader = reader or AuditReader(self.repository)
+            packet = reader.packet(record_id)
+            context = reader.json(packet['context'])
             fields = context['fields']
             record = {'file_id': context['file_id'], 'context_id': context['context_id']}
             for name, field in (('invoice_number', 'invoice.number'), ('supplier_id', 'supplier.id'),
@@ -267,10 +270,23 @@ class PostgresResultsStore:
         return record
 
     def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
+        from backend.audit_reader import AuditReader
         from rules_ingestion.decision_context import SourceSnapshot
 
-        records = [dict(self._history_record(row['record_id']))
-                   for row in self.engine.repository.processed_records(exclude_file_id)]
+        rows = self.repository.processed_records(exclude_file_id)
+        missing = [row['record_id'] for row in rows if row['record_id'] not in self._history_cache]
+        # Bounded batches avoid two remote reads per historical invoice.
+        # Only the small verified history projection survives each batch.
+        for start in range(0, len(missing), 64):
+            reader = AuditReader(self.repository)
+            ids = missing[start:start + 64]
+            for row in self.repository.audit_records(ids):
+                reader.records[row['record_id']] = row
+                reader.artifacts[str(row['artifact_id'])] = row['artifact']
+            reader.prefetch([reader.packet(record_id)['context']['artifact_id'] for record_id in ids])
+            for record_id in ids:
+                self._history_record(record_id, reader)
+        records = [dict(self._history_record(row['record_id'])) for row in rows]
         return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True,
                                                       'same_file_policy': 'include'},
                               captured_at=captured_at, asserted_by='core-engine-postgres',

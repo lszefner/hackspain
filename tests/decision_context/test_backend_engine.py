@@ -328,7 +328,7 @@ async def test_processed_history_reads_projection_without_forensic_replay(runtim
     assert records[0]['file_id'] == 'invoice.pdf'
     assert records[0]['context_id'].startswith('dc_')
     assert set(records[0]) == {'file_id', 'context_id', 'invoice_number', 'supplier_id', 'total', 'currency', 'issue_date'}
-    assert 0 < gets['count'] <= 3
+    assert gets['count'] == 0
     gets['count'] = 0
     again = store.processed_history_snapshot(captured_at='2026-09-19T12:00:00Z')
     assert gets['count'] == 0
@@ -583,3 +583,56 @@ def test_rule_builder_reuses_existing_ai_stages(monkeypatch):
     assert calls[0] == ('classify', loaded.norma_lines, {'prefer_jev': True, 'use_llm': True})
     assert calls[1] == ('compile', {'use_llm': True, 'gen_python': False})
     assert audit['discovery_cache_used'] is False
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize('file_count', [1, 3])
+async def test_correction_reuses_submission_preserves_audit_and_projects_new_run(runtime, monkeypatch, file_count):
+    from test_decision_context import make_snapshots
+
+    from backend import correct_revision
+    from backend.audit_reader import AuditReader
+    from tests.test_rule_execution import rule
+
+    engine, kwargs, calls, rules, _ = runtime
+    monkeypatch.setenv('REVISION_REVIEW_ENABLED', 'false')
+    monkeypatch.setattr(rr, 'capture_master_snapshots', lambda *a, **k: make_snapshots(histories=False))
+    monkeypatch.setattr(rr.ErpClient, 'snapshot', lambda self: {
+        'records': [{'pedido': 'PO-1', 'estado': 'PENDIENTE'}], 'pages': [], 'complete': True})
+    monkeypatch.setattr(correct_revision, 'capture_master_snapshots',
+                        lambda *a, **k: make_snapshots(histories=False))
+    rules.write_bytes(canonical_bytes(make_ruleset([rule('DUPLICATES')])))
+    sources = [RuleSource('rules.csv', b'original,rule\n')]
+    kwargs.update(ruleset_path=str(rules), rule_sources=sources)
+    file_ids = ['invoice.pdf', 'second.pdf', 'third.pdf'][:file_count]
+    for name in file_ids[1:]:
+        Path(kwargs['input_dir'], name).write_bytes(b'%PDF-test')
+    original = await rr.revisar_lote(file_ids, **kwargs)
+    old_id = original['files'][0]['evaluation_record_id']
+    reader = AuditReader(engine.repository)
+    old_packet = reader.packet(old_id)
+    call_args = {'request_key': 'correction-1', 'ruleset': rules.read_bytes(), 'rule_sources': sources,
+                 'sources_yaml': kwargs['sources_yaml'], 'evaluation_date': EVAL_DATE,
+                 'input_dir': kwargs['input_dir']}
+    result = correct_revision.correct_existing(engine, file_ids, **call_args)
+    assert result['state'] == 'completed'
+    assert result['files'][0]['decision'] == ('PAGAR' if file_count == 1 else 'NO_PAGAR')
+    assert [r['file_id'] for r in result['files']] == file_ids
+    assert calls['interpret'] == file_count
+    assert reader.packet(old_id) == old_packet
+    latest = PostgresResultsStore(engine).get('invoice.pdf')
+    assert latest['request_key'] == 'correction-1'
+    assert latest['review_status'] == 'DISABLED'
+    assert latest['evaluation_record_id'] != old_id
+    assert correct_revision.correct_existing(engine, file_ids, **call_args) == result
+
+
+@pytest.mark.asyncio
+async def test_raw_provider_error_bytes_survive_compact_json_mode(runtime):
+    engine, _kwargs, _calls, _rules, _workbook = runtime
+    engine.storage.compact_json = True
+    pipeline = Pipeline(engine.repository, engine.storage, None, {})
+    for content in (b'', b'<html>provider error</html>', b'{"error":"unavailable"}'):
+        artifact = pipeline.bytes_artifact(content, 'provider-response', 'application/json')
+        assert not artifact['object_key'].startswith('postgres/')
+        assert engine.storage.get(artifact['object_key']) == content

@@ -798,7 +798,8 @@ class PostgresRepository:
         return self._run(op)
 
     def retry_jobs(
-        self, batch_id: str | uuid.UUID, stage: str, *, include_unknown: bool = False
+        self, batch_id: str | uuid.UUID, stage: str, *, include_unknown: bool = False,
+        input_id: str | uuid.UUID | None = None,
     ) -> list[dict[str, Any]]:
         """Create a new, auditable generation for explicitly selected jobs."""
         allowed = (
@@ -820,12 +821,13 @@ class PostgresRepository:
                       work_key || ':retry:' || gen_random_uuid()::text, max_attempts
                     FROM ingestion.jobs
                     WHERE batch_id = %s AND stage = %s AND state = ANY(%s::text[])
+                      AND (%s::uuid IS NULL OR input_id = %s::uuid)
                       AND NOT EXISTS (
                         SELECT 1 FROM ingestion.jobs newer
                         WHERE newer.work_key LIKE ingestion.jobs.work_key || ':retry:%%'
                       )
                     RETURNING *""",
-                    (_uuid(batch_id), stage, list(allowed)),
+                    (_uuid(batch_id), stage, list(allowed), _uuid(input_id), _uuid(input_id)),
                 )
                 return [dict(row) for row in cur.fetchall()]
 

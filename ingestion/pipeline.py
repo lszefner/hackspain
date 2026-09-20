@@ -55,7 +55,8 @@ class Pipeline:
         return row
 
     def bytes_artifact(self, value, kind, content_type):
-        return self.repo.save_artifact(self.storage.put(value, kind, content_type))
+        put = getattr(self.storage, 'put_raw', self.storage.put)
+        return self.repo.save_artifact(put(value, kind, content_type))
 
     def load_artifact(self, artifact_id):
         artifact = self.repo.get_artifact(artifact_id)

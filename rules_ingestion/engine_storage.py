@@ -270,16 +270,20 @@ SELECT i.file_name AS file_id, i.id AS input_id, i.batch_id,
 FROM latest_inputs i JOIN ingestion.batches b ON b.id = i.batch_id
 LEFT JOIN ingestion.input_results r ON r.input_id = i.id AND r.interpreter = b.config->>'interpreter'
 LEFT JOIN LATERAL (
- SELECT er.record_id, er.decision FROM ingestion.engine_records er
+ SELECT er.record_id, er.decision, er.artifact_id FROM ingestion.engine_records er
  WHERE er.input_id = i.id AND er.kind = 'evaluation' ORDER BY er.created_at DESC, er.record_id DESC LIMIT 1
 ) e ON true
+LEFT JOIN ingestion.artifacts evaluation_packet ON evaluation_packet.id = e.artifact_id
 LEFT JOIN LATERAL (
  SELECT er.record_id, er.artifact_id FROM ingestion.engine_records er
  WHERE er.parent_record_id = e.record_id AND er.kind = 'review' ORDER BY er.created_at DESC, er.record_id DESC LIMIT 1
 ) v ON true
 LEFT JOIN ingestion.artifacts review_packet ON review_packet.id = v.artifact_id
 LEFT JOIN ingestion.artifacts review_body ON review_body.id = (review_packet.payload->'review'->>'artifact_id')::uuid
-LEFT JOIN ingestion.engine_runs run ON run.batch_id = i.batch_id
+LEFT JOIN ingestion.engine_runs run ON
+ (evaluation_packet.payload->>'correction_request_key' IS NOT NULL
+  AND run.request_key = evaluation_packet.payload->>'correction_request_key')
+ OR (evaluation_packet.payload->>'correction_request_key' IS NULL AND run.batch_id = i.batch_id)
 LEFT JOIN ingestion.artifacts run_input ON run_input.id = run.input_artifact_id
 ORDER BY i.file_name
 ''', (file_id, file_id))

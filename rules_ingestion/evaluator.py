@@ -65,11 +65,20 @@ _LOADED_IMPLEMENTATION = implementation_identity()
 def _findings(context: dict, results: list[dict]) -> list[dict]:
     findings = []
     for original in context["findings"]:
+        severity = original["severity"]
+        if (original["code"] == "HISTORY_RECORDS_MALFORMED"
+                and original["source_ids"]
+                and all(context["history_observations"].get(name, {}).get("coverage") == "complete"
+                        for name in original["source_ids"])):
+            # The execution adapter has ruled out both keys for incomplete
+            # unrelated rows. Retain the source-quality warning without
+            # treating the older alignment matcher as a second veto.
+            severity = "info"
         refs = list(original["refs"])
         refs += [{"field": name} for name in original["field_ids"] if {"field": name} not in refs]
         refs += [{"source": name, "pointer": ""} for name in original["source_ids"]
                  if context["sources"][name]["availability"] != "unavailable" and {"source": name, "pointer": ""} not in refs]
-        findings.append({"code": original["code"], "severity": original["severity"], "rule_ids": original["rule_ids"], "refs": refs})
+        findings.append({"code": original["code"], "severity": severity, "rule_ids": original["rule_ids"], "refs": refs})
     for result in results:
         if not result["complete"] or result["status"] in ("BLOCKED", "ERROR", "UNSUPPORTED"):
             codes = [trace["reason_code"] for trace in result["trace"] if trace.get("verdict") == "BLOCKED"] or result["reason_codes"]

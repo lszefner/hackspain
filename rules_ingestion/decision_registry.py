@@ -133,7 +133,7 @@ UNIMPLEMENTED_FLAGS = {
 OTHER_PARAMETERS = {
     "VENDOR": (),
     "DUPLICATES": ("hard_key", "soft_key", "soft_duplicate_verdict"),
-    "AMOUNT": ("tolerance_eur", "allowed_currencies"),
+    "AMOUNT": ("tolerance_eur", "allowed_currencies", "order_currency_policy"),
     "AUTHORIZATION": ("escalate_above_eur",),
     "DATES": (),
     "MISSING": ("required_fields",),
