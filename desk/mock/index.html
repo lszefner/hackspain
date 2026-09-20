@@ -615,6 +615,24 @@ body.chatting .chips{justify-content:flex-start}
   .exp .drop{padding-left:20px}
   .att .nm{max-width:160px}
 }
+
+
+.audit-json{white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 var(--mono);max-height:440px;overflow:auto;padding:14px;background:var(--chip);border-radius:8px}
+.live-rule{padding:12px 0;border-bottom:1px solid var(--line)}
+.live-rule summary{display:flex;justify-content:space-between;gap:16px;cursor:pointer;font-size:13px}
+.live-rule p{font-size:13px;line-height:1.6;overflow-wrap:anywhere}
+.live-filter{font-size:12px;display:flex;align-items:center;gap:6px}
+.live-filter select{padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.live-pages{display:flex;justify-content:center;align-items:center;gap:16px;margin:18px;font-size:12px}
+.irow{width:100%;text-align:left;background:transparent;border-left:0;border-right:0;border-top:0}
+.pad{overflow:auto}.itbl{min-width:740px}.inv-head{flex-wrap:wrap}
+button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media(max-width:760px){.lane-head{flex-wrap:wrap}.figs{gap:10px}.fig .amt{font-size:13px}.live-pages{flex-wrap:wrap}.stats{grid-template-columns:1fr}.why-box .txt3{font-size:15px}}
+
+.lane-head{grid-template-columns:12px minmax(180px,1fr) auto}
+.lane .who3{flex-wrap:wrap;gap:4px 10px}.lane .sub2{font-size:11px}
+@media(max-width:1200px){.lane-head{grid-template-columns:12px minmax(0,1fr)}.lane-head .figs{grid-column:2/-1;justify-content:space-between;text-align:left;width:100%;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.inv-head{padding:14px;gap:10px}.inv-head .search{width:100%;min-width:0}.inv-head .seg{display:flex;flex-wrap:wrap}.inv-head .seg button{font-size:11px;padding:7px}.fig .lbl2{font-size:8px}.fig .amt{font-size:11px}.fig .n2{font-size:10px}.live-filter{flex-wrap:wrap}.lane-head{padding:12px}.lanes{min-width:0}.lane .nm2{font-size:13px}}
 </style>
 </head>
 <body>
@@ -648,15 +666,15 @@ body.chatting .chips{justify-content:flex-start}
         <div class="composer-in">
           <div class="hello">
             <h1>Good morning, Alberto.</h1>
-            <p>I did the boring part while you slept. What is left needs an actual human, which is where you come in.</p>
+            <p>Search your recorded invoices, inspect their evidence, and see what needs attention.</p>
           </div>
           <div class="tray" id="tray"></div>
           <form class="composer" id="composer">
             <input type="file" id="file" multiple accept=".pdf,.zip,application/pdf,application/zip" hidden>
-            <button class="icon-btn" type="button" id="clip" title="Attach a PDF or ZIP" aria-label="Attach">
+            <button class="icon-btn" type="button" id="clip" disabled title="Upload processing is not connected" aria-label="Attach">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.05l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.66 5.66l-9.2 9.2a2 2 0 0 1-2.83-2.83l8.5-8.5"/></svg>
             </button>
-            <input type="text" id="q" autocomplete="off" placeholder="Ask me anything, throw me a batch, or invent a new rule…">
+            <input type="text" id="q" autocomplete="off" placeholder="Ask about a recorded invoice, supplier or rule…">
             <button class="send" type="submit" id="send" aria-label="Send">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
             </button>
@@ -685,7 +703,7 @@ body.chatting .chips{justify-content:flex-start}
 </div>
 
 <div class="scrim" id="scrim"></div>
-<aside class="dossier" id="dossier" aria-hidden="true">
+<aside class="dossier" id="dossier" role="dialog" aria-modal="true" aria-labelledby="dos-file" aria-hidden="true">
   <div class="dos-head">
     <span class="t" id="dos-file"></span>
     <span class="sub" id="dos-sub"></span>
@@ -704,9 +722,9 @@ const now = () => new Date().toLocaleTimeString('en-GB', {hour: '2-digit', minut
 const KB = n => n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, n >> 10) + ' KB';
 const EXT = n => (n.split('.').pop() || '').toUpperCase().slice(0, 3);
 
-const CHIPS = ['Which payments do I need to do today',
+const CHIPS = ['Which invoices need attention',
                'Which invoices do I need to review',
-               "Show me today's report"];
+               "Show recorded invoice totals"];
 $('#chips').innerHTML = CHIPS.map(c => `<button class="chip">${esc(c)}</button>`).join('');
 
 $('#nav').addEventListener('click', e => {
@@ -762,7 +780,7 @@ function globe(host, px = 30, colour = '#2b1f16'){
 
 /* ───────────────── chat */
 const thread = $('#thread');
-const MIN_THINK = 4000;          // it never answers faster than this, however quick the model is
+const MIN_THINK = 0;          // show replies as soon as they are available
 let history = [], busy = false, staged = [];
 const scroll = () => { thread.scrollTop = thread.scrollHeight; };
 
@@ -1204,364 +1222,6 @@ thread.addEventListener('click', async e => {
   if (row) row.closest('.exp').classList.toggle('open');
 });
 
-/* ───────────────── invoices: one box per supplier, opened on demand */
-const INV = {q: '', action: '', open: new Set()};
-let invTimer = 0, invReady = false;
-
-const ACTS = [['', 'All'], ['PAY', 'Pay'], ['ESCALATE', 'Review'], ['DO NOT PAY', 'Do not pay']];
-$('#inv-action').innerHTML = ACTS.map(([v, l]) =>
-  `<button data-a="${esc(v)}"${v === '' ? ' class="on"' : ''}>${esc(l)}</button>`).join('');
-
-const money = n => '€' + Number(n || 0).toLocaleString('en-GB',
-  {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-function fig(kind, label, amount, n){
-  return `<span class="fig ${kind}"><span class="lbl2">${esc(label)}</span>
-    <span class="amt${amount ? '' : ' zero'}">${esc(money(amount))}</span>
-    <span class="n2">${n} invoice${n === 1 ? '' : 's'}</span></span>`;
-}
-
-function laneRows(rows){
-  return `<div class="pad"><div class="itbl">
-    <div class="ihead"><span>File</span><span>Invoice</span><span>Issued</span>
-      <span style="text-align:right">Amount</span><span>Action</span><span>What blocked it</span></div>
-    ${rows.map(r => `<div class="irow" data-file="${esc(r.file)}">
-      <span class="f">${esc(r.file)}</span>
-      <span class="n">${esc(r.number)}</span>
-      <span class="d">${esc(r.date)}</span>
-      <span class="a">${esc(money(r.total))}</span>
-      <span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>
-      <span class="b">${esc(r.blocking.length ? r.blocking.join(', ').toLowerCase() : '—')}</span>
-    </div>`).join('')}</div></div>`;
-}
-
-async function loadInvoices(){
-  const p = new URLSearchParams({q: INV.q, action: INV.action});
-  const d = await (await fetch('/api/lanes?' + p)).json();
-
-  if (!invReady){
-    $('#inv-action').querySelectorAll('button').forEach(b => {
-      const k = b.dataset.a;
-      if (k) b.textContent += ' · ' + (d.counts[k] ?? 0);
-    });
-    invReady = true;
-  }
-  $('#inv-count').textContent = `${d.matched} of ${d.grand}`;
-
-  $('#inv-body').innerHTML = !d.lanes.length
-    ? `<div class="empty-note">Nothing matches that. Try a supplier name, or clear the filters.</div>`
-    : `<div class="lanes">${d.lanes.map(l => {
-        const open = INV.open.has(l.id);
-        return `<div class="lane${open ? ' open' : ''}" data-lane="${esc(l.id)}">
-          <button class="lane-head" type="button">
-            <span class="cv2"></span>
-            <span class="who3"><span class="nm2">${esc(l.name)}</span>
-              <span class="sub2">${l.count}</span></span>
-            <span class="figs">
-              ${fig('pay', 'Pay', l.pay_eur, l.pay_n)}
-              ${fig('rev', 'Needs you', l.review_eur, l.review_n)}
-              ${fig('stop', 'No pay', l.nopay_eur, l.nopay_n)}
-            </span>
-          </button>
-          <div class="lane-body"><div class="in2">${open ? laneRows(l.rows) : ''}</div></div>
-        </div>`;
-      }).join('')}</div>`;
-
-  // keep the rows for lanes the user opens later
-  $('#inv-body').querySelectorAll('.lane').forEach(el => {
-    el._rows = d.lanes.find(l => l.id === el.dataset.lane).rows;
-  });
-}
-
-$('#inv-q').addEventListener('input', e => {
-  INV.q = e.target.value;
-  clearTimeout(invTimer); invTimer = setTimeout(() => loadInvoices(), 200);
-});
-$('#inv-action').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  $('#inv-action').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b));
-  INV.action = b.dataset.a; loadInvoices();
-});
-$('#view-invoices').addEventListener('click', e => {
-  const head = e.target.closest('.lane-head');
-  if (head){
-    const lane = head.closest('.lane'), id = lane.dataset.lane;
-    const opening = !lane.classList.contains('open');
-    if (opening && !lane.querySelector('.itbl')){
-      lane.querySelector('.in2').innerHTML = laneRows(lane._rows);
-    }
-    lane.classList.toggle('open', opening);
-    INV.open[opening ? 'add' : 'delete'](id);
-    return;
-  }
-  const row = e.target.closest('.irow');
-  if (row) openDossier(row.dataset.file);
-});
-
-/* the expediente: the real page on the left, what we read off it on the right */
-let dossierFile = null;
-
-async function openDossier(file){
-  const d = await (await fetch('/api/dossier?file=' + encodeURIComponent(file))).json();
-  const r = d.row;
-  dossierFile = file;
-  $('#dos-file').textContent = file;
-  $('#dos-sub').innerHTML = `${esc(r.vendor)} · ${esc(money(r.total))} ` +
-    `<span class="k ${esc(r.action.replace(/[^A-Z]/g, ''))}">${esc(r.action)}</span>`;
-  $('#dos-frame').src = '/api/pdf?file=' + encodeURIComponent(file) + '#view=FitH';
-
-  const blocked = d.checks.filter(c => c.verdict === 'BLOCKS');
-  const why = blocked.length
-    ? `${blocked.map(c => c.name).join(' and ')} stopped it. ` +
-      blocked.map(c => c.detail).join('. ') + '.'
-    : `Nothing stopped it. All five checks passed under ruleset ${d.ruleset}, so it goes in the run.`;
-
-  const kind = r.action.replace(/[^A-Z]/g, '');
-  const done = d.decided;
-  $('#dos-side').innerHTML = `
-    <div class="why-box ${esc(kind)}">
-      <span class="lbl3">Why · ${esc(r.action)}</span>
-      <div class="txt3">${esc(why)}</div></div>
-
-    ${done ? `<div class="dos-said">${esc(done)}</div>` : `<div class="dos-acts">
-      <button class="btn primary" data-dact="approve">Approve · ${esc(money(r.total))}</button>
-      <button class="btn danger" data-dact="reject">Reject</button>
-      <button class="btn" data-dact="email">Write to the supplier</button>
-      <button class="btn" data-dact="defer">Defer</button>
-      <span class="spacer"></span>
-      <button class="btn ask" id="dos-ask">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.8 8.8 0 0 1-3.8-.9L3 20.5l1.6-4.7A8.4 8.4 0 0 1 12 3.1a8.4 8.4 0 0 1 9 8.4z"/></svg>
-        Ask Albertito about it</button>
-    </div>`}
-
-    <div class="sec"><h5>What I read off the page</h5>
-      <dl>${d.fields.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join('')}</dl>
-      <div class="sums">${(d.amounts || []).map(([k, v], i) =>
-        `<span class="sum${i === 2 ? ' tot' : ''}"><span class="k4">${esc(k)}</span>
-         <span class="v4">${esc(v)}</span></span>`).join('')}</div></div>
-
-    <div class="sec"><h5>Rules · ${d.checks.length} run · ${blocked.length} blocking</h5>
-      ${d.checks.map(c => `<div class="chk">
-        <span class="nm ${c.verdict === 'BLOCKS' ? 'NOPAY' : ''}">${esc(c.name)}</span>
-        <span class="dt">${esc(c.detail)}</span>
-        <span class="vd2 ${esc(c.verdict)}">${esc(c.verdict)}</span></div>`).join('')}</div>
-
-    <div class="sec"><h5>What happened · ${d.timeline.length} events · ${d.ms} ms · $${d.cost}</h5>
-      <ul class="tl">${d.timeline.map(t => `<li class="${t.kind === 'VERDICT' ? 'hot' : ''}">
-        <div class="k2">${esc(t.kind)}</div>
-        <div class="d2">${esc(t.detail)}</div>
-        <div class="m2">${esc(t.actor)} · ${t.ms} ms · $${t.cost.toFixed(5)}</div></li>`).join('')}</ul></div>`;
-
-  $('#dossier').classList.add('on'); $('#dossier').setAttribute('aria-hidden', 'false');
-  $('#scrim').classList.add('on');
-}
-
-function closeDossier(){
-  $('#dossier').classList.remove('on'); $('#dossier').setAttribute('aria-hidden', 'true');
-  $('#scrim').classList.remove('on');
-  setTimeout(() => { $('#dos-frame').src = 'about:blank'; }, 420);
-}
-$('#dos-side').addEventListener('click', async e => {
-  if (e.target.id === 'dos-ask'){
-    const f = dossierFile;
-    closeDossier();
-    document.querySelector('.nav-item[data-view="agent"]').click();
-    return ask(`What do you make of ${f}?`);
-  }
-  const b = e.target.closest('[data-dact]');
-  if (!b) return;
-  const act = b.dataset.dact;
-  const reason = act === 'defer' ? 'waiting on the supplier' : null;
-  const bar = b.closest('.dos-acts');
-  bar.querySelectorAll('.btn').forEach(x => x.classList.add('done'));
-  b.classList.remove('done'); b.textContent = '…';
-  const res = await (await fetch('/api/action', {
-    method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({act, key: 'file:' + dossierFile, reason}),
-  })).json();
-  bar.outerHTML = `<div class="dos-said">${esc(res.said)}
-    <button class="btn" id="dos-undo">Put it back</button></div>`;
-  const u = $('#dos-undo');
-  if (u) u.onclick = async () => {
-    await fetch('/api/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
-                                body: JSON.stringify({act: 'undo'})});
-    openDossier(dossierFile);
-  };
-});
-
-$('#dos-x').addEventListener('click', closeDossier);
-$('#scrim').addEventListener('click', closeDossier);
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDossier(); });
-
-/* ───────────────── summary: folded from the same 500 invoices */
-let sumReady = false;
-
-/* one hue, twelve steps: share reads by size, not by colour-guessing */
-function ramp(i, n){
-  const a = [74, 51, 36], b = [201, 190, 176];
-  const t = n < 2 ? 0 : i / (n - 1);
-  return `rgb(${a.map((v, k) => Math.round(v + (b[k] - v) * t)).join(',')})`;
-}
-
-function ring(items, spend, count){
-  const R = 66, SW = 26, C = 2 * Math.PI * R;
-  let off = 0;
-  const segs = items.map((it, i) => {
-    const len = spend ? (it.eur / spend) * C : 0;
-    const seg = `<circle class="sl" data-i="${i}" r="${R}" cx="93" cy="93" fill="none"
-      stroke="${ramp(i, items.length)}" stroke-width="${SW}"
-      stroke-dasharray="${len.toFixed(2)} ${(C - len).toFixed(2)}"
-      stroke-dashoffset="${(-off).toFixed(2)}"></circle>`;
-    off += len;
-    return seg;
-  }).join('');
-  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
-  const short = n => n >= 1e6 ? '€' + (n / 1e6).toFixed(2) + 'M' : eur0(n);
-  return `<div class="ring-wrap">
-    <svg class="ring" viewBox="0 0 186 186" role="img" aria-label="Share of spend by supplier">
-      <g transform="rotate(-90 93 93)">${segs}</g>
-      <text class="ring-mid" x="93" y="90"><tspan class="big">${esc(short(spend))}</tspan></text>
-      <text class="ring-mid" x="93" y="104"><tspan class="sml">${count} invoices</tspan></text>
-    </svg>
-    <div class="key">${items.map((it, i) => `<div class="kr" data-i="${i}">
-      <span class="sw" style="background:${ramp(i, items.length)}"></span>
-      <span class="kn">${esc(it.name)}</span>
-      <span class="kv">${esc(eur0(it.eur))}</span>
-      <span class="kp">${spend ? (it.eur / spend * 100).toFixed(1) : 0}%</span>
-    </div>`).join('')}</div></div>`;
-}
-
-function columns(items){
-  const max = Math.max(...items.map(r => r.n), 1);
-  return `<div class="cols">${items.map(r => `
-    <div class="col" title="${esc(r.name)} — ${r.n} invoices">
-      <span class="cn">${r.n}</span>
-      <span class="stk" style="height:${((r.n / max) * 100).toFixed(1)}%"><i class="pa"></i></span>
-      <span class="cl">${esc(r.name.split(' ')[0])}</span></div>`).join('')}</div>`;
-}
-
-function spark(trend){
-  if (trend.length < 2) return '';
-  const w = 1000, h = 150, pad = 6;
-  const max = Math.max(...trend.map(t => t.eur), 1);
-  const pts = trend.map((t, i) => [
-    (i / (trend.length - 1)) * (w - pad * 2) + pad,
-    h - (t.eur / max) * (h - 16) - 4,
-  ]);
-  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
-  const area = `${line} L${pts.at(-1)[0].toFixed(1)},${h} L${pts[0][0].toFixed(1)},${h} Z`;
-  const nice = m => new Date(m + '-02').toLocaleDateString('en-GB', {month: 'short'});
-  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true">
-      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="var(--accent)" stop-opacity=".16"/>
-        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
-      <path class="ar" d="${area}"/><path class="ln" d="${line}"/>
-      ${pts.map(p => `<circle class="dt2" cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2.5"/>`).join('')}
-    </svg>
-    <div class="xax" style="grid-template-columns:repeat(${trend.length},1fr)">
-      ${trend.map(t => `<span>${esc(nice(t.month))} · ${t.n}</span>`).join('')}</div>`;
-}
-
-async function loadSummary(){
-  const d = await (await fetch('/api/summary')).json();
-  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
-
-  $('#sum-body').innerHTML = `
-    <div class="stats">
-      <div class="stat pay"><span class="k5">Pay</span><div class="v5">${esc(eur0(d.pay.eur))}</div>
-        <div class="s5">${d.pay.n} invoices, clean on all five</div></div>
-      <div class="stat rev"><span class="k5">Needs you</span><div class="v5">${esc(eur0(d.review.eur))}</div>
-        <div class="s5">${d.review.n} invoices waiting on a person</div></div>
-      <div class="stat stop"><span class="k5">No pay</span><div class="v5">${esc(eur0(d.stop.eur))}</div>
-        <div class="s5">${d.stop.n} stopped by a rule</div></div>
-      <div class="stat"><span class="k5">Suppliers</span><div class="v5">${d.suppliers}</div>
-        <div class="s5">${esc(eur0(d.spend))} across ${d.total} invoices</div></div>
-    </div>
-
-    <div class="duo">
-      <div class="card2"><h3>Where the money goes</h3>
-        <p class="lede2">Share of everything invoiced, biggest first.</p>
-        ${ring(d.by_money, d.spend, d.total)}
-      </div>
-      <div class="card2"><h3>Invoices per supplier</h3>
-        <p class="lede2">How much paper each one sends.</p>
-        ${columns(d.by_count)}
-      </div>
-    </div>
-
-    <div class="card2">
-      <h3>Spend by month</h3>
-      <p class="lede2">Read off the issue dates on the pages. The count under each month is the volume.</p>
-      ${spark(d.trend)}
-    </div>`;
-  const wrap = $('#sum-body').querySelector('.ring-wrap');
-  if (wrap){
-    wrap.querySelectorAll('.kr').forEach(r => {
-      r.onmouseenter = () => {
-        wrap.classList.add('dim');
-        wrap.querySelectorAll('.sl').forEach(c =>
-          c.classList.toggle('up', c.dataset.i === r.dataset.i));
-      };
-      r.onmouseleave = () => wrap.classList.remove('dim');
-    });
-  }
-  sumReady = true;
-}
-
-/* ───────────────── rules: the ruleset, and what it actually caught */
-let rulesReady = false;
-
-async function loadRules(){
-  const d = await (await fetch('/api/rules')).json();
-  const eur0 = n => '€' + Math.round(n).toLocaleString('en-GB');
-  const worst = Math.max(...d.rules.map(r => r.n), 1);
-
-  $('#rules-page').innerHTML = `
-    <div class="rhead">
-      <div>
-        <h2>Rules</h2>
-        <p>Six checks run on every invoice, in this order. The first one that stops it
-           decides, and nothing outside this list has a say. Change one and every verdict
-           can be replayed against it.</p>
-      </div>
-      <div class="stamp"><div class="vv">${esc(d.version)}</div>
-        <div class="ss">sha256 ${esc(d.sha)}</div>
-        <div class="ss">${d.checked} checked · ${d.stopped} stopped</div></div>
-    </div>
-
-    <div class="chain">${d.rules.map(r => `
-      <div class="rule" data-rule="${esc(r.name)}">
-        <button class="rule-top" type="button">
-          <span class="no">${r.step}</span>
-          <span class="mid3"><span class="nm3">${esc(r.name)}</span>
-            <span class="ds">${esc(r.does)}</span></span>
-          <span class="ef ${esc(r.effect.replace(/[^A-Za-z]/g, ''))}">${esc(r.effect)}</span>
-          <span class="ct">
-            <span class="tk"><i style="width:${r.n ? Math.max(6, r.n / worst * 100) : 0}%"></i></span>
-            <span class="nq${r.n ? '' : ' zero'}">${r.n}</span></span>
-          <span class="cv3"></span>
-        </button>
-        <div class="rule-body"><div class="in3"><div class="pad3">${esc(r.note)}
-          <div class="amt3">${r.n
-            ? `stopped ${r.n} of ${d.checked} · ${esc(eur0(r.eur))} held back · ${r.share}% of the box`
-            : (r.added ? 'added from a cluster, nothing has hit it yet'
-                       : 'nothing in the box fails this one')}</div>
-        </div></div></div>
-      </div>`).join('')}</div>
-
-    <div class="hist"><h3>What changed · ${d.history.length}</h3>
-      ${d.history.map(h => `<div class="hr2">
-        <span class="vj">${esc(h.from)} → ${esc(h.to)}</span>
-        <span><span class="tt">${esc(h.title)}</span><div class="qq">you said: “${esc(h.said)}”</div></span>
-        <span class="wn">${esc(h.when)}</span></div>`).join('')}</div>`;
-  rulesReady = true;
-}
-
-$('#view-rules').addEventListener('click', e => {
-  const top = e.target.closest('.rule-top');
-  if (top) top.closest('.rule').classList.toggle('open');
-});
-
 /* ───────────────── drop anywhere */
 const ov = $('#dropov'), main = document.querySelector('.main');
 let dc = 0;
@@ -1571,12 +1231,13 @@ main.addEventListener('dragleave', () => { if (--dc <= 0){ dc = 0; ov.classList.
 main.addEventListener('drop', e => {
   e.preventDefault(); dc = 0; ov.classList.remove('on');
   const f = e.dataTransfer && e.dataTransfer.files;
-  if (f && f.length) addFiles(f);
+  if (f && f.length) bubble('Upload processing is not connected. No files were saved or evaluated.');
 });
 
 refreshSend();
 $('#q').focus();
 </script>
+<script src="/desk/live.js"></script>
 <svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
   <filter id="goo" color-interpolation-filters="sRGB">
     <feGaussianBlur in="SourceGraphic" stdDeviation="7" result="blur"/>

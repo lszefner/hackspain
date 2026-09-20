@@ -59,8 +59,9 @@ def _lanzar_en_fondo(file_ids: list[str], request_key: str) -> None:
     global _procesando, _ultimo_error
     try:
         revisar_lote_sync(file_ids, store=get_store(), request_key=request_key)
+        _ultimo_error = None
     except Exception as exc:  # noqa: BLE001 - report background failures to the API
-        _ultimo_error = type(exc).__name__
+        _ultimo_error = f"{type(exc).__name__}: {exc}"
     finally:
         with _estado_lock:
             _procesando = False
@@ -111,7 +112,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         url = urlparse(self.path)
-        if url.path == "/api/salud":
+        if url.path.startswith('/api/ui/'):
+            self._ui(url.path[len('/api/ui/'):], parse_qs(url.query))
+        elif url.path == "/api/salud":
             self._salud()
         elif url.path == "/api/resumen":
             self._json(200, _resumen())
@@ -133,6 +136,51 @@ class Handler(BaseHTTPRequestHandler):
             self._json(200, {"procesando": _procesando, "error": _ultimo_error})
         else:
             self._json(404, {"error": "not_found"})
+
+    def _ui(self, resource, query):
+        from time import perf_counter
+
+        from backend.ui_queries import DeskQueries
+
+        started = perf_counter()
+        try:
+            desk = DeskQueries(get_store())
+            if resource in ('invoice', 'pdf'):
+                file_id = (query.get('file') or [''])[0]
+                if not file_id or Path(file_id).name != file_id or '\\' in file_id:
+                    raise ValueError('invalid_file_id')
+                if resource == 'pdf':
+                    data = desk.pdf(file_id)
+                    if data is None:
+                        self._json(404, {'error': 'pdf_not_recorded'})
+                        return
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'application/pdf')
+                    self.send_header('Content-Length', str(len(data)))
+                    self.send_header('Cache-Control', 'private, no-store')
+                    self.end_headers()
+                    self.wfile.write(data)
+                    return
+                result = desk.detail(file_id)
+                if result is None:
+                    self._json(404, {'error': 'invoice_not_recorded'})
+                    return
+            elif resource == 'invoices':
+                result = desk.invoices(query)
+            elif resource == 'suppliers':
+                result = desk.suppliers(query)
+            elif resource == 'summary':
+                result = desk.summary()
+            elif resource == 'rules':
+                result = desk.rules()
+            else:
+                self._json(404, {'error': 'not_found'})
+                return
+            self._json(200, result | {'query_ms': round((perf_counter() - started)*1000, 2)})
+        except ValueError:
+            self._json(422, {'error': 'invalid_query'})
+        except Exception:
+            self._json(503, {'error': 'backend_query_unavailable'})
 
     def do_POST(self):
         url = urlparse(self.path)

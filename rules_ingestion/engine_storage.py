@@ -296,6 +296,37 @@ WHERE er.kind = 'evaluation' AND (%s::text IS NULL OR i.file_name <> %s)
 ORDER BY er.input_id, er.created_at DESC, er.record_id DESC
 ''', (exclude_file_id, exclude_file_id))
 
+    def processed_history_projections(self, exclude_file_id=None):
+        """Latest evaluation identity fields from durable Postgres JSON payloads.
+
+        Avoids per-record archive/storage round trips when building the
+        processed-history snapshot used for duplicate checks.
+        """
+        return self._rows('''
+SELECT DISTINCT ON (er.input_id)
+  er.record_id,
+  i.file_name AS file_id,
+  ctx.payload->>'context_id' AS context_id,
+  CASE WHEN (ctx.payload->'fields'->'invoice.number'->>'state') = 'present'
+       THEN ctx.payload->'fields'->'invoice.number'->>'value' END AS invoice_number,
+  CASE WHEN (ctx.payload->'fields'->'supplier.id'->>'state') = 'present'
+       THEN ctx.payload->'fields'->'supplier.id'->>'value' END AS supplier_id,
+  CASE WHEN (ctx.payload->'fields'->'invoice.total'->>'state') = 'present'
+       THEN ctx.payload->'fields'->'invoice.total'->>'value' END AS total,
+  CASE WHEN (ctx.payload->'fields'->'invoice.currency'->>'state') = 'present'
+       THEN ctx.payload->'fields'->'invoice.currency'->>'value' END AS currency,
+  CASE WHEN (ctx.payload->'fields'->'invoice.issue_date'->>'state') = 'present'
+       THEN ctx.payload->'fields'->'invoice.issue_date'->>'value' END AS issue_date,
+  (packet.payload IS NOT NULL AND ctx.payload IS NOT NULL) AS projected
+FROM ingestion.engine_records er
+JOIN ingestion.inputs i ON i.id = er.input_id
+JOIN ingestion.artifacts packet ON packet.id = er.artifact_id
+LEFT JOIN ingestion.artifacts ctx
+  ON ctx.id = (packet.payload->'context'->>'artifact_id')::uuid
+WHERE er.kind = 'evaluation' AND (%s::text IS NULL OR i.file_name <> %s)
+ORDER BY er.input_id, er.created_at DESC, er.record_id DESC
+''', (exclude_file_id, exclude_file_id))
+
 
 class ArchiveError(Exception):
     pass

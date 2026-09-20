@@ -177,6 +177,9 @@ class ResultsStore:
 
 
 class PostgresResultsStore:
+    _HISTORY_FIELDS = (
+        'file_id', 'context_id', 'invoice_number', 'supplier_id', 'total', 'currency', 'issue_date')
+
     def __init__(self, engine=None, *, repository=None):
         self._engine = engine
         self.repository = repository if repository is not None else engine.repository
@@ -270,23 +273,23 @@ class PostgresResultsStore:
         return record
 
     def processed_history_snapshot(self, *, captured_at, exclude_file_id=None):
-        from backend.audit_reader import AuditReader
         from rules_ingestion.decision_context import SourceSnapshot
 
-        rows = self.repository.processed_records(exclude_file_id)
-        missing = [row['record_id'] for row in rows if row['record_id'] not in self._history_cache]
-        # Bounded batches avoid two remote reads per historical invoice.
-        # Only the small verified history projection survives each batch.
-        for start in range(0, len(missing), 64):
-            reader = AuditReader(self.repository)
-            ids = missing[start:start + 64]
-            for row in self.repository.audit_records(ids):
-                reader.records[row['record_id']] = row
-                reader.artifacts[str(row['artifact_id'])] = row['artifact']
-            reader.prefetch([reader.packet(record_id)['context']['artifact_id'] for record_id in ids])
-            for record_id in ids:
-                self._history_record(record_id, reader)
-        records = [dict(self._history_record(row['record_id'])) for row in rows]
+        # Prefer one SQL projection of durable Postgres payloads over per-record
+        # archive round trips. Fall back to AuditReader only when payload is missing.
+        records = []
+        for row in self.repository.processed_history_projections(exclude_file_id):
+            record_id = row['record_id']
+            cached = self._history_cache.get(record_id)
+            if cached is not None:
+                records.append(dict(cached))
+                continue
+            if row.get('projected'):
+                record = {key: row.get(key) for key in self._HISTORY_FIELDS}
+                self._history_cache[record_id] = record
+                records.append(dict(record))
+                continue
+            records.append(dict(self._history_record(record_id)))
         return SourceSnapshot(kind='history', payload={'kind': 'processed', 'records': records, 'complete': True,
                                                       'same_file_policy': 'include'},
                               captured_at=captured_at, asserted_by='core-engine-postgres',

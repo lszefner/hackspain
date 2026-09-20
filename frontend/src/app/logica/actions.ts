@@ -1,21 +1,14 @@
 "use server";
-
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
-import { activarNorma, ensayarNorma, publicarNorma, type Ensayo } from "@/lib/normas";
-
-export async function activar(version: string) {
-  activarNorma(version);
-  revalidatePath("/", "layout"); // la norma activa afecta a todas las vistas
+import type { Ensayo } from "@/lib/normas";
+export async function activar(_version: string): Promise<void> {
+  void _version;
+  throw new Error("Rule activation is not connected. No rules were changed.");
 }
-
-export async function ensayar(yaml: string): Promise<Ensayo> {
-  return ensayarNorma(yaml);
+export async function ensayar(_yaml: string): Promise<Ensayo> {
+  void _yaml;
+  throw new Error("Rule simulation is not connected. No evaluation was performed.");
 }
-
-export async function publicar(yaml: string, autor: string, motivo: string): Promise<string[]> {
-  const r = publicarNorma(yaml, autor, motivo);
-  if (!r.ok) return r.errores;
-  revalidatePath("/", "layout");
-  redirect(`/logica?version=${r.version}&publicada=1`);
+export async function publicar(_yaml: string, _autor: string, _motivo: string): Promise<string[]> {
+  void [_yaml, _autor, _motivo];
+  return ["Rule publication is not connected. No rules were changed."];
 }
