@@ -433,8 +433,12 @@ async function enviarTurno(oye) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado, oye }),
     });
+    if (!(res.headers.get("content-type") || "").includes("application/json")) {
+      throw new Error(`HTTP ${res.status} en ${API}/turno: el servidor no devolvió JSON. Comprueba que la API de llamadas esté en marcha.`);
+    }
     r = await res.json();
     if (r.error) throw new Error(r.error);
+    if (!res.ok) throw new Error(`HTTP ${res.status} en ${API}/turno`);
   } catch (e) {
     avisar(`No he podido consultar el servidor: ${e.message}`);
     estadoVoz("error");

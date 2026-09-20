@@ -13,7 +13,7 @@ Tres cosas se publican:
     que se dice y que se calla es el mismo fichero en los dos sitios.
   - la pagina: `estatico/` verbatim, servida como ficheros sueltos.
   - la voz: los mp3 que ya estan en `.voz/`, copiados a `public/`. Se publica
-    UNA voz (Ines): la cache mezcla mp3 de ElevenLabs y m4a de `say`, y
+    UNA voz (la predeterminada): la cache mezcla mp3 de ElevenLabs y m4a de `say`, y
     publicar las dos haria que la agente cambiara de voz a mitad de llamada.
 
 Lo que NO se publica es `voz.py`, que es el unico fichero que sabe hablar con

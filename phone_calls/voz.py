@@ -60,8 +60,9 @@ VOCES_11L = {
     "Marina": "M7m4UdXA2zH2Dhz4OzqV",   # peninsular, adulta: calm, warm, natural
     "Sofía": "RrEQHwbMIvoa9O0J5xAW",    # peninsular, joven: smooth, expressive
     "Inés": "b8hczxpWV1VCBo2sB5jd",     # peninsular, joven: calm, friendly
+    "Marco": "woeaOojf4khJahry1fqM",    # Marco AI Narrative Story Voice
 }
-VOZ_11L = "Inés"
+VOZ_11L = "Marco"
 # Medido con la frase del caso del importe (117 caracteres), conexion caliente:
 # multilingual_v2 2,27 s, turbo 0,45 s, flash 0,38 s -- flash es MAS rapido
 # que el `say` local en frio (0,80 s). El bueno para precalentar, el rapido

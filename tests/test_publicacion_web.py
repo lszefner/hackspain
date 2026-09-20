@@ -126,7 +126,7 @@ def test_todo_lo_que_se_dira_en_la_demo_tiene_audio(caja):
     indice = json.loads((pub.BUNDLE / "voz_indice.json").read_text("utf-8"))
     faltan = [f for f in pub.frases(caja) if f not in indice]
     assert not faltan, (
-        f"{len(faltan)} frases de la demo las dira el navegador, no Ines: "
+        f"{len(faltan)} frases de la demo las dira el navegador, no {pub.voz.VOZ_11L}: "
         f"{[f[:50] for f in faltan]}")
 
 
