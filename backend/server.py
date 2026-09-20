@@ -289,13 +289,29 @@ class Handler(BaseHTTPRequestHandler):
 def main(argv=None) -> int:
     import argparse
 
+    from psycopg import OperationalError
+    from psycopg_pool import PoolTimeout
+
     parser = argparse.ArgumentParser(prog="python -m backend.server")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8010)
     args = parser.parse_args(argv)
-    get_store()
+    print("Comprobando conexion a Postgres (hasta 30 s)...", flush=True)
+    try:
+        get_store()
+    except (PoolTimeout, OperationalError):
+        print(
+            "No se pudo conectar a Postgres; la API no ha arrancado. "
+            "Comprueba la conexion DATABASE_URL / SUPABASE_DB_URL "
+            "(DATABASE_URL tiene prioridad), el DNS/VPN y el acceso al puerto "
+            "de la base de datos. Prueba otra red y revisa el estado del "
+            "proyecto Supabase. No se ha cambiado ningun dato.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return 1
     server = ThreadingHTTPServer((args.host, args.port), Handler)
-    print(f"revision API en http://{args.host}:{args.port}")
+    print(f"revision API en http://{args.host}:{args.port}", flush=True)
     server.serve_forever()
     return 0
 
